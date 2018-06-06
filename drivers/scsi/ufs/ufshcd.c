@@ -1621,6 +1621,8 @@ static void ufshcd_ungate_work(struct work_struct *work)
 
 	ufshcd_enable_irq(hba);
 
+	ufshcd_enable_irq(hba);
+
 	/* Exit from hibern8 */
 	if (ufshcd_can_hibern8_during_gating(hba)) {
 		/* Prevent gating in this path */
