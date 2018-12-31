@@ -802,6 +802,8 @@ int dsi_display_cont_splash_res_disable(void *display);
 int dsi_display_get_panel_vfp(void *display,
 	int h_active, int v_active);
 
+struct dsi_display *get_main_display(void);
+
 /**
  * dsi_display_dump_clks_state() - dump clocks state to console
  * @display:         Handle to display
