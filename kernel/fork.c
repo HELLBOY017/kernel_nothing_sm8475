@@ -97,6 +97,7 @@
 #include <linux/scs.h>
 #include <linux/io_uring.h>
 #include <linux/cpufreq_times.h>
+#include <linux/cpu_input_boost.h>
 
 #include <asm/pgalloc.h>
 #include <linux/uaccess.h>
@@ -2543,6 +2544,11 @@ pid_t kernel_clone(struct kernel_clone_args *args)
 	    (args->flags & CLONE_PARENT_SETTID) &&
 	    (args->pidfd == args->parent_tid))
 		return -EINVAL;
+
+	/* Boost CPU to the max for 50 ms when userspace launches an app */
+	if (is_zygote_pid(current->pid)) {
+		cpu_input_boost_kick_max(50);
+	}
 
 	/*
 	 * Determine whether and which event to report to ptracer.  When
