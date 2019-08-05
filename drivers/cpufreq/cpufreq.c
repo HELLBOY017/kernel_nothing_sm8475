@@ -738,10 +738,12 @@ static ssize_t show_scaling_cur_freq(struct cpufreq_policy *policy, char *buf)
 static ssize_t store_##file_name					\
 (struct cpufreq_policy *policy, const char *buf, size_t count)		\
 {									\
-	unsigned long val;						\
-	int ret;							\
+	unsigned long val = 0;						\
+	int ret = 0;							\
 									\
-	ret = sscanf(buf, "%lu", &val);					\
+	if (&policy->object == &policy->min)				\
+		return count;						\
+									\
 	if (ret != 1)							\
 		return -EINVAL;						\
 									\
