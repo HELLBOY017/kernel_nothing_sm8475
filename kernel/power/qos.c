@@ -418,7 +418,7 @@ static int __init cpu_latency_qos_init(void)
 		pr_err("%s: %s setup failed\n", __func__,
 		       cpu_latency_qos_miscdev.name);
 
-	return ret;
+	return 0;
 }
 late_initcall(cpu_latency_qos_init);
 #endif /* CONFIG_CPU_IDLE */
