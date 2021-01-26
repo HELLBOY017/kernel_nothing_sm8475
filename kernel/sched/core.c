@@ -1990,8 +1990,8 @@ static int __set_cpus_allowed_ptr_locked(struct task_struct *p,
 	int ret = 0;
 
 	/* Don't allow perf-critical threads to have non-perf affinities */
-	if ((p->flags & PF_PERF_CRITICAL) && new_mask != cpu_perf_mask &&
-	    new_mask != cpu_prime_mask)
+	if ((p->flags & PF_PERF_CRITICAL) && new_mask != cpu_lp_mask &&
+	    new_mask != cpu_perf_mask && new_mask != cpu_prime_mask)
 		return -EINVAL;
 
 	update_rq_clock(rq);
