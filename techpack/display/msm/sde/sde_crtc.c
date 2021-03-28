@@ -27,6 +27,8 @@
 #include <drm/drm_probe_helper.h>
 #include <drm/drm_flip_work.h>
 
+#include <linux/cpu_input_boost.h>
+
 #include "sde_kms.h"
 #include "sde_hw_lm.h"
 #include "sde_hw_ctl.h"
@@ -5363,6 +5365,7 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 			dim_layer_stage = pstates[plane_idx].stage;
 		fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate,
 							     dim_layer_stage);
+		cpu_input_boost_kick_max(500);
 	}
 
 	if (fod_dim_layer == cstate->fod_dim_layer)
