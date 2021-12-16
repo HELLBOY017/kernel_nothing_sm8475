@@ -275,8 +275,6 @@ static int qpnp_tm_get_temp(void *data, int *temp)
 		if (ret < 0)
 			return ret;
 	} else {
-		static int debug_count = 0;
-
 		mutex_lock(&chip->lock);
 		stage = qpnp_tm_get_temp_stage(chip);
 		if (stage < 0) {
@@ -299,14 +297,11 @@ static int qpnp_tm_get_temp(void *data, int *temp)
 		}
 
 		/* MMI_STOPSHIP <debug abnormal QC sensor> : tsens report abnormal value. */
-		pr_info("%s: %s last=%d, temp=%d, ret=%d\n", __func__,
-			chip->tz_dev->type, chip->temp, mili_celsius, ret);
-		if (mili_celsius / 1000 > 100) {
-			WARN(1, "Abnormal thermal sensor value: %d", debug_count);
-			debug_count++;
+		if (mili_celsius / 1000 > 145) {
+			pr_info("%s: %s last=%d, temp=%d, ret=%d\n", __func__,
+				chip->tz_dev->type, chip->temp, mili_celsius, ret);
 		} else {
 			chip->temp = mili_celsius;
-			debug_count = 0;
 		}
 	}
 
