@@ -13,6 +13,7 @@
 #include <misc/isl97900_led.h>
 
 #include "dsi_panel.h"
+#include "dsi_display.h"
 #include "dsi_ctrl_hw.h"
 #include "dsi_parser.h"
 #include "sde_dbg.h"
@@ -3683,6 +3684,31 @@ int nt_is_panel_detected(void)
 	return rc;
 }
 
+
+static struct attribute *panel_attrs[] = {
+	NULL,
+};
+
+static struct attribute_group panel_attrs_group = {
+	.attrs = panel_attrs,
+};
+
+static int dsi_panel_sysfs_init(struct dsi_panel *panel)
+{
+	int rc = 0;
+
+	rc = sysfs_create_group(&panel->parent->kobj, &panel_attrs_group);
+	if (rc)
+		DSI_ERR("failed to create panel sysfs attributes\n");
+
+	return rc;
+}
+
+static void dsi_panel_sysfs_deinit(struct dsi_panel *panel)
+{
+	sysfs_remove_group(&panel->parent->kobj, &panel_attrs_group);
+}
+
 struct dsi_panel *dsi_panel_get(struct device *parent,
 				struct device_node *of_node,
 				struct device_node *parser_node,
@@ -3826,6 +3852,10 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 
 	drm_panel_add(&panel->drm_panel);
 
+	rc = dsi_panel_sysfs_init(panel);
+	if (rc)
+		goto error;
+
 	mutex_init(&panel->panel_lock);
 
 	return panel;
@@ -3836,6 +3866,8 @@ error:
 
 void dsi_panel_put(struct dsi_panel *panel)
 {
+	dsi_panel_sysfs_deinit(panel);
+
 	drm_panel_remove(&panel->drm_panel);
 
 	/* free resources allocated for ESD check */
