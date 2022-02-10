@@ -334,6 +334,7 @@ struct dsi_panel {
 	struct brightness_alpha_pair *fod_dim_lut;
 	unsigned int fod_dim_lut_len;
 	u8 fod_dim_alpha;
+	bool fod_ui;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
@@ -472,5 +473,8 @@ void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set);
 void dsi_panel_dealloc_cmd_packets(struct dsi_panel_cmd_set *set);
 
 int nt_display_parse_switch_cmds(struct dsi_panel *panel);
+
+bool dsi_panel_get_fod_ui(struct dsi_panel *panel);
+void dsi_panel_set_fod_ui(struct dsi_panel *panel, bool status);
 
 #endif /* _DSI_PANEL_H_ */
