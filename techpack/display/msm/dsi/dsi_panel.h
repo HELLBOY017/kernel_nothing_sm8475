@@ -332,6 +332,8 @@ struct dsi_panel {
 	struct dsi_display_refresh_rate_cmd_set nt_cmd_sets[DSI_CMD_SFM_MAX];
 	struct brightness_alpha_pair *fod_dim_lut;
 	unsigned int fod_dim_lut_len;
+	u8 fod_dim_alpha;
+	bool fod_hbm_enabled;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
