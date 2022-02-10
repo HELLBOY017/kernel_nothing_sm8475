@@ -507,6 +507,7 @@ struct sde_crtc_state {
 	uint32_t num_dim_layers;
 	uint32_t cwb_enc_mask;
 	struct sde_hw_dim_layer dim_layer[SDE_MAX_DIM_LAYERS];
+	struct sde_hw_dim_layer *fod_dim_layer;
 	uint32_t num_ds;
 	uint32_t num_ds_enabled;
 	struct sde_hw_ds_cfg ds_cfg[SDE_MAX_DS_COUNT];
