@@ -562,6 +562,11 @@ struct sde_drm_roi_v1 {
 #define UBWC_STATS_MAX_ROI		0x3
 
 /**
+ * sde fod dim layer
+ */
+#define FOD_PRESSED_LAYER_ZORDER	0x20000000u
+
+/**
  * struct sde_drm_ubwc_stats_roi - region of interest for ubwc stats
  * y_coord0: first y offset from top of display
  * y_coord1: second y offset from top of display
