@@ -38,11 +38,7 @@
 #include <wlan_cp_stats_utils_api.h>
 #include <wlan_cp_stats_ext_type.h>
 #include <wlan_cp_stats_public_structs.h>
-#ifdef WLAN_FEATURE_MIB_STATS
-#include <wlan_cp_stats_mc_defs.h>
-#else
-#include <wlan_cp_stats_ic_defs.h>
-#endif
+#include <wlan_twt_public_structs.h>
 
 /* noise floor */
 #define CP_STATS_TGT_NOISE_FLOOR_DBM (-96)
@@ -118,7 +114,7 @@ struct peer_cp_stats {
 	void *peer_comp_priv_obj[WLAN_CP_STATS_MAX_COMPONENTS];
 	qdf_spinlock_t peer_cp_stats_lock;
 #if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_CONV_SUPPORTED)
-	struct twt_session_stats_info twt_param[TWT_PEER_MAX_SESSIONS];
+	struct twt_session_stats_info twt_param[WLAN_MAX_TWT_SESSIONS_PER_PEER];
 #endif
 };
 
