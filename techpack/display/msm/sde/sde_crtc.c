@@ -5342,17 +5342,33 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 			  struct plane_state *pstates, int cnt)
 {
 	struct sde_hw_dim_layer *fod_dim_layer;
+	struct dsi_display *display;
+	struct dsi_panel *panel;
 	uint32_t dim_layer_stage;
+	bool force_fod_ui;
 	int plane_idx;
+
+	display = get_main_display();
+	if (!display || !display->panel) {
+		SDE_ERROR("Invalid primary display\n");
+		return;
+	}
+
+	panel = display->panel;
+
+	force_fod_ui = dsi_panel_get_force_fod_ui(panel);
 
 	for (plane_idx = 0; plane_idx < cnt; plane_idx++)
 		if (sde_plane_is_fod_layer(pstates[plane_idx].drm_pstate))
 			break;
 
-	if (plane_idx == cnt) {
+	if (plane_idx == cnt && !force_fod_ui) {
 		fod_dim_layer = NULL;
 	} else {
-		dim_layer_stage = pstates[plane_idx].stage;
+		if (force_fod_ui)
+			dim_layer_stage = pstates[cnt - 1].stage + 1;
+		else
+			dim_layer_stage = pstates[plane_idx].stage;
 		fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate,
 							     dim_layer_stage);
 	}
