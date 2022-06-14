@@ -5800,6 +5800,7 @@ static int dwc3_msm_host_ss_powerdown(struct dwc3_msm *mdwc)
 	usb_phy_notify_disconnect(mdwc->ss_phy,
 					USB_SPEED_SUPER);
 	usb_phy_set_suspend(mdwc->ss_phy, 1);
+	dev_dbg(mdwc->dev, "%s: Host SS Powerdown\n", __func__);
 
 	return 0;
 }
@@ -5821,6 +5822,7 @@ static int dwc3_msm_host_ss_powerup(struct dwc3_msm *mdwc)
 	reg = dwc3_msm_read_reg(mdwc->base, EXTRA_INP_REG);
 	reg &= ~EXTRA_INP_SS_DISABLE;
 	dwc3_msm_write_reg(mdwc->base, EXTRA_INP_REG, reg);
+	dev_dbg(mdwc->dev, "%s: Host SS Powerup\n", __func__);
 
 	return 0;
 }
@@ -5877,7 +5879,7 @@ static int dwc3_msm_host_notifier(struct notifier_block *nb,
 				mdwc->core_clk_rate);
 			mdwc->max_rh_port_speed = USB_SPEED_UNKNOWN;
 			dwc3_msm_update_bus_bw(mdwc, mdwc->default_bus_vote);
-			dwc3_msm_host_ss_powerup(mdwc);
+			dwc3_msm_host_ss_powerdown(mdwc);
 
 			if (udev->parent->speed >= USB_SPEED_SUPER)
 				usb_redriver_host_powercycle(mdwc->redriver);
@@ -6084,7 +6086,7 @@ static int dwc3_otg_start_host(struct dwc3_msm *mdwc, int on)
 		mdwc->in_host_mode = false;
 
 		if (!mdwc->ss_release_called) {
-			dwc3_msm_host_ss_powerup(mdwc);
+			dwc3_msm_host_ss_powerdown(mdwc);
 			dwc3_msm_clear_dp_only_params(mdwc);
 		}
 
