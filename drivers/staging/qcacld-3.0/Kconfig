@@ -17,4 +17,16 @@ config QCA_CLD_WLAN_PROFILE
 
 	  Profiles are located at drivers/staging/qcacld-3.0/configs.
 
+config QCA_CLD_WLAN_DYNAMIC_SINGLE_CHIP_NAME
+	string "Dynamic single chip name for the Qualcomm Atheros CLD WLAN module"
+	default ""
+	help
+	  Specify the chip name to be used by the Qualcomm Atheros CLD WLAN
+	  module.
+
+	  This is used to load the userspace WCNSS_qcom_cfg.ini from a
+	  certain subfolder.
+	  It will load from
+	  /vendor/firmware/wlan/qca_cld/<QCA_CLD_WLAN_DYNAMIC_SINGLE_CHIP_NAME>
+
 endif # QCA_CLD_WLAN

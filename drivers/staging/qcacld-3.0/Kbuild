@@ -4386,6 +4386,8 @@ endif
 # driver attached. Moreover, as the first priority, host driver will only
 # append DYNAMIC_SINGLE_CHIP to the path of firmware/mac/ini file.
 
+DYNAMIC_SINGLE_CHIP ?= $(CONFIG_QCA_CLD_WLAN_DYNAMIC_SINGLE_CHIP_NAME)
+
 ifneq ($(DYNAMIC_SINGLE_CHIP),)
 ccflags-y += -DDYNAMIC_SINGLE_CHIP=\"$(DYNAMIC_SINGLE_CHIP)\"
 ifneq ($(MULTI_IF_NAME),)
