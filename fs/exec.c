@@ -93,6 +93,7 @@ bool is_zygote_pid(pid_t pid)
 	return atomic_read(&zygote32_pid) == pid ||
 		atomic_read(&zygote64_pid) == pid;
 }
+#define HWCOMPOSER_BIN_PREFIX "/vendor/bin/hw/vendor.qti.hardware.display.composer-service"
 
 void __register_binfmt(struct linux_binfmt * fmt, int insert)
 {
@@ -1964,6 +1965,12 @@ static int do_execveat_common(int fd, struct filename *filename,
 			atomic_set(&zygote32_pid, current->pid);
 		else if (unlikely(!strcmp(filename->name, ZYGOTE64_BIN)))
 			atomic_set(&zygote64_pid, current->pid);
+                else if (unlikely(!strncmp(filename->name,
+					   HWCOMPOSER_BIN_PREFIX,
+					   strlen(HWCOMPOSER_BIN_PREFIX)))) {
+			current->flags |= PC_PERF_AFFINE;
+			set_cpus_allowed_ptr(current, cpu_perf_mask);
+		}
 	}
 
 	retval = bprm_execve(bprm, fd, filename, flags);
