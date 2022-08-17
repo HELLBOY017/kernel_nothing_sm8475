@@ -309,12 +309,15 @@ static int setup_load_info(struct load_info *info, int flags)
 	/* This is temporary: point mod into copy of data. */
 	info->mod = (void *)info->hdr + info->sechdrs[info->index.mod].sh_offset;
 
+#ifdef INCLUDE_VERMAGIC
+	// struct module is visible only for kernel/module.c
 	/*
 	 * If we didn't load the .modinfo 'name' field earlier, fall back to
 	 * on-disk struct mod 'name' field.
 	 */
 	if (!info->name)
 		info->name = info->mod->name;
+#endif
 
 	if (flags & MODULE_INIT_IGNORE_MODVERSIONS)
 		info->index.vers = 0; /* Pretend no __versions section! */
