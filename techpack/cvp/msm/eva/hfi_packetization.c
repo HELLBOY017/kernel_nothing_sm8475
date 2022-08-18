@@ -58,9 +58,9 @@ int cvp_create_pkt_cmd_sys_debug_config(
 	hfi = (struct cvp_hfi_debug_config *) &pkt->rg_property_data[1];
 	hfi->debug_config = mode;
 	hfi->debug_mode = HFI_DEBUG_MODE_QUEUE;
-	if (msm_cvp_fw_debug_mode
+	if (cvp_msm_cvp_fw_debug_mode
 			<= (HFI_DEBUG_MODE_QUEUE | HFI_DEBUG_MODE_QDSS))
-		hfi->debug_mode = msm_cvp_fw_debug_mode;
+		hfi->debug_mode = cvp_msm_cvp_fw_debug_mode;
 	return 0;
 }
 
@@ -357,7 +357,7 @@ int cvp_create_pkt_cmd_session_send(
 	if (ptr->session_id != hash32_ptr(session))
 		goto error_hfi_packet;
 
-	def_idx = get_pkt_index(ptr);
+	def_idx = cvp_get_pkt_index(ptr);
 	if (def_idx < 0) {
 		memcpy(out_pkt, in_pkt, ptr->size);
 		return 0;

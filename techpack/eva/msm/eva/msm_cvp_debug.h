@@ -54,18 +54,18 @@ enum msm_cvp_debugfs_event {
 
 extern int msm_cvp_debug;
 extern int msm_cvp_debug_out;
-extern int msm_cvp_fw_debug;
-extern int msm_cvp_fw_debug_mode;
-extern int msm_cvp_fw_low_power_mode;
-extern bool msm_cvp_fw_coverage;
-extern bool msm_cvp_thermal_mitigation_disabled;
-extern bool msm_cvp_cacheop_disabled;
-extern int msm_cvp_clock_voting;
-extern bool msm_cvp_syscache_disable;
-extern bool msm_cvp_dsp_disable;
-extern bool msm_cvp_mmrm_enabled;
-extern bool msm_cvp_dcvs_disable;
-extern int msm_cvp_minidump_enable;
+extern int eva_msm_cvp_fw_debug;
+extern int eva_msm_cvp_fw_debug_mode;
+extern int eva_msm_cvp_fw_low_power_mode;
+extern bool eva_msm_cvp_fw_coverage;
+extern bool eva_msm_cvp_thermal_mitigation_disabled;
+extern bool eva_msm_cvp_cacheop_disabled;
+extern int eva_msm_cvp_clock_voting;
+extern bool eva_msm_cvp_syscache_disable;
+extern bool eva_msm_cvp_dsp_disable;
+extern bool eva_msm_cvp_mmrm_enabled;
+extern bool eva_msm_cvp_dcvs_disable;
+extern int eva_msm_cvp_minidump_enable;
 
 #define dprintk(__level, __fmt, arg...)	\
 	do { \
@@ -85,12 +85,12 @@ extern int msm_cvp_minidump_enable;
 	} while (0)
 
 
-struct dentry *msm_cvp_debugfs_init_drv(void);
-struct dentry *msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
+struct dentry *eva_msm_cvp_debugfs_init_drv(void);
+struct dentry *eva_msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
 		struct dentry *parent);
-struct dentry *msm_cvp_debugfs_init_inst(struct msm_cvp_inst *inst,
+struct dentry *eva_msm_cvp_debugfs_init_inst(struct msm_cvp_inst *inst,
 		struct dentry *parent);
-void msm_cvp_debugfs_deinit_inst(struct msm_cvp_inst *inst);
+void eva_msm_cvp_debugfs_deinit_inst(struct msm_cvp_inst *inst);
 
 static inline char *get_debug_level_str(int level)
 {

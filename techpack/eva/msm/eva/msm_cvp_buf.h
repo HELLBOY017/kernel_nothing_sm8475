@@ -136,82 +136,82 @@ struct msm_cvp_frame {
 	u32 pkt_type;
 };
 
-void print_cvp_buffer(u32 tag, const char *str,
+void eva_print_cvp_buffer(u32 tag, const char *str,
 		struct msm_cvp_inst *inst,
 		struct cvp_internal_buf *cbuf);
-void print_cvp_buffer(u32 tag, const char *str,
+void eva_print_cvp_buffer(u32 tag, const char *str,
 		struct msm_cvp_inst *inst,
 		struct cvp_internal_buf *cbuf);
-void print_client_buffer(u32 tag, const char *str,
+void eva_print_client_buffer(u32 tag, const char *str,
 		struct msm_cvp_inst *inst,
 		struct eva_kmd_buffer *cbuf);
-int print_smem(u32 tag, const char *str,
+int eva_print_smem(u32 tag, const char *str,
 		struct msm_cvp_inst *inst,
 		struct msm_cvp_smem *smem);
 
 /*Kernel DMA buffer and IOMMU mapping functions*/
-int msm_cvp_smem_alloc(size_t size, u32 align, int map_kernel,
+int eva_msm_cvp_smem_alloc(size_t size, u32 align, int map_kernel,
 			void  *res, struct msm_cvp_smem *smem);
-int msm_cvp_smem_free(struct msm_cvp_smem *smem);
-struct context_bank_info *msm_cvp_smem_get_context_bank(
+int eva_msm_cvp_smem_free(struct msm_cvp_smem *smem);
+struct context_bank_info *eva_msm_cvp_smem_get_context_bank(
 				struct msm_cvp_platform_resources *res,
 				unsigned int flags);
-int msm_cvp_map_smem(struct msm_cvp_inst *inst,
+int eva_msm_cvp_map_smem(struct msm_cvp_inst *inst,
 			struct msm_cvp_smem *smem,
 			const char *str);
-int msm_cvp_unmap_smem(struct msm_cvp_inst *inst,
+int eva_msm_cvp_unmap_smem(struct msm_cvp_inst *inst,
 			struct msm_cvp_smem *smem,
 			const char *str);
-struct dma_buf *msm_cvp_smem_get_dma_buf(int fd);
-void msm_cvp_smem_put_dma_buf(void *dma_buf);
-int msm_cvp_smem_cache_operations(struct dma_buf *dbuf,
+struct dma_buf *eva_msm_cvp_smem_get_dma_buf(int fd);
+void eva_msm_cvp_smem_put_dma_buf(void *dma_buf);
+int eva_msm_cvp_smem_cache_operations(struct dma_buf *dbuf,
 				enum smem_cache_ops cache_op,
 				unsigned long offset,
 				unsigned long size);
-int msm_cvp_map_ipcc_regs(u32 *iova);
+int eva_msm_cvp_map_ipcc_regs(u32 *iova);
 
 /* CVP driver internal buffer management functions*/
-struct cvp_internal_buf *cvp_allocate_arp_bufs(struct msm_cvp_inst *inst,
+struct cvp_internal_buf *eva_cvp_allocate_arp_bufs(struct msm_cvp_inst *inst,
 					u32 buffer_size);
-int cvp_release_arp_buffers(struct msm_cvp_inst *inst);
-int msm_cvp_map_buf_dsp(struct msm_cvp_inst *inst,
+int eva_cvp_release_arp_buffers(struct msm_cvp_inst *inst);
+int eva_msm_cvp_map_buf_dsp(struct msm_cvp_inst *inst,
 			struct eva_kmd_buffer *buf);
-int msm_cvp_unmap_buf_dsp(struct msm_cvp_inst *inst,
+int eva_msm_cvp_unmap_buf_dsp(struct msm_cvp_inst *inst,
 			struct eva_kmd_buffer *buf);
-int msm_cvp_map_buf_dsp_new(struct msm_cvp_inst *inst,
+int eva_msm_cvp_map_buf_dsp_new(struct msm_cvp_inst *inst,
 			struct eva_kmd_buffer *buf,
 			int32_t pid,
 			uint32_t *iova);
-int msm_cvp_unmap_buf_dsp_new(struct msm_cvp_inst *inst,
+int eva_msm_cvp_unmap_buf_dsp_new(struct msm_cvp_inst *inst,
 			struct eva_kmd_buffer *buf);
-void msm_cvp_cache_operations(struct msm_cvp_smem *smem,
+void eva_msm_cvp_cache_operations(struct msm_cvp_smem *smem,
 			u32 type, u32 offset, u32 size);
-u32 msm_cvp_map_frame_buf(struct msm_cvp_inst *inst,
+u32 eva_msm_cvp_map_frame_buf(struct msm_cvp_inst *inst,
 			struct cvp_buf_type *buf,
 			struct msm_cvp_frame *frame);
-int msm_cvp_mark_user_persist(struct msm_cvp_inst *inst,
+int eva_msm_cvp_mark_user_persist(struct msm_cvp_inst *inst,
 			struct eva_kmd_hfi_packet *in_pkt,
 			unsigned int offset, unsigned int buf_num);
-int msm_cvp_map_user_persist(struct msm_cvp_inst *inst,
+int eva_msm_cvp_map_user_persist(struct msm_cvp_inst *inst,
 			struct eva_kmd_hfi_packet *in_pkt,
 			unsigned int offset, unsigned int buf_num);
-int msm_cvp_unmap_user_persist(struct msm_cvp_inst *inst,
+int eva_msm_cvp_unmap_user_persist(struct msm_cvp_inst *inst,
 			struct eva_kmd_hfi_packet *in_pkt,
 			unsigned int offset, unsigned int buf_num);
-int msm_cvp_map_frame(struct msm_cvp_inst *inst,
+int eva_msm_cvp_map_frame(struct msm_cvp_inst *inst,
 		struct eva_kmd_hfi_packet *in_pkt,
 		unsigned int offset, unsigned int buf_num);
-void msm_cvp_unmap_frame(struct msm_cvp_inst *inst, u64 ktid);
+void eva_msm_cvp_unmap_frame(struct msm_cvp_inst *inst, u64 ktid);
 int msm_cvp_register_buffer(struct msm_cvp_inst *inst,
 		struct eva_kmd_buffer *buf);
 int msm_cvp_unregister_buffer(struct msm_cvp_inst *inst,
 		struct eva_kmd_buffer *buf);
-int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst);
-void msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst, bool log);
-int cvp_allocate_dsp_bufs(struct msm_cvp_inst *inst,
+int eva_msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst);
+void eva_msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst, bool log);
+int eva_cvp_allocate_dsp_bufs(struct msm_cvp_inst *inst,
 			struct cvp_internal_buf *buf,
 			u32 buffer_size,
 			u32 secure_type);
-int cvp_release_dsp_buffers(struct msm_cvp_inst *inst,
+int eva_cvp_release_dsp_buffers(struct msm_cvp_inst *inst,
 			struct cvp_internal_buf *buf);
 #endif

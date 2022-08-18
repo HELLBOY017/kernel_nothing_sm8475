@@ -234,7 +234,7 @@ struct cvp_hal_cmd_sys_get_property_packet {
 #define call_hfi_op(q, op, args...)			\
 	(((q) && (q)->op) ? ((q)->op(args)) : 0)
 
-struct msm_cvp_hfi_defs {
+struct msm_eva_cvp_hfi_defs {
 	unsigned int size;
 	unsigned int type;
 	bool is_config_pkt;
@@ -276,10 +276,10 @@ struct msm_cvp_fw {
 	int cookie;
 };
 
-int cvp_hfi_process_msg_packet(u32 device_id,
+int eva_cvp_hfi_process_msg_packet(u32 device_id,
 	void *msg_hdr, struct msm_cvp_cb_info *info);
 
-enum cvp_status cvp_hfi_process_sys_init_done_prop_read(
+enum cvp_status eva_cvp_hfi_process_sys_init_done_prop_read(
 	struct cvp_hfi_msg_sys_init_done_packet *pkt,
 	struct cvp_hal_sys_init_done *sys_init_done);
 
@@ -287,20 +287,20 @@ enum cvp_status hfi_process_session_init_done_prop_read(
 	struct cvp_hfi_msg_sys_session_init_done_packet *pkt,
 	struct cvp_hal_session_init_done *session_init_done);
 
-struct cvp_hfi_device *cvp_hfi_initialize(enum msm_cvp_hfi_type hfi_type,
+struct cvp_hfi_device *eva_cvp_hfi_initialize(enum msm_cvp_hfi_type hfi_type,
 		u32 device_id, struct msm_cvp_platform_resources *res,
 		hfi_cmd_response_callback callback);
-void cvp_hfi_deinitialize(enum msm_cvp_hfi_type hfi_type,
+void eva_cvp_hfi_deinitialize(enum msm_cvp_hfi_type hfi_type,
 			struct cvp_hfi_device *hdev);
 
-int get_pkt_index(struct cvp_hal_session_cmd_pkt *hdr);
+int eva_get_pkt_index(struct cvp_hal_session_cmd_pkt *hdr);
 int get_pkt_array_size(void);
-int get_hfi_version(void);
-unsigned int get_msg_size(struct cvp_hfi_msg_session_hdr *hdr);
-unsigned int get_msg_session_id(void *msg);
-unsigned int get_msg_errorcode(void *msg);
-int get_msg_opconfigs(void *msg, unsigned int *session_id,
+int eva_get_hfi_version(void);
+unsigned int eva_get_msg_size(struct cvp_hfi_msg_session_hdr *hdr);
+unsigned int eva_get_msg_session_id(void *msg);
+unsigned int eva_get_msg_errorcode(void *msg);
+int eva_get_msg_opconfigs(void *msg, unsigned int *session_id,
 		unsigned int *error_type, unsigned int *config_id);
-extern const struct msm_cvp_hfi_defs cvp_hfi_defs[];
+extern const struct msm_eva_cvp_hfi_defs eva_cvp_hfi_defs[];
 
 #endif /*__CVP_HFI_API_H__ */

@@ -407,20 +407,20 @@ struct msm_cvp_inst {
 	struct cvp_fence_queue fence_cmd_queue;
 };
 
-extern struct msm_cvp_drv *cvp_driver;
+extern struct msm_cvp_drv *eva_cvp_driver;
 
-void cvp_handle_cmd_response(enum hal_command_response cmd, void *data);
-int msm_cvp_trigger_ssr(struct msm_cvp_core *core,
+void eva_cvp_handle_cmd_response(enum hal_command_response cmd, void *data);
+int eva_msm_cvp_trigger_ssr(struct msm_cvp_core *core,
 	enum hal_ssr_trigger_type type);
-int msm_cvp_noc_error_info(struct msm_cvp_core *core);
-void msm_cvp_comm_handle_thermal_event(void);
+int eva_msm_cvp_noc_error_info(struct msm_cvp_core *core);
+void eva_msm_cvp_comm_handle_thermal_event(void);
 
-void msm_cvp_fw_unload_handler(struct work_struct *work);
-void msm_cvp_ssr_handler(struct work_struct *work);
+void eva_msm_cvp_fw_unload_handler(struct work_struct *work);
+void eva_msm_cvp_ssr_handler(struct work_struct *work);
 /*
  * XXX: normally should be in msm_cvp_core.h, but that's meant for public APIs,
  * whereas this is private
  */
-int msm_cvp_destroy(struct msm_cvp_inst *inst);
-void *cvp_get_drv_data(struct device *dev);
+int eva_msm_cvp_destroy(struct msm_cvp_inst *inst);
+void *eva_cvp_get_drv_data(struct device *dev);
 #endif

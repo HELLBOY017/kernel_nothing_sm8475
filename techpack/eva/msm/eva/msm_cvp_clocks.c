@@ -78,7 +78,7 @@ int msm_cvp_mmrm_notifier_cb(
 	return 0;
 }
 
-int msm_cvp_set_clocks(struct msm_cvp_core *core)
+int eva_msm_cvp_set_clocks(struct msm_cvp_core *core)
 {
 	struct cvp_hfi_device *hdev;
 	int rc;
@@ -94,7 +94,7 @@ int msm_cvp_set_clocks(struct msm_cvp_core *core)
 	return rc;
 }
 
-int msm_cvp_mmrm_register(struct iris_hfi_device *device)
+int eva_msm_cvp_mmrm_register(struct iris_hfi_device *device)
 {
 	int rc = 0;
 	struct clock_info *cl = NULL;
@@ -176,7 +176,7 @@ int msm_cvp_mmrm_deregister(struct iris_hfi_device *device)
 	iris_hfi_for_each_clock(device, cl) {
 		if ((cl->has_scaling) && (__clk_is_enabled(cl->clk))){
 			// set min freq and cur freq to 0;
-			rc = msm_cvp_mmrm_set_value_in_range(device,
+			rc = eva_msm_cvp_mmrm_set_value_in_range(device,
 				0, 0);
 			if (rc) {
 				dprintk(CVP_ERR,
@@ -198,7 +198,7 @@ int msm_cvp_mmrm_deregister(struct iris_hfi_device *device)
 	return rc;
 }
 
-int msm_cvp_mmrm_set_value_in_range(struct iris_hfi_device *device,
+int eva_msm_cvp_mmrm_set_value_in_range(struct iris_hfi_device *device,
 	u32 freq_min, u32 freq_cur)
 {
 	int rc = 0;
@@ -233,7 +233,7 @@ int msm_cvp_mmrm_set_value_in_range(struct iris_hfi_device *device,
 	return rc;
 }
 
-int msm_cvp_set_clocks_impl(struct iris_hfi_device *device, u32 freq)
+int eva_msm_cvp_set_clocks_impl(struct iris_hfi_device *device, u32 freq)
 {
 	struct clock_info *cl;
 	int rc = 0;
@@ -246,8 +246,8 @@ int msm_cvp_set_clocks_impl(struct iris_hfi_device *device, u32 freq)
 	iris_hfi_for_each_clock(device, cl) {
 		if (cl->has_scaling) {/* has_scaling */
 			device->clk_freq = freq;
-			if (msm_cvp_clock_voting)
-				freq = msm_cvp_clock_voting;
+			if (eva_msm_cvp_clock_voting)
+				freq = eva_msm_cvp_clock_voting;
 
 			freq = freq * fsrc2clk;
 			dprintk(CVP_PWR,
@@ -256,7 +256,7 @@ int msm_cvp_set_clocks_impl(struct iris_hfi_device *device, u32 freq)
 
 			if (device->mmrm_cvp != NULL) {
 				/* min freq : 1st element value in the table */
-				rc = msm_cvp_mmrm_set_value_in_range(device,
+				rc = eva_msm_cvp_mmrm_set_value_in_range(device,
 					freq_min, freq);
 				if (rc) {
 					dprintk(CVP_ERR,
@@ -286,7 +286,7 @@ int msm_cvp_set_clocks_impl(struct iris_hfi_device *device, u32 freq)
 	return 0;
 }
 
-int msm_cvp_scale_clocks(struct iris_hfi_device *device)
+int eva_msm_cvp_scale_clocks(struct iris_hfi_device *device)
 {
 	int rc = 0;
 	struct allowed_clock_rates_table *allowed_clks_tbl = NULL;
@@ -298,11 +298,11 @@ int msm_cvp_scale_clocks(struct iris_hfi_device *device)
 		allowed_clks_tbl[0].clock_rate;
 
 	dprintk(CVP_PWR, "%s: scale clock rate %d\n", __func__, rate);
-	rc = msm_cvp_set_clocks_impl(device, rate);
+	rc = eva_msm_cvp_set_clocks_impl(device, rate);
 	return rc;
 }
 
-int msm_cvp_prepare_enable_clk(struct iris_hfi_device *device,
+int eva_msm_cvp_prepare_enable_clk(struct iris_hfi_device *device,
 		const char *name)
 {
 	struct clock_info *cl = NULL;
@@ -324,7 +324,7 @@ int msm_cvp_prepare_enable_clk(struct iris_hfi_device *device,
 		if (cl->has_scaling) {
 			if (device->mmrm_cvp != NULL) {
 				// set min freq and cur freq to 0;
-				rc = msm_cvp_mmrm_set_value_in_range(device,
+				rc = eva_msm_cvp_mmrm_set_value_in_range(device,
 						0, 0);
 				if (rc)
 					dprintk(CVP_ERR,
@@ -361,7 +361,7 @@ int msm_cvp_prepare_enable_clk(struct iris_hfi_device *device,
 	return -EINVAL;
 }
 
-int msm_cvp_disable_unprepare_clk(struct iris_hfi_device *device,
+int eva_msm_cvp_disable_unprepare_clk(struct iris_hfi_device *device,
 		const char *name)
 {
 	struct clock_info *cl;
@@ -382,7 +382,7 @@ int msm_cvp_disable_unprepare_clk(struct iris_hfi_device *device,
 		if (cl->has_scaling) {
 			if (device->mmrm_cvp != NULL) {
 				// set min freq and cur freq to 0;
-				rc = msm_cvp_mmrm_set_value_in_range(device,
+				rc = eva_msm_cvp_mmrm_set_value_in_range(device,
 					0, 0);
 				if (rc)
 					dprintk(CVP_ERR,
@@ -397,7 +397,7 @@ int msm_cvp_disable_unprepare_clk(struct iris_hfi_device *device,
 	return -EINVAL;
 }
 
-int msm_cvp_init_clocks(struct iris_hfi_device *device)
+int eva_msm_cvp_init_clocks(struct iris_hfi_device *device)
 {
 	int rc = 0;
 	struct clock_info *cl = NULL;
@@ -429,11 +429,11 @@ int msm_cvp_init_clocks(struct iris_hfi_device *device)
 	return 0;
 
 err_clk_get:
-	msm_cvp_deinit_clocks(device);
+	eva_msm_cvp_deinit_clocks(device);
 	return rc;
 }
 
-void msm_cvp_deinit_clocks(struct iris_hfi_device *device)
+void eva_msm_cvp_deinit_clocks(struct iris_hfi_device *device)
 {
 	struct clock_info *cl;
 

@@ -16,7 +16,7 @@
 #include "cvp_hfi.h"
 #include "msm_cvp_common.h"
 
-extern struct msm_cvp_drv *cvp_driver;
+extern struct msm_cvp_drv *eva_cvp_driver;
 
 static enum cvp_status hfi_map_err_status(u32 hfi_err)
 {
@@ -187,7 +187,7 @@ err_no_prop:
 	return 0;
 }
 
-enum cvp_status cvp_hfi_process_sys_init_done_prop_read(
+enum cvp_status eva_cvp_hfi_process_sys_init_done_prop_read(
 	struct cvp_hfi_msg_sys_init_done_packet *pkt,
 	struct cvp_hal_sys_init_done *sys_init_done)
 {
@@ -313,7 +313,7 @@ static int hfi_process_session_set_buf_done(u32 device_id,
 	struct cvp_hfi_msg_session_hdr *pkt =
 			(struct cvp_hfi_msg_session_hdr *)hdr;
 	struct msm_cvp_cb_cmd_done cmd_done = {0};
-	unsigned int pkt_size = get_msg_size(pkt);
+	unsigned int pkt_size = eva_get_msg_size(pkt);
 
 	if (!pkt || pkt->size < pkt_size) {
 		dprintk(CVP_ERR, "bad packet/packet size %d\n",
@@ -324,8 +324,8 @@ static int hfi_process_session_set_buf_done(u32 device_id,
 			pkt->session_id);
 
 	cmd_done.device_id = device_id;
-	cmd_done.session_id = (void *)(uintptr_t)get_msg_session_id(pkt);
-	cmd_done.status = hfi_map_err_status(get_msg_errorcode(pkt));
+	cmd_done.session_id = (void *)(uintptr_t)eva_get_msg_session_id(pkt);
+	cmd_done.status = hfi_map_err_status(eva_get_msg_errorcode(pkt));
 	cmd_done.size = 0;
 
 	info->response_type = HAL_SESSION_SET_BUFFER_DONE;
@@ -367,7 +367,7 @@ static int hfi_process_session_rel_buf_done(u32 device_id,
 	struct cvp_hfi_msg_session_hdr *pkt =
 			(struct cvp_hfi_msg_session_hdr *)hdr;
 	struct msm_cvp_cb_cmd_done cmd_done = {0};
-	unsigned int pkt_size = get_msg_size(pkt);
+	unsigned int pkt_size = eva_get_msg_size(pkt);
 
 	if (!pkt || pkt->size < pkt_size) {
 		dprintk(CVP_ERR, "bad packet/packet size %d\n",
@@ -378,8 +378,8 @@ static int hfi_process_session_rel_buf_done(u32 device_id,
 			pkt->session_id);
 
 	cmd_done.device_id = device_id;
-	cmd_done.session_id = (void *)(uintptr_t)get_msg_session_id(pkt);
-	cmd_done.status = hfi_map_err_status(get_msg_errorcode(pkt));
+	cmd_done.session_id = (void *)(uintptr_t)eva_get_msg_session_id(pkt);
+	cmd_done.status = hfi_map_err_status(eva_get_msg_errorcode(pkt));
 	cmd_done.size = 0;
 
 	info->response_type = HAL_SESSION_RELEASE_BUFFER_DONE;
@@ -388,7 +388,7 @@ static int hfi_process_session_rel_buf_done(u32 device_id,
 	return 0;
 }
 
-static struct msm_cvp_inst *cvp_get_inst_from_id(struct msm_cvp_core *core,
+static struct msm_cvp_inst *eva_cvp_get_inst_from_id(struct msm_cvp_core *core,
 	unsigned int session_id)
 {
 	struct msm_cvp_inst *inst = NULL;
@@ -442,9 +442,9 @@ static int hfi_process_session_dump_notify(u32 device_id,
 		dprintk(CVP_ERR, "%s: bad_pkt_size %d\n", __func__, pkt->size);
 		return -E2BIG;
 	}
-	session_id = get_msg_session_id(pkt);
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
-	inst = cvp_get_inst_from_id(core, session_id);
+	session_id = eva_get_msg_session_id(pkt);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
+	inst = eva_cvp_get_inst_from_id(core, session_id);
 	if (!inst) {
 		dprintk(CVP_ERR, "%s: invalid session\n", __func__);
 		return -EINVAL;
@@ -463,7 +463,7 @@ static int hfi_process_session_dump_notify(u32 device_id,
 	info->response_type = HAL_SESSION_DUMP_NOTIFY;
 	info->response.cmd = cmd_done;
 
-	cvp_put_inst(inst);
+	eva_cvp_put_inst(inst);
 	return 0;
 }
 
@@ -485,9 +485,9 @@ static int hfi_process_session_cvp_msg(u32 device_id,
 		dprintk(CVP_ERR, "%s: bad_pkt_size %d\n", __func__, pkt->size);
 		return -E2BIG;
 	}
-	session_id = get_msg_session_id(pkt);
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
-	inst = cvp_get_inst_from_id(core, session_id);
+	session_id = eva_get_msg_session_id(pkt);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
+	inst = eva_cvp_get_inst_from_id(core, session_id);
 
 	if (!inst) {
 		dprintk(CVP_ERR, "%s: invalid session\n", __func__);
@@ -499,18 +499,18 @@ static int hfi_process_session_cvp_msg(u32 device_id,
 	else
 		sq = &inst->session_queue;
 
-	sess_msg = kmem_cache_alloc(cvp_driver->msg_cache, GFP_KERNEL);
+	sess_msg = kmem_cache_alloc(eva_cvp_driver->msg_cache, GFP_KERNEL);
 	if (sess_msg == NULL) {
 		dprintk(CVP_ERR, "%s runs out msg cache memory\n", __func__);
 		goto error_no_mem;
 	}
 
-	memcpy(&sess_msg->pkt, pkt, get_msg_size(pkt));
+	memcpy(&sess_msg->pkt, pkt, eva_get_msg_size(pkt));
 
 	dprintk(CVP_HFI,
 		"%s: Received msg %x cmd_done.status=%d sessionid=%x\n",
 		__func__, pkt->packet_type,
-		hfi_map_err_status(get_msg_errorcode(pkt)), session_id);
+		hfi_map_err_status(eva_get_msg_errorcode(pkt)), session_id);
 
 	spin_lock(&sq->lock);
 	if (sq->msg_count >= MAX_NUM_MSGS_PER_SESSION) {
@@ -525,14 +525,14 @@ static int hfi_process_session_cvp_msg(u32 device_id,
 
 	info->response_type = HAL_NO_RESP;
 
-	cvp_put_inst(inst);
+	eva_cvp_put_inst(inst);
 	return 0;
 
 error_handle_msg:
 	spin_unlock(&sq->lock);
-	kmem_cache_free(cvp_driver->msg_cache, sess_msg);
+	kmem_cache_free(eva_cvp_driver->msg_cache, sess_msg);
 error_no_mem:
-	cvp_put_inst(inst);
+	eva_cvp_put_inst(inst);
 	return -ENOMEM;
 }
 
@@ -559,12 +559,12 @@ static void hfi_process_sys_get_prop_image_version(
 	 */
 	for (i = 0; i < version_string_size; i++) {
 		if (str_image_version[i] != '\0')
-			cvp_driver->fw_version[i] = str_image_version[i];
+			eva_cvp_driver->fw_version[i] = str_image_version[i];
 		else
-			cvp_driver->fw_version[i] = ' ';
+			eva_cvp_driver->fw_version[i] = ' ';
 	}
-	cvp_driver->fw_version[i - 1] = '\0';
-	dprintk(CVP_HFI, "F/W version: %s\n", cvp_driver->fw_version);
+	eva_cvp_driver->fw_version[i - 1] = '\0';
+	dprintk(CVP_HFI, "F/W version: %s\n", eva_cvp_driver->fw_version);
 }
 
 static int hfi_process_sys_property_info(u32 device_id,
@@ -602,7 +602,7 @@ static int hfi_process_sys_property_info(u32 device_id,
 
 }
 
-int cvp_hfi_process_msg_packet(u32 device_id, void *hdr,
+int eva_cvp_hfi_process_msg_packet(u32 device_id, void *hdr,
 			struct msm_cvp_cb_info *info)
 {
 	typedef int (*pkt_func_def)(u32, void *, struct msm_cvp_cb_info *info);

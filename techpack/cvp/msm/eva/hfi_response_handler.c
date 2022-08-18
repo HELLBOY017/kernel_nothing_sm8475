@@ -316,7 +316,7 @@ static int hfi_process_session_set_buf_done(u32 device_id,
 	struct cvp_hfi_msg_session_hdr *pkt =
 			(struct cvp_hfi_msg_session_hdr *)hdr;
 	struct msm_cvp_cb_cmd_done cmd_done = {0};
-	unsigned int pkt_size = get_msg_size(pkt);
+	unsigned int pkt_size = cvp_get_msg_size(pkt);
 
 	if (!pkt || pkt->size < pkt_size) {
 		dprintk(CVP_ERR, "bad packet/packet size %d\n",
@@ -327,8 +327,8 @@ static int hfi_process_session_set_buf_done(u32 device_id,
 			pkt->session_id);
 
 	cmd_done.device_id = device_id;
-	cmd_done.session_id = (void *)(uintptr_t)get_msg_session_id(pkt);
-	cmd_done.status = hfi_map_err_status(get_msg_errorcode(pkt));
+	cmd_done.session_id = (void *)(uintptr_t)cvp_get_msg_session_id(pkt);
+	cmd_done.status = hfi_map_err_status(cvp_get_msg_errorcode(pkt));
 	cmd_done.size = 0;
 
 	info->response_type = HAL_SESSION_SET_BUFFER_DONE;
@@ -370,7 +370,7 @@ static int hfi_process_session_rel_buf_done(u32 device_id,
 	struct cvp_hfi_msg_session_hdr *pkt =
 			(struct cvp_hfi_msg_session_hdr *)hdr;
 	struct msm_cvp_cb_cmd_done cmd_done = {0};
-	unsigned int pkt_size = get_msg_size(pkt);
+	unsigned int pkt_size = cvp_get_msg_size(pkt);
 
 	if (!pkt || pkt->size < pkt_size) {
 		dprintk(CVP_ERR, "bad packet/packet size %d\n",
@@ -381,8 +381,8 @@ static int hfi_process_session_rel_buf_done(u32 device_id,
 			pkt->session_id);
 
 	cmd_done.device_id = device_id;
-	cmd_done.session_id = (void *)(uintptr_t)get_msg_session_id(pkt);
-	cmd_done.status = hfi_map_err_status(get_msg_errorcode(pkt));
+	cmd_done.session_id = (void *)(uintptr_t)cvp_get_msg_session_id(pkt);
+	cmd_done.status = hfi_map_err_status(cvp_get_msg_errorcode(pkt));
 	cmd_done.size = 0;
 
 	info->response_type = HAL_SESSION_RELEASE_BUFFER_DONE;
@@ -405,13 +405,13 @@ static int hfi_process_session_cvp_operation_config(u32 device_id,
 	if (!pkt) {
 		dprintk(CVP_ERR, "%s: invalid param\n", __func__);
 		return -EINVAL;
-	} else if (pkt->size < get_msg_size(lhdr)) {
+	} else if (pkt->size < cvp_get_msg_size(lhdr)) {
 		dprintk(CVP_ERR,
 				"%s: bad_pkt_size\n", __func__);
 		return -E2BIG;
 	}
 
-	get_msg_opconfigs(pkt, &session_id, &error_type, &conf_id);
+	cvp_get_msg_opconfigs(pkt, &session_id, &error_type, &conf_id);
 	cmd_done.device_id = device_id;
 	cmd_done.session_id = (void *)(uintptr_t)session_id;
 	cmd_done.status = hfi_map_err_status(error_type);
@@ -499,7 +499,7 @@ static int hfi_process_session_cvp_msg(u32 device_id,
 		dprintk(CVP_ERR, "%s: bad_pkt_size %d\n", __func__, pkt->size);
 		return -E2BIG;
 	}
-	session_id = get_msg_session_id(pkt);
+	session_id = cvp_get_msg_session_id(pkt);
 	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
 	inst = cvp_get_inst_from_id(core, session_id);
 
@@ -519,12 +519,12 @@ static int hfi_process_session_cvp_msg(u32 device_id,
 		goto error_no_mem;
 	}
 
-	memcpy(&sess_msg->pkt, pkt, get_msg_size(pkt));
+	memcpy(&sess_msg->pkt, pkt, cvp_get_msg_size(pkt));
 
 	dprintk(CVP_HFI,
 		"%s: Received msg %x cmd_done.status=%d sessionid=%x\n",
 		__func__, pkt->packet_type,
-		hfi_map_err_status(get_msg_errorcode(pkt)), session_id);
+		hfi_map_err_status(cvp_get_msg_errorcode(pkt)), session_id);
 
 	spin_lock(&sq->lock);
 	if (sq->msg_count >= MAX_NUM_MSGS_PER_SESSION) {

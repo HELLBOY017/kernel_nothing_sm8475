@@ -104,7 +104,7 @@ static inline void msm_cvp_free_clock_table(
 	res->clock_set.count = 0;
 }
 
-void msm_cvp_free_platform_resources(
+void cvp_msm_cvp_free_platform_resources(
 			struct msm_cvp_platform_resources *res)
 {
 	msm_cvp_free_clock_table(res);
@@ -936,7 +936,7 @@ remove_cb:
 	return rc;
 }
 
-int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
+int cvp_msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 		struct device *dev, unsigned long iova, int flags, void *token)
 {
 	struct msm_cvp_core *core = token;
@@ -962,7 +962,7 @@ int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 
 	mutex_lock(&core->lock);
 	list_for_each_entry(inst, &core->instances, list) {
-		msm_cvp_print_inst_bufs(inst);
+		cvp_msm_cvp_print_inst_bufs(inst);
 	}
 	core->smmu_fault_handled = true;
 
@@ -1045,7 +1045,7 @@ static int msm_cvp_populate_context_bank(struct device *dev,
 	}
 
 	iommu_set_fault_handler(cb->domain,
-		msm_cvp_smmu_fault_handler, (void *)core);
+		cvp_msm_cvp_smmu_fault_handler, (void *)core);
 
 	return 0;
 

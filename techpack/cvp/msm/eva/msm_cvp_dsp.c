@@ -11,7 +11,7 @@
 #include "msm_cvp_internal.h"
 #include "cvp_dump.h"
 
-struct cvp_dsp_apps gfa_cv;
+struct cvp_dsp_apps cvp_gfa_cv;
 static int hlosVM[HLOS_VM_NUM] = {VMID_HLOS};
 static int dspVM[DSP_VM_NUM] = {VMID_HLOS, VMID_CDSP_Q6};
 static int dspVMperm[DSP_VM_NUM] = { PERM_READ | PERM_WRITE | PERM_EXEC,
@@ -23,7 +23,7 @@ static int cvp_reinit_dsp(void);
 static int cvp_dsp_send_cmd(struct cvp_dsp_cmd_msg *cmd, uint32_t len)
 {
 	int rc = 0;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 
 	dprintk(CVP_DSP, "%s: cmd = %d\n", __func__, cmd->type);
 
@@ -47,7 +47,7 @@ static int cvp_dsp_send_cmd_sync(struct cvp_dsp_cmd_msg *cmd,
 		uint32_t len, struct cvp_dsp_rsp_msg *rsp)
 {
 	int rc = 0;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 
 	dprintk(CVP_DSP, "%s: cmd = %d\n", __func__, cmd->type);
 
@@ -110,7 +110,7 @@ exit:
 static int cvp_hyp_assign_to_dsp(uint64_t addr, uint32_t size)
 {
 	int rc = 0;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 
 	if (!me->hyp_assigned) {
 		rc = hyp_assign_phys(addr, size, hlosVM, HLOS_VM_NUM, dspVM,
@@ -130,7 +130,7 @@ static int cvp_hyp_assign_to_dsp(uint64_t addr, uint32_t size)
 static int cvp_hyp_assign_from_dsp(void)
 {
 	int rc = 0;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 
 	if (me->hyp_assigned) {
 		rc = hyp_assign_phys(me->addr, me->size, dspVM, DSP_VM_NUM,
@@ -149,7 +149,7 @@ static int cvp_hyp_assign_from_dsp(void)
 
 static int cvp_dsp_rpmsg_probe(struct rpmsg_device *rpdev)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	const char *edge_name = NULL;
 	int ret = 0;
 
@@ -178,7 +178,7 @@ static int cvp_dsp_rpmsg_probe(struct rpmsg_device *rpdev)
 
 static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 
 	dprintk(CVP_WARN, "%s: CDSP SSR triggered\n", __func__);
 
@@ -196,7 +196,7 @@ static int cvp_dsp_rpmsg_callback(struct rpmsg_device *rpdev,
 	void *data, int len, void *priv, u32 addr)
 {
 	struct cvp_dsp_rsp_msg *rsp = (struct cvp_dsp_rsp_msg *)data;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 
 	dprintk(CVP_DSP, "%s: type = 0x%x ret = 0x%x len = 0x%x\n",
 		__func__, rsp->type, rsp->ret, len);
@@ -240,7 +240,7 @@ int cvp_dsp_suspend(uint32_t session_flag)
 {
 	int rc = 0;
 	struct cvp_dsp_cmd_msg cmd;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp;
 	bool retried = false;
 
@@ -296,7 +296,7 @@ int cvp_dsp_resume(uint32_t session_flag)
 {
 	int rc = 0;
 	struct cvp_dsp_cmd_msg cmd;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp;
 
 	cmd.type = CPU2DSP_RESUME;
@@ -325,7 +325,7 @@ exit:
 
 int cvp_dsp_shutdown(uint32_t session_flag)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	int rc = 0;
 	struct cvp_dsp_cmd_msg cmd;
 	struct cvp_dsp_rsp_msg rsp;
@@ -360,7 +360,7 @@ int cvp_dsp_register_buffer(uint32_t session_id, uint32_t buff_fd,
 {
 	struct cvp_dsp_cmd_msg cmd;
 	int rc;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp;
 	bool retried = false;
 
@@ -430,7 +430,7 @@ int cvp_dsp_deregister_buffer(uint32_t session_id, uint32_t buff_fd,
 {
 	struct cvp_dsp_cmd_msg cmd;
 	int rc;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp;
 	bool retried = false;
 
@@ -576,7 +576,7 @@ static int __reinit_dsp(void)
 	uint32_t flag = 0;
 	uint64_t addr;
 	uint32_t size;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp;
 	struct msm_cvp_core *core;
 	struct iris_hfi_device *device;
@@ -640,7 +640,7 @@ exit:
 static int cvp_reinit_dsp(void)
 {
 	int rc;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 
 	rc = __reinit_dsp();
 	if (rc)	{
@@ -656,7 +656,7 @@ void cvp_dsp_send_hfi_queue(void)
 {
 	struct msm_cvp_core *core;
 	struct iris_hfi_device *device;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp = {0};
 	uint64_t addr;
 	uint32_t size;
@@ -754,7 +754,7 @@ exit:
 static int cvp_dsp_thread(void *data)
 {
 	int rc = 0, old_state;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	struct cvp_dsp_cmd_msg cmd;
 	struct cvp_hfi_device *hdev;
 	struct msm_cvp_core *core;
@@ -848,13 +848,13 @@ exit:
 int cvp_dsp_device_init(void)
 {
     
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	char tname[16];
 	int rc;
 	int i;
 
-	add_va_node_to_list(CVP_DBG_DUMP, &gfa_cv, sizeof(struct cvp_dsp_apps),
-        "cvp_dsp_apps-gfa_cv", false);
+	cvp_add_va_node_to_list(CVP_DBG_DUMP, &cvp_gfa_cv, sizeof(struct cvp_dsp_apps),
+        "cvp_dsp_apps-cvp_gfa_cv", false);
 	mutex_init(&me->lock);
 	me->state = DSP_INVALID;
 	me->hyp_assigned = false;
@@ -892,7 +892,7 @@ register_bail:
 
 void cvp_dsp_device_exit(void)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &cvp_gfa_cv;
 	int i;
 
 	mutex_lock(&me->lock);

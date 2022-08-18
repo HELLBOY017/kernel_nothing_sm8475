@@ -69,7 +69,7 @@ static int msm_dma_get_device_address(struct dma_buf *dbuf, u32 align,
 	}
 
 	if (is_iommu_present(res)) {
-		cb = msm_cvp_smem_get_context_bank(res, flags);
+		cb = eva_msm_cvp_smem_get_context_bank(res, flags);
 		if (!cb) {
 			dprintk(CVP_ERR,
 				"%s: Failed to get context bank device\n",
@@ -173,7 +173,7 @@ static int msm_dma_put_device_address(u32 flags,
 	return rc;
 }
 
-struct dma_buf *msm_cvp_smem_get_dma_buf(int fd)
+struct dma_buf *eva_msm_cvp_smem_get_dma_buf(int fd)
 {
 	struct dma_buf *dma_buf;
 
@@ -187,7 +187,7 @@ struct dma_buf *msm_cvp_smem_get_dma_buf(int fd)
 	return dma_buf;
 }
 
-void msm_cvp_smem_put_dma_buf(void *dma_buf)
+void eva_msm_cvp_smem_put_dma_buf(void *dma_buf)
 {
 	if (!dma_buf) {
 		dprintk(CVP_ERR, "%s: NULL dma_buf\n", __func__);
@@ -197,7 +197,7 @@ void msm_cvp_smem_put_dma_buf(void *dma_buf)
 	dma_heap_buffer_free((struct dma_buf *)dma_buf);
 }
 
-int msm_cvp_map_smem(struct msm_cvp_inst *inst,
+int eva_msm_cvp_map_smem(struct msm_cvp_inst *inst,
 			struct msm_cvp_smem *smem,
 			const char *str)
 {
@@ -251,7 +251,7 @@ int msm_cvp_map_smem(struct msm_cvp_inst *inst,
 	smem->size = dma_buf->size;
 	smem->device_addr = (u32)iova;
 
-	print_smem(CVP_MEM, str, inst, smem);
+	eva_print_smem(CVP_MEM, str, inst, smem);
 	goto success;
 exit:
 	smem->device_addr = 0x0;
@@ -261,7 +261,7 @@ success:
 	return rc;
 }
 
-int msm_cvp_unmap_smem(struct msm_cvp_inst *inst,
+int eva_msm_cvp_unmap_smem(struct msm_cvp_inst *inst,
 		struct msm_cvp_smem *smem,
 		const char *str)
 {
@@ -273,7 +273,7 @@ int msm_cvp_unmap_smem(struct msm_cvp_inst *inst,
 		goto exit;
 	}
 
-	print_smem(CVP_MEM, str, inst, smem);
+	eva_print_smem(CVP_MEM, str, inst, smem);
 	rc = msm_dma_put_device_address(smem->flags, &smem->mapping_info);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to put device address: %d\n", rc);
@@ -343,8 +343,8 @@ static int alloc_dma_mem(size_t size, u32 align, int map_kernel,
 		goto fail_device_address;
 	}
 
-	if (!gfa_cv.dmabuf_f_op)
-		gfa_cv.dmabuf_f_op = (const struct file_operations *)dbuf->file->f_op;
+	if (!eva_gfa_cv.dmabuf_f_op)
+		eva_gfa_cv.dmabuf_f_op = (const struct file_operations *)dbuf->file->f_op;
 
 	mem->size = size;
 	mem->dma_buf = dbuf;
@@ -415,7 +415,7 @@ static int free_dma_mem(struct msm_cvp_smem *mem)
 	return 0;
 }
 
-int msm_cvp_smem_alloc(size_t size, u32 align, int map_kernel,
+int eva_msm_cvp_smem_alloc(size_t size, u32 align, int map_kernel,
 		void *res, struct msm_cvp_smem *smem)
 {
 	int rc = 0;
@@ -432,7 +432,7 @@ int msm_cvp_smem_alloc(size_t size, u32 align, int map_kernel,
 	return rc;
 }
 
-int msm_cvp_smem_free(struct msm_cvp_smem *smem)
+int eva_msm_cvp_smem_free(struct msm_cvp_smem *smem)
 {
 	int rc = 0;
 
@@ -445,7 +445,7 @@ int msm_cvp_smem_free(struct msm_cvp_smem *smem)
 	return rc;
 };
 
-int msm_cvp_smem_cache_operations(struct dma_buf *dbuf,
+int eva_msm_cvp_smem_cache_operations(struct dma_buf *dbuf,
 	enum smem_cache_ops cache_op, unsigned long offset, unsigned long size)
 {
 	int rc = 0;
@@ -483,7 +483,7 @@ int msm_cvp_smem_cache_operations(struct dma_buf *dbuf,
 	return rc;
 }
 
-struct context_bank_info *msm_cvp_smem_get_context_bank(
+struct context_bank_info *eva_msm_cvp_smem_get_context_bank(
 	struct msm_cvp_platform_resources *res,
 	unsigned int flags)
 {
@@ -519,7 +519,7 @@ struct context_bank_info *msm_cvp_smem_get_context_bank(
 	return match;
 }
 
-int msm_cvp_map_ipcc_regs(u32 *iova)
+int eva_msm_cvp_map_ipcc_regs(u32 *iova)
 {
 	struct context_bank_info *cb;
 	struct msm_cvp_core *core;
@@ -528,7 +528,7 @@ int msm_cvp_map_ipcc_regs(u32 *iova)
 	phys_addr_t paddr;
 	u32 size;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core) {
 		hfi_ops = core->device;
 		if (hfi_ops)
@@ -544,7 +544,7 @@ int msm_cvp_map_ipcc_regs(u32 *iova)
 	if (!paddr || !size)
 		return -EINVAL;
 
-	cb = msm_cvp_smem_get_context_bank(dev->res, 0);
+	cb = eva_msm_cvp_smem_get_context_bank(dev->res, 0);
 	if (!cb) {
 		dprintk(CVP_ERR, "%s: fail to get context bank\n", __func__);
 		return -EINVAL;

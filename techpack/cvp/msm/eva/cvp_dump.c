@@ -67,18 +67,18 @@ static struct notifier_block eva_hfiq_list_notif_blk = {
 		.priority = INT_MAX,
 };
 
-struct list_head *dump_array[CVP_MAX_DUMP] = {
+struct list_head *cvp_dump_array[CVP_MAX_DUMP] = {
 	[CVP_QUEUE_DUMP] = &head_node_hfi_queue,
 	[CVP_DBG_DUMP] = &head_node_dbg_struct,
 	[CVP_STATIC_DUMP] = &head_node_static_dump,
 };
 
-int md_eva_static_dump_register(const char *name, u64 virt, u64 phys, u64 size)
+int cvp_md_eva_static_dump_register(const char *name, u64 virt, u64 phys, u64 size)
 {
 	struct list_head *head_node;
 	struct eva_static_md *temp_node = NULL;
 
-	head_node = dump_array[CVP_STATIC_DUMP];
+	head_node = cvp_dump_array[CVP_STATIC_DUMP];
 
 	/*Creating Node*/
 	temp_node = kzalloc(sizeof(struct eva_static_md), GFP_KERNEL);
@@ -115,7 +115,7 @@ int md_eva_static_dump_register(const char *name, u64 virt, u64 phys, u64 size)
 	}
 }
 
-void md_eva_static_dump_unregister(void)
+void cvp_md_eva_static_dump_unregister(void)
 {
 	struct eva_static_md *cursor, *temp;
 
@@ -179,7 +179,7 @@ void cvp_free_va_md_list(void)
 		dprintk(CVP_INFO, "debug structure va_md list is empty now!\n");
 }
 
-void add_va_node_to_list(enum cvp_dump_type type, void *buff_va, u32 buff_size,
+void cvp_add_va_node_to_list(enum cvp_dump_type type, void *buff_va, u32 buff_size,
 			const char *region_name, bool copy)
 {
 	struct list_head *head_node;
@@ -188,7 +188,7 @@ void add_va_node_to_list(enum cvp_dump_type type, void *buff_va, u32 buff_size,
 	if (type >= CVP_MAX_DUMP)
 		return;
 
-	head_node = dump_array[type];
+	head_node = cvp_dump_array[type];
 
 	/*Creating Node*/
 	temp_node = kzalloc(sizeof(struct eva_va_md_queue), GFP_KERNEL);
@@ -212,7 +212,7 @@ void add_va_node_to_list(enum cvp_dump_type type, void *buff_va, u32 buff_size,
 			temp_node->va_md_buff_size);
 }
 
-void add_hfi_queue_to_va_md_list(void *device)
+void cvp_add_hfi_queue_to_va_md_list(void *device)
 {
 	struct cvp_iface_q_info *iface_q;
 	struct iris_hfi_device *dev;
@@ -220,29 +220,29 @@ void add_hfi_queue_to_va_md_list(void *device)
 	dev = (struct iris_hfi_device*)device;
 
 	iface_q = &dev->iface_queues[CVP_IFACEQ_CMDQ_IDX];
-	add_va_node_to_list(CVP_QUEUE_DUMP,
+	cvp_add_va_node_to_list(CVP_QUEUE_DUMP,
 				iface_q->q_array.align_virtual_addr,
 				iface_q->q_array.mem_size,
 				"eva_cmdq_cpu", false);
 	iface_q = &dev->iface_queues[CVP_IFACEQ_MSGQ_IDX];
-	add_va_node_to_list(CVP_QUEUE_DUMP,
+	cvp_add_va_node_to_list(CVP_QUEUE_DUMP,
 				iface_q->q_array.align_virtual_addr,
 				iface_q->q_array.mem_size,
 				"eva_msgq_cpu", false);
 
 	iface_q = &dev->dsp_iface_queues[CVP_IFACEQ_CMDQ_IDX];
-	add_va_node_to_list(CVP_QUEUE_DUMP,
+	cvp_add_va_node_to_list(CVP_QUEUE_DUMP,
 				iface_q->q_array.align_virtual_addr,
 				iface_q->q_array.mem_size,
 				"eva_cmdq_dsp", false);
 	iface_q = &dev->dsp_iface_queues[CVP_IFACEQ_MSGQ_IDX];
-	add_va_node_to_list(CVP_QUEUE_DUMP,
+	cvp_add_va_node_to_list(CVP_QUEUE_DUMP,
 				iface_q->q_array.align_virtual_addr,
 				iface_q->q_array.mem_size,
 				"eva_msgq_dsp", false);
 }
 
-void add_queue_header_to_va_md_list(void *device)
+void cvp_add_queue_header_to_va_md_list(void *device)
 {
 	struct cvp_iface_q_info *iface_q;
 	struct iris_hfi_device *dev;
@@ -252,25 +252,25 @@ void add_queue_header_to_va_md_list(void *device)
 
 	iface_q = &dev->iface_queues[CVP_IFACEQ_CMDQ_IDX];
 	queue = (struct cvp_hfi_queue_header *)iface_q->q_hdr;
-	add_va_node_to_list(CVP_DBG_DUMP,
+	cvp_add_va_node_to_list(CVP_DBG_DUMP,
 			queue, sizeof(struct cvp_hfi_queue_header),
 			"cvp_hfi_queue_header-cpucmdQ", false);
 
 	iface_q = &dev->iface_queues[CVP_IFACEQ_MSGQ_IDX];
 	queue = (struct cvp_hfi_queue_header *)iface_q->q_hdr;
-	add_va_node_to_list(CVP_DBG_DUMP,
+	cvp_add_va_node_to_list(CVP_DBG_DUMP,
 			queue, sizeof(struct cvp_hfi_queue_header),
 			"cvp_hfi_queue_header-cpumsgQ", false);
 
 	iface_q = &dev->dsp_iface_queues[CVP_IFACEQ_CMDQ_IDX];
 	queue = (struct cvp_hfi_queue_header *)iface_q->q_hdr;
-	add_va_node_to_list(CVP_DBG_DUMP,
+	cvp_add_va_node_to_list(CVP_DBG_DUMP,
 			queue, sizeof(struct cvp_hfi_queue_header),
 			"cvp_hfi_queue_header-dspcmdQ", false);
 
 	iface_q = &dev->dsp_iface_queues[CVP_IFACEQ_MSGQ_IDX];
 	queue = (struct cvp_hfi_queue_header *)iface_q->q_hdr;
-	add_va_node_to_list(CVP_DBG_DUMP,
+	cvp_add_va_node_to_list(CVP_DBG_DUMP,
 			queue, sizeof(struct cvp_hfi_queue_header),
 			"cvp_hfi_queue_header-dspmsgQ", false);
 }
@@ -301,7 +301,7 @@ static int eva_hfiq_list_notif_handler(struct notifier_block *this,
 		strlcpy(entry.owner, cursor->region_name, sizeof(entry.owner));
 		entry.cb = NULL;
 
-		if (msm_cvp_minidump_enable) {
+		if (cvp_msm_cvp_minidump_enable) {
 			rc = qcom_va_md_add_region(&entry);
 			if (rc)
 				dprintk(CVP_ERR, "Add region \"failed\" for \
@@ -342,7 +342,7 @@ static int eva_struct_list_notif_handler(struct notifier_block *this,
 		strlcpy(entry.owner, cursor->region_name, sizeof(entry.owner));
 		entry.cb = NULL;
 
-		if (msm_cvp_minidump_enable) {
+		if (cvp_msm_cvp_minidump_enable) {
 			rc = qcom_va_md_add_region(&entry);
 			if (rc)
 				dprintk(CVP_ERR, "Add region \"failed\" for \

@@ -112,7 +112,7 @@ static inline void msm_cvp_free_clock_table(
 	res->clock_set.count = 0;
 }
 
-void msm_cvp_free_platform_resources(
+void eva_msm_cvp_free_platform_resources(
 			struct msm_cvp_platform_resources *res)
 {
 	msm_cvp_free_clock_table(res);
@@ -631,8 +631,8 @@ static int msm_cvp_load_clock_table(
 		num_clocks);
 	if (rc) {
 		dprintk(CVP_CORE, "Failed to read clock ids: %d\n", rc);
-		msm_cvp_mmrm_enabled = false;
-		dprintk(CVP_CORE, "flag msm_cvp_mmrm_enabled disabled\n");
+		eva_msm_cvp_mmrm_enabled = false;
+		dprintk(CVP_CORE, "flag eva_msm_cvp_mmrm_enabled disabled\n");
 	}
 
 	clock_props = devm_kzalloc(&pdev->dev, num_clocks *
@@ -668,7 +668,7 @@ static int msm_cvp_load_clock_table(
 		of_property_read_string_index(pdev->dev.of_node,
 				"clock-names", c, &vc->name);
 
-		if (msm_cvp_mmrm_enabled == true)
+		if (eva_msm_cvp_mmrm_enabled == true)
 			vc->clk_id = clock_ids[c];
 
 		if (clock_props[c] & CLOCK_PROP_HAS_SCALING) {
@@ -753,7 +753,7 @@ static int find_key_value(struct msm_cvp_platform_data *platform_data,
 	return 0;
 }
 
-int cvp_read_platform_resources_from_drv_data(
+int eva_cvp_read_platform_resources_from_drv_data(
 		struct msm_cvp_core *core)
 {
 	struct msm_cvp_platform_data *platform_data;
@@ -825,7 +825,7 @@ int cvp_read_platform_resources_from_drv_data(
 
 }
 
-int cvp_read_platform_resources_from_dt(
+int eva_cvp_read_platform_resources_from_dt(
 		struct msm_cvp_platform_resources *res)
 {
 	struct platform_device *pdev = res->pdev;
@@ -964,7 +964,7 @@ remove_cb:
 	return rc;
 }
 
-int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
+int eva_msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 		struct device *dev, unsigned long iova, int flags, void *token)
 {
 	struct msm_cvp_core *core = token;
@@ -987,7 +987,7 @@ int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 	mutex_lock(&core->lock);
 	log = (core->log.snapshot_index > 0)? false : true;
 	list_for_each_entry(inst, &core->instances, list) {
-		msm_cvp_print_inst_bufs(inst, log);
+		eva_msm_cvp_print_inst_bufs(inst, log);
 	}
 	hdev = core->device->hfi_device_data;
 	if (hdev)
@@ -1071,7 +1071,7 @@ static int msm_cvp_populate_context_bank(struct device *dev,
 	}
 
 	iommu_set_fault_handler(cb->domain,
-		msm_cvp_smmu_fault_handler, (void *)core);
+		eva_msm_cvp_smmu_fault_handler, (void *)core);
 
 	return 0;
 
@@ -1080,7 +1080,7 @@ err_setup_cb:
 	return rc;
 }
 
-int cvp_read_context_bank_resources_from_dt(struct platform_device *pdev)
+int eva_cvp_read_context_bank_resources_from_dt(struct platform_device *pdev)
 {
 	struct msm_cvp_core *core;
 	int rc = 0;
@@ -1110,7 +1110,7 @@ int cvp_read_context_bank_resources_from_dt(struct platform_device *pdev)
 	return rc;
 }
 
-int cvp_read_bus_resources_from_dt(struct platform_device *pdev)
+int eva_cvp_read_bus_resources_from_dt(struct platform_device *pdev)
 {
 	struct msm_cvp_core *core;
 
@@ -1133,7 +1133,7 @@ int cvp_read_bus_resources_from_dt(struct platform_device *pdev)
 	return msm_cvp_populate_bus(&pdev->dev, &core->resources);
 }
 
-int cvp_read_mem_cdsp_resources_from_dt(struct platform_device *pdev)
+int eva_cvp_read_mem_cdsp_resources_from_dt(struct platform_device *pdev)
 {
 	struct msm_cvp_core *core;
 

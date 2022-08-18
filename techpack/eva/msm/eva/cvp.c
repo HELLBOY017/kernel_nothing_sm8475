@@ -32,7 +32,7 @@
 #define CLASS_NAME              "cvp"
 #define DRIVER_NAME             "cvp"
 
-struct msm_cvp_drv *cvp_driver;
+struct msm_cvp_drv *eva_cvp_driver;
 
 static int cvp_open(struct inode *inode, struct file *filp)
 {
@@ -84,8 +84,8 @@ static const struct file_operations cvp_fops = {
 	.owner = THIS_MODULE,
 	.open = cvp_open,
 	.release = cvp_close,
-	.unlocked_ioctl = cvp_unblocked_ioctl,
-	.compat_ioctl = cvp_compat_ioctl,
+	.unlocked_ioctl = eva_cvp_unblocked_ioctl,
+	.compat_ioctl = eva_cvp_compat_ioctl,
 	.poll = cvp_poll,
 };
 
@@ -104,8 +104,8 @@ static int read_platform_resources(struct msm_cvp_core *core,
 	core->resources.pdev = pdev;
 	if (pdev->dev.of_node) {
 		/* Target supports DT, parse from it */
-		rc = cvp_read_platform_resources_from_drv_data(core);
-		rc = cvp_read_platform_resources_from_dt(&core->resources);
+		rc = eva_cvp_read_platform_resources_from_drv_data(core);
+		rc = eva_cvp_read_platform_resources_from_dt(&core->resources);
 	} else {
 		dprintk(CVP_ERR, "pdev node is NULL\n");
 		rc = -EINVAL;
@@ -147,8 +147,8 @@ static int msm_cvp_initialize_core(struct platform_device *pdev,
 		init_completion(&core->completions[i]);
 	}
 
-	INIT_DELAYED_WORK(&core->fw_unload_work, msm_cvp_fw_unload_handler);
-	INIT_WORK(&core->ssr_work, msm_cvp_ssr_handler);
+	INIT_DELAYED_WORK(&core->fw_unload_work, eva_msm_cvp_fw_unload_handler);
+	INIT_WORK(&core->ssr_work, eva_msm_cvp_ssr_handler);
 	init_cycle_info(&core->dyn_clk);
 	core->ssr_count = 0;
 
@@ -186,7 +186,7 @@ static ssize_t pwr_collapse_delay_store(struct device *dev,
 	else if (!val)
 		return -EINVAL;
 
-	core = get_cvp_core(MSM_CORE_CVP);
+	core = eva_get_cvp_core(MSM_CORE_CVP);
 	if (!core)
 		return -EINVAL;
 	core->resources.msm_cvp_pwr_collapse_delay = val;
@@ -199,7 +199,7 @@ static ssize_t pwr_collapse_delay_show(struct device *dev,
 {
 	struct msm_cvp_core *core = NULL;
 
-	core = get_cvp_core(MSM_CORE_CVP);
+	core = eva_get_cvp_core(MSM_CORE_CVP);
 	if (!core)
 		return -EINVAL;
 
@@ -213,7 +213,7 @@ static ssize_t thermal_level_show(struct device *dev,
 		struct device_attribute *attr,
 		char *buf)
 {
-	return snprintf(buf, PAGE_SIZE, "%d\n", cvp_driver->thermal_level);
+	return snprintf(buf, PAGE_SIZE, "%d\n", eva_cvp_driver->thermal_level);
 }
 
 static ssize_t thermal_level_store(struct device *dev,
@@ -229,13 +229,13 @@ static ssize_t thermal_level_store(struct device *dev,
 		return -EINVAL;
 	}
 	dprintk(CVP_PWR, "Thermal level old %d new %d\n",
-			cvp_driver->thermal_level, val);
+			eva_cvp_driver->thermal_level, val);
 
-	if (val == cvp_driver->thermal_level)
+	if (val == eva_cvp_driver->thermal_level)
 		return count;
-	cvp_driver->thermal_level = val;
+	eva_cvp_driver->thermal_level = val;
 
-	msm_cvp_comm_handle_thermal_event();
+	eva_msm_cvp_comm_handle_thermal_event();
 	return count;
 }
 
@@ -245,7 +245,7 @@ static ssize_t sku_version_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	return scnprintf(buf, PAGE_SIZE, "%d",
-			cvp_driver->sku_version);
+			eva_cvp_driver->sku_version);
 }
 
 static DEVICE_ATTR_RO(sku_version);
@@ -288,7 +288,7 @@ static ssize_t boot_store(struct device *dev,
 			"Failed to create eva instance\n");
 			return -ENOMEM;
 		}
-		rc = msm_cvp_session_create(inst);
+		rc = eva_msm_cvp_session_create(inst);
 		if (rc)
 			dprintk(CVP_ERR, "Failed to create eva session\n");
 
@@ -331,7 +331,7 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 	int rc = 0;
 	struct msm_cvp_core *core;
 
-	if (!cvp_driver) {
+	if (!eva_cvp_driver) {
 		dprintk(CVP_ERR, "Invalid cvp driver\n");
 		return -EINVAL;
 	}
@@ -340,7 +340,7 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 	if (!core)
 		return -ENOMEM;
 
-	core->platform_data = cvp_get_drv_data(&pdev->dev);
+	core->platform_data = eva_cvp_get_drv_data(&pdev->dev);
 	dev_set_drvdata(&pdev->dev, core);
 	rc = msm_cvp_initialize_core(pdev, core);
 	if (rc) {
@@ -385,15 +385,15 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 	}
 
 	/* finish setting up the 'core' */
-	mutex_lock(&cvp_driver->lock);
-	if (cvp_driver->num_cores + 1 > MSM_CVP_CORES_MAX) {
-		mutex_unlock(&cvp_driver->lock);
+	mutex_lock(&eva_cvp_driver->lock);
+	if (eva_cvp_driver->num_cores + 1 > MSM_CVP_CORES_MAX) {
+		mutex_unlock(&eva_cvp_driver->lock);
 		dprintk(CVP_ERR, "Maximum cores already exist, core_no = %d\n",
-				cvp_driver->num_cores);
+				eva_cvp_driver->num_cores);
 		goto err_cores_exceeded;
 	}
-	cvp_driver->num_cores++;
-	mutex_unlock(&cvp_driver->lock);
+	eva_cvp_driver->num_cores++;
+	mutex_unlock(&eva_cvp_driver->lock);
 
 	rc = sysfs_create_group(&core->dev->kobj, &msm_cvp_core_attr_group);
 	if (rc) {
@@ -402,12 +402,12 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 		goto err_cores_exceeded;
 	}
 
-	core->device = cvp_hfi_initialize(core->hfi_type, core->id,
-				&core->resources, &cvp_handle_cmd_response);
+	core->device = eva_cvp_hfi_initialize(core->hfi_type, core->id,
+				&core->resources, &eva_cvp_handle_cmd_response);
 	if (IS_ERR_OR_NULL(core->device)) {
-		mutex_lock(&cvp_driver->lock);
-		cvp_driver->num_cores--;
-		mutex_unlock(&cvp_driver->lock);
+		mutex_lock(&eva_cvp_driver->lock);
+		eva_cvp_driver->num_cores--;
+		mutex_unlock(&eva_cvp_driver->lock);
 
 		rc = PTR_ERR(core->device) ?: -EBADHANDLE;
 		if (rc != -EPROBE_DEFER)
@@ -417,18 +417,18 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 		goto err_hfi_initialize;
 	}
 
-	mutex_lock(&cvp_driver->lock);
-	list_add_tail(&core->list, &cvp_driver->cores);
-	mutex_unlock(&cvp_driver->lock);
+	mutex_lock(&eva_cvp_driver->lock);
+	list_add_tail(&core->list, &eva_cvp_driver->cores);
+	mutex_unlock(&eva_cvp_driver->lock);
 
-	cvp_driver->debugfs_root = msm_cvp_debugfs_init_drv();
-	if (!cvp_driver->debugfs_root)
+	eva_cvp_driver->debugfs_root = eva_msm_cvp_debugfs_init_drv();
+	if (!eva_cvp_driver->debugfs_root)
 		dprintk(CVP_ERR, "Failed to create debugfs for msm_cvp\n");
 
-	core->debugfs_root = msm_cvp_debugfs_init_core(
-		core, cvp_driver->debugfs_root);
+	core->debugfs_root = eva_msm_cvp_debugfs_init_core(
+		core, eva_cvp_driver->debugfs_root);
 
-	cvp_driver->sku_version = core->resources.sku_version;
+	eva_cvp_driver->sku_version = core->resources.sku_version;
 
 	dprintk(CVP_CORE, "populating sub devices\n");
 	/*
@@ -447,7 +447,7 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 	atomic64_set(&core->kernel_trans_id, get_pkt_array_size());
 
 	if (core->resources.dsp_enabled) {
-		rc = cvp_dsp_device_init();
+		rc = eva_cvp_dsp_device_init();
 		if (rc)
 			dprintk(CVP_WARN, "Failed to initialize DSP driver\n");
 	} else {
@@ -455,13 +455,13 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 	}
 
 	// Registering EVA SS with minidump
-	cvp_register_va_md_region();
+	eva_cvp_register_va_md_region();
 
 	return rc;
 
 err_fail_sub_device_probe:
-	cvp_hfi_deinitialize(core->hfi_type, core->device);
-	debugfs_remove_recursive(cvp_driver->debugfs_root);
+	eva_cvp_hfi_deinitialize(core->hfi_type, core->device);
+	debugfs_remove_recursive(eva_cvp_driver->debugfs_root);
 err_hfi_initialize:
 err_cores_exceeded:
 	cdev_del(&core->cdev);
@@ -481,17 +481,17 @@ err_core_init:
 
 static int msm_cvp_probe_mem_cdsp(struct platform_device *pdev)
 {
-	return cvp_read_mem_cdsp_resources_from_dt(pdev);
+	return eva_cvp_read_mem_cdsp_resources_from_dt(pdev);
 }
 
 static int msm_cvp_probe_context_bank(struct platform_device *pdev)
 {
-	return cvp_read_context_bank_resources_from_dt(pdev);
+	return eva_cvp_read_context_bank_resources_from_dt(pdev);
 }
 
 static int msm_cvp_probe_bus(struct platform_device *pdev)
 {
-	return cvp_read_bus_resources_from_dt(pdev);
+	return eva_cvp_read_bus_resources_from_dt(pdev);
 }
 
 static int msm_cvp_probe(struct platform_device *pdev)
@@ -535,8 +535,8 @@ static int msm_cvp_remove(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	cvp_hfi_deinitialize(core->hfi_type, core->device);
-	msm_cvp_free_platform_resources(&core->resources);
+	eva_cvp_hfi_deinitialize(core->hfi_type, core->device);
+	eva_msm_cvp_free_platform_resources(&core->resources);
 	sysfs_remove_group(&pdev->dev.kobj, &msm_cvp_core_attr_group);
 	dev_set_drvdata(&pdev->dev, NULL);
 	mutex_destroy(&core->lock);
@@ -588,7 +588,7 @@ static const struct dev_pm_ops msm_cvp_pm_ops = {
 
 MODULE_DEVICE_TABLE(of, msm_cvp_plat_match);
 
-static struct platform_driver msm_cvp_driver = {
+static struct platform_driver msm_eva_cvp_driver = {
 	.probe = msm_cvp_probe,
 	.remove = msm_cvp_remove,
 	.driver = {
@@ -602,46 +602,46 @@ static int __init msm_cvp_init(void)
 {
 	int rc = 0;
 
-	cvp_driver = kzalloc(sizeof(*cvp_driver), GFP_KERNEL);
-	if (!cvp_driver) {
+	eva_cvp_driver = kzalloc(sizeof(*eva_cvp_driver), GFP_KERNEL);
+	if (!eva_cvp_driver) {
 		dprintk(CVP_ERR,
 			"Failed to allocate memroy for msm_cvp_drv\n");
 		return -ENOMEM;
 	}
 
-	INIT_LIST_HEAD(&cvp_driver->cores);
-	mutex_init(&cvp_driver->lock);
+	INIT_LIST_HEAD(&eva_cvp_driver->cores);
+	mutex_init(&eva_cvp_driver->lock);
 
-	rc = platform_driver_register(&msm_cvp_driver);
+	rc = platform_driver_register(&msm_eva_cvp_driver);
 	if (rc) {
 		dprintk(CVP_ERR,
 			"Failed to register platform driver\n");
-		kfree(cvp_driver);
-		cvp_driver = NULL;
+		kfree(eva_cvp_driver);
+		eva_cvp_driver = NULL;
 		return rc;
 	}
 
-	cvp_driver->msg_cache = KMEM_CACHE(cvp_session_msg, 0);
-	cvp_driver->frame_cache = KMEM_CACHE(msm_cvp_frame, 0);
-	cvp_driver->buf_cache = KMEM_CACHE(cvp_internal_buf, 0);
-	cvp_driver->smem_cache = KMEM_CACHE(msm_cvp_smem, 0);
+	eva_cvp_driver->msg_cache = KMEM_CACHE(cvp_session_msg, 0);
+	eva_cvp_driver->frame_cache = KMEM_CACHE(msm_cvp_frame, 0);
+	eva_cvp_driver->buf_cache = KMEM_CACHE(cvp_internal_buf, 0);
+	eva_cvp_driver->smem_cache = KMEM_CACHE(msm_cvp_smem, 0);
 
 	return rc;
 }
 
 static void __exit msm_cvp_exit(void)
 {
-	cvp_dsp_device_exit();
-	kmem_cache_destroy(cvp_driver->msg_cache);
-	kmem_cache_destroy(cvp_driver->frame_cache);
-	kmem_cache_destroy(cvp_driver->buf_cache);
-	kmem_cache_destroy(cvp_driver->smem_cache);
+	eva_cvp_dsp_device_exit();
+	kmem_cache_destroy(eva_cvp_driver->msg_cache);
+	kmem_cache_destroy(eva_cvp_driver->frame_cache);
+	kmem_cache_destroy(eva_cvp_driver->buf_cache);
+	kmem_cache_destroy(eva_cvp_driver->smem_cache);
 
-	platform_driver_unregister(&msm_cvp_driver);
-	debugfs_remove_recursive(cvp_driver->debugfs_root);
-	mutex_destroy(&cvp_driver->lock);
-	kfree(cvp_driver);
-	cvp_driver = NULL;
+	platform_driver_unregister(&msm_eva_cvp_driver);
+	debugfs_remove_recursive(eva_cvp_driver->debugfs_root);
+	mutex_destroy(&eva_cvp_driver->lock);
+	kfree(eva_cvp_driver);
+	eva_cvp_driver = NULL;
 }
 
 module_init(msm_cvp_init);

@@ -17,20 +17,20 @@ EXPORT_SYMBOL(msm_cvp_debug21);
 int msm_cvp_debug_out21 = CVP_OUT_PRINTK;
 EXPORT_SYMBOL(msm_cvp_debug_out21);
 
-int msm_cvp_fw_debug = 0x18;
-int msm_cvp_fw_debug_mode = 1;
-int msm_cvp_fw_low_power_mode = 1;
-bool msm_cvp_fw_coverage = !true;
-bool msm_cvp_cacheop_enabled = true;
-bool msm_cvp_thermal_mitigation_disabled = !true;
-bool msm_cvp_cacheop_disabled = !true;
-int msm_cvp_clock_voting = !1;
-bool msm_cvp_syscache_disable = !true;
-bool msm_cvp_dsp_disable = !true;
-bool msm_cvp_mmrm_enabled = !true;
-bool msm_cvp_dcvs_disable = !true;
+int cvp_msm_cvp_fw_debug = 0x18;
+int cvp_msm_cvp_fw_debug_mode = 1;
+int cvp_msm_cvp_fw_low_power_mode = 1;
+bool cvp_msm_cvp_fw_coverage = !true;
+bool cvp_msm_cvp_cacheop_enabled = true;
+bool cvp_msm_cvp_thermal_mitigation_disabled = !true;
+bool cvp_msm_cvp_cacheop_disabled = !true;
+int cvp_msm_cvp_clock_voting = !1;
+bool cvp_msm_cvp_syscache_disable = !true;
+bool cvp_msm_cvp_dsp_disable = !true;
+bool cvp_msm_cvp_mmrm_enabled = !true;
+bool cvp_msm_cvp_dcvs_disable = !true;
 bool msm_cvp_dsp_driver_enable = true;
-int msm_cvp_minidump_enable = !1;
+int cvp_msm_cvp_minidump_enable = !1;
 
 #define MAX_DBG_BUF_SIZE 4096
 
@@ -156,7 +156,7 @@ static ssize_t trigger_ssr_write(struct file *filp, const char __user *buf,
 		dprintk(CVP_WARN, "returning error err %d\n", rc);
 		rc = -EINVAL;
 	} else {
-		msm_cvp_trigger_ssr(core, ssr_trigger_val);
+		cvp_msm_cvp_trigger_ssr(core, ssr_trigger_val);
 		rc = count;
 	}
 exit:
@@ -232,7 +232,7 @@ static int cvp_power_set(void *data, u64 val)
 
 DEFINE_DEBUGFS_ATTRIBUTE(cvp_pwr_fops, cvp_power_get, cvp_power_set, "%llu\n");
 
-struct dentry *msm_cvp_debugfs_init_drv(void)
+struct dentry *cvp_msm_cvp_debugfs_init_drv(void)
 {
 	struct dentry *dir = NULL, *f;
 
@@ -243,30 +243,30 @@ struct dentry *msm_cvp_debugfs_init_drv(void)
 	}
 
 	debugfs_create_x32("debug_level", 0644, dir, &msm_cvp_debug21);
-	debugfs_create_x32("fw_level", 0644, dir, &msm_cvp_fw_debug);
-	debugfs_create_u32("fw_debug_mode", 0644, dir, &msm_cvp_fw_debug_mode);
+	debugfs_create_x32("fw_level", 0644, dir, &cvp_msm_cvp_fw_debug);
+	debugfs_create_u32("fw_debug_mode", 0644, dir, &cvp_msm_cvp_fw_debug_mode);
 	debugfs_create_u32("fw_low_power_mode", 0644, dir,
-		&msm_cvp_fw_low_power_mode);
+		&cvp_msm_cvp_fw_low_power_mode);
 	debugfs_create_u32("debug_output", 0644, dir, &msm_cvp_debug_out21);
 	debugfs_create_u32("minidump_enable", 0644, dir,
-			&msm_cvp_minidump_enable);
-	f = debugfs_create_bool("fw_coverage", 0644, dir, &msm_cvp_fw_coverage);
+			&cvp_msm_cvp_minidump_enable);
+	f = debugfs_create_bool("fw_coverage", 0644, dir, &cvp_msm_cvp_fw_coverage);
 	if (IS_ERR_OR_NULL(f))
 		goto failed_create_dir;
 	f = debugfs_create_bool("disable_thermal_mitigation", 0644, dir,
-			&msm_cvp_thermal_mitigation_disabled);
+			&cvp_msm_cvp_thermal_mitigation_disabled);
 	if (IS_ERR_OR_NULL(f))
 		goto failed_create_dir;
 	f = debugfs_create_bool("enable_cacheop", 0644, dir,
-			&msm_cvp_cacheop_enabled);
+			&cvp_msm_cvp_cacheop_enabled);
 	if (IS_ERR_OR_NULL(f))
 		goto failed_create_dir;
 	f = debugfs_create_bool("disable_cvp_syscache", 0644, dir,
-			&msm_cvp_syscache_disable);
+			&cvp_msm_cvp_syscache_disable);
 	if (IS_ERR_OR_NULL(f))
 		goto failed_create_dir;
     f = debugfs_create_bool("disable_dcvs", 0644, dir,
-                            &msm_cvp_dcvs_disable);
+                            &cvp_msm_cvp_dcvs_disable);
     if (IS_ERR_OR_NULL(f))
        goto failed_create_dir;
 	f = debugfs_create_bool("enable_dsp_driver", 0644, dir,
@@ -301,7 +301,7 @@ static int _clk_rate_set(void *data, u64 val)
 	if (val == 0) {
 		struct iris_hfi_device *hdev = dev->hfi_device_data;
 
-		msm_cvp_clock_voting = 0;
+		cvp_msm_cvp_clock_voting = 0;
 		call_hfi_op(dev, scale_clocks, hdev, hdev->clk_freq);
 		return 0;
 	}
@@ -311,15 +311,15 @@ static int _clk_rate_set(void *data, u64 val)
 			break;
 
 	if (i == tbl_size)
-		msm_cvp_clock_voting = tbl[tbl_size-1].clock_rate;
+		cvp_msm_cvp_clock_voting = tbl[tbl_size-1].clock_rate;
 	else
-		msm_cvp_clock_voting = tbl[i].clock_rate;
+		cvp_msm_cvp_clock_voting = tbl[i].clock_rate;
 
 	dprintk(CVP_WARN, "Override cvp_clk_rate with %d\n",
-			msm_cvp_clock_voting);
+			cvp_msm_cvp_clock_voting);
 
 	call_hfi_op(dev, scale_clocks, dev->hfi_device_data,
-		msm_cvp_clock_voting);
+		cvp_msm_cvp_clock_voting);
 
 	return 0;
 }
@@ -331,8 +331,8 @@ static int _clk_rate_get(void *data, u64 *val)
 
 	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
 	hdev = core->device->hfi_device_data;
-	if (msm_cvp_clock_voting)
-		*val = msm_cvp_clock_voting;
+	if (cvp_msm_cvp_clock_voting)
+		*val = cvp_msm_cvp_clock_voting;
 	else
 		*val = hdev->clk_freq;
 
@@ -342,7 +342,7 @@ static int _clk_rate_get(void *data, u64 *val)
 DEFINE_DEBUGFS_ATTRIBUTE(clk_rate_fops, _clk_rate_get, _clk_rate_set, "%llu\n");
 
 
-struct dentry *msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
+struct dentry *cvp_msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
 		struct dentry *parent)
 {
 	struct dentry *dir = NULL;
@@ -398,7 +398,7 @@ static void put_inst_helper(struct kref *kref)
 	struct msm_cvp_inst *inst = container_of(kref,
 			struct msm_cvp_inst, kref);
 
-	msm_cvp_destroy(inst);
+	cvp_msm_cvp_destroy(inst);
 }
 
 static ssize_t inst_info_read(struct file *file, char __user *buf,
@@ -479,7 +479,7 @@ static const struct file_operations inst_info_fops = {
 	.release = inst_info_release,
 };
 
-struct dentry *msm_cvp_debugfs_init_inst(struct msm_cvp_inst *inst,
+struct dentry *cvp_msm_cvp_debugfs_init_inst(struct msm_cvp_inst *inst,
 		struct dentry *parent)
 {
 	struct dentry *dir = NULL, *info = NULL;
@@ -528,7 +528,7 @@ exit:
 	return dir;
 }
 
-void msm_cvp_debugfs_deinit_inst(struct msm_cvp_inst *inst)
+void cvp_msm_cvp_debugfs_deinit_inst(struct msm_cvp_inst *inst)
 {
 	struct dentry *dentry = NULL;
 

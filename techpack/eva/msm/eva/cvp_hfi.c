@@ -58,12 +58,12 @@ enum tzbsp_subsys_state {
 	TZ_SUBSYS_STATE_RESTORE_THRESHOLD = 2,
 };
 
-const struct msm_cvp_gov_data CVP_DEFAULT_BUS_VOTE = {
+const struct msm_cvp_gov_data eva_CVP_DEFAULT_BUS_VOTE = {
 	.data = NULL,
 	.data_count = 0,
 };
 
-const int cvp_max_packets = 32;
+const int eva_cvp_max_packets = 32;
 
 static void iris_hfi_pm_handler(struct work_struct *work);
 static DECLARE_DELAYED_WORK(iris_hfi_pm_work, iris_hfi_pm_handler);
@@ -140,24 +140,24 @@ static inline bool is_sys_cache_present(struct iris_hfi_device *device)
 
 #define ROW_SIZE 32
 
-int get_hfi_version(void)
+int eva_get_hfi_version(void)
 {
 	struct msm_cvp_core *core;
 	struct iris_hfi_device *hfi;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	hfi = (struct iris_hfi_device *)core->device->hfi_device_data;
 
 	return hfi->version;
 }
 
-unsigned int get_msg_size(struct cvp_hfi_msg_session_hdr *hdr)
+unsigned int eva_get_msg_size(struct cvp_hfi_msg_session_hdr *hdr)
 {
 	struct msm_cvp_core *core;
 	struct iris_hfi_device *device;
 	u32 minor_ver;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core)
 		device = core->device->hfi_device_data;
 	else
@@ -181,7 +181,7 @@ unsigned int get_msg_size(struct cvp_hfi_msg_session_hdr *hdr)
 
 }
 
-unsigned int get_msg_session_id(void *msg)
+unsigned int eva_get_msg_session_id(void *msg)
 {
 	struct cvp_hfi_msg_session_hdr *hdr =
 		(struct cvp_hfi_msg_session_hdr *)msg;
@@ -189,7 +189,7 @@ unsigned int get_msg_session_id(void *msg)
 	return hdr->session_id;
 }
 
-unsigned int get_msg_errorcode(void *msg)
+unsigned int eva_get_msg_errorcode(void *msg)
 {
 	struct cvp_hfi_msg_session_hdr *hdr =
 		(struct cvp_hfi_msg_session_hdr *)msg;
@@ -197,7 +197,7 @@ unsigned int get_msg_errorcode(void *msg)
 	return hdr->error_type;
 }
 
-int get_msg_opconfigs(void *msg, unsigned int *session_id,
+int eva_get_msg_opconfigs(void *msg, unsigned int *session_id,
 		unsigned int *error_type, unsigned int *config_id)
 {
 	struct cvp_hfi_msg_session_op_cfg_packet *cfg =
@@ -232,7 +232,7 @@ static int __dsp_suspend(struct iris_hfi_device *device, bool force, u32 flags)
 	int rc;
 	struct cvp_hal_session *temp;
 
-	if (msm_cvp_dsp_disable)
+	if (eva_msm_cvp_dsp_disable)
 		return 0;
 
 	list_for_each_entry(temp, &device->sess_head, list) {
@@ -250,7 +250,7 @@ static int __dsp_suspend(struct iris_hfi_device *device, bool force, u32 flags)
 	}
 
 	dprintk(CVP_DSP, "%s: suspend dsp\n", __func__);
-	rc = cvp_dsp_suspend(flags);
+	rc = eva_cvp_dsp_suspend(flags);
 	if (rc) {
 		dprintk(CVP_ERR, "%s: dsp suspend failed with error %d\n",
 			__func__, rc);
@@ -265,11 +265,11 @@ static int __dsp_resume(struct iris_hfi_device *device, u32 flags)
 {
 	int rc;
 
-	if (msm_cvp_dsp_disable)
+	if (eva_msm_cvp_dsp_disable)
 		return 0;
 
 	dprintk(CVP_DSP, "%s: resume dsp\n", __func__);
-	rc = cvp_dsp_resume(flags);
+	rc = eva_cvp_dsp_resume(flags);
 	if (rc) {
 		dprintk(CVP_ERR,
 			"%s: dsp resume failed with error %d\n",
@@ -285,11 +285,11 @@ static int __dsp_shutdown(struct iris_hfi_device *device, u32 flags)
 {
 	int rc;
 
-	if (msm_cvp_dsp_disable)
+	if (eva_msm_cvp_dsp_disable)
 		return 0;
 
 	dprintk(CVP_DSP, "%s: shutdown dsp\n", __func__);
-	rc = cvp_dsp_shutdown(flags);
+	rc = eva_cvp_dsp_shutdown(flags);
 	if (rc) {
 		dprintk(CVP_ERR,
 			"%s: dsp shutdown failed with error %d\n",
@@ -615,7 +615,7 @@ static int __smem_alloc(struct iris_hfi_device *dev, struct cvp_mem_addr *mem,
 
 	dprintk(CVP_INFO, "start to alloc size: %d, flags: %d\n", size, flags);
 	alloc->flags = flags;
-	rc = msm_cvp_smem_alloc(size, align, 1, (void *)dev->res, alloc);
+	rc = eva_msm_cvp_smem_alloc(size, align, 1, (void *)dev->res, alloc);
 	if (rc) {
 		dprintk(CVP_ERR, "Alloc failed\n");
 		rc = -ENOMEM;
@@ -641,7 +641,7 @@ static void __smem_free(struct iris_hfi_device *dev, struct msm_cvp_smem *mem)
 		return;
 	}
 
-	msm_cvp_smem_free(mem);
+	eva_msm_cvp_smem_free(mem);
 }
 
 static void __write_register(struct iris_hfi_device *device,
@@ -758,7 +758,7 @@ static void __set_registers(struct iris_hfi_device *device)
 		return;
 	}
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	pdata = core->platform_data;
 
 	reg_set = &device->res->reg_set;
@@ -1130,7 +1130,7 @@ static int iris_hfi_scale_clocks(void *dev, u32 freq)
 		goto exit;
 	}
 
-	rc = msm_cvp_set_clocks_impl(device, freq);
+	rc = eva_msm_cvp_set_clocks_impl(device, freq);
 exit:
 	mutex_unlock(&device->lock);
 
@@ -1347,7 +1347,7 @@ static int __interface_dsp_queues_init(struct iris_hfi_device *dev)
 		dprintk(CVP_ERR, "%s: failed dma allocation\n", __func__);
 		goto fail_dma_alloc;
 	}
-	cb = msm_cvp_smem_get_context_bank(dev->res, 0);
+	cb = eva_msm_cvp_smem_get_context_bank(dev->res, 0);
 	if (!cb) {
 		dprintk(CVP_ERR,
 			"%s: failed to get context bank\n", __func__);
@@ -1387,7 +1387,7 @@ static int __interface_dsp_queues_init(struct iris_hfi_device *dev)
 		spin_lock_init(&iface_q->hfi_lock);
 	}
 
-	cvp_dsp_init_hfi_queue_hdr(dev);
+	eva_cvp_dsp_init_hfi_queue_hdr(dev);
 
 	return rc;
 
@@ -1423,7 +1423,7 @@ static void __interface_queues_release(struct iris_hfi_device *device)
 		}
 
 		mem_map = (struct cvp_hfi_mem_map *)(qdss + 1);
-		cb = msm_cvp_smem_get_context_bank(device->res, 0);
+		cb = eva_msm_cvp_smem_get_context_bank(device->res, 0);
 
 		for (i = 0; cb && i < num_entries; i++) {
 			iommu_unmap(cb->domain,
@@ -1577,7 +1577,7 @@ static int __interface_queues_init(struct iris_hfi_device *dev)
 		spin_lock_init(&iface_q->hfi_lock);
 	}
 
-	if ((msm_cvp_fw_debug_mode & HFI_DEBUG_MODE_QDSS) && num_entries) {
+	if ((eva_msm_cvp_fw_debug_mode & HFI_DEBUG_MODE_QDSS) && num_entries) {
 		rc = __smem_alloc(dev, mem_addr, ALIGNED_QDSS_SIZE, 1,
 				SMEM_UNCACHED);
 		if (rc) {
@@ -1647,7 +1647,7 @@ static int __interface_queues_init(struct iris_hfi_device *dev)
 		qdss->mem_map_table_base_addr = mem_map_table_base_addr;
 
 		mem_map = (struct cvp_hfi_mem_map *)(qdss + 1);
-		cb = msm_cvp_smem_get_context_bank(dev->res, 0);
+		cb = eva_msm_cvp_smem_get_context_bank(dev->res, 0);
 		if (!cb) {
 			dprintk(CVP_ERR,
 				"%s: failed to get context bank\n", __func__);
@@ -1850,8 +1850,8 @@ static int iris_hfi_core_init(void *device)
 	}
 
 	/* mmrm registration */
-	if (msm_cvp_mmrm_enabled) {
-		rc = msm_cvp_mmrm_register(device);
+	if (eva_msm_cvp_mmrm_enabled) {
+		rc = eva_msm_cvp_mmrm_register(device);
 		if (rc) {
 			dprintk(CVP_ERR, "Failed to register mmrm client\n");
 			goto err_core_init;
@@ -1873,13 +1873,13 @@ static int iris_hfi_core_init(void *device)
 	}
 
 	// Add node for dev struct
-	add_va_node_to_list(CVP_QUEUE_DUMP, dev,
+	eva_add_va_node_to_list(CVP_QUEUE_DUMP, dev,
 			sizeof(struct iris_hfi_device),
 			"iris_hfi_device-dev", false);
-	add_queue_header_to_va_md_list((void*)dev);
-	add_hfi_queue_to_va_md_list((void*)dev);
+	eva_add_queue_header_to_va_md_list((void*)dev);
+	eva_add_hfi_queue_to_va_md_list((void*)dev);
 
-	rc = msm_cvp_map_ipcc_regs(&ipcc_iova);
+	rc = eva_msm_cvp_map_ipcc_regs(&ipcc_iova);
 	if (!rc) {
 		dprintk(CVP_CORE, "IPCC iova 0x%x\n", ipcc_iova);
 		__write_register(dev, CVP_MMAP_ADDR, ipcc_iova);
@@ -1909,7 +1909,7 @@ static int iris_hfi_core_init(void *device)
 	if (rc || __iface_cmdq_write(dev, &version_pkt))
 		dprintk(CVP_WARN, "Failed to send image version pkt to f/w\n");
 
-	__sys_set_debug(device, msm_cvp_fw_debug);
+	__sys_set_debug(device, eva_msm_cvp_fw_debug);
 
 	__enable_subcaches(device);
 	__set_subcaches(device);
@@ -1950,7 +1950,7 @@ static int iris_hfi_core_init(void *device)
 pm_qos_bail:
 	mutex_unlock(&dev->lock);
 
-	cvp_dsp_send_hfi_queue();
+	eva_cvp_dsp_send_hfi_queue();
 
 	pm_relax(dev->res->pdev->dev.parent);
 	dprintk(CVP_CORE, "Core inited successfully\n");
@@ -2007,7 +2007,7 @@ static int iris_hfi_core_release(void *dev)
 	__disable_subcaches(device);
 	__unload_fw(device);
 
-	if (msm_cvp_mmrm_enabled) {
+	if (eva_msm_cvp_mmrm_enabled) {
 		rc = msm_cvp_mmrm_deregister(device);
 		if (rc) {
 			dprintk(CVP_ERR,
@@ -2060,7 +2060,7 @@ static int iris_hfi_core_trigger_ssr(void *device,
 	int rc = 0;
 	struct iris_hfi_device *dev;
 
-	cvp_free_va_md_list();
+	eva_cvp_free_va_md_list();
 	if (!device) {
 		dprintk(CVP_ERR, "invalid device\n");
 		return -ENODEV;
@@ -2088,9 +2088,9 @@ err_create_pkt:
 
 static void __set_default_sys_properties(struct iris_hfi_device *device)
 {
-	if (__sys_set_debug(device, msm_cvp_fw_debug))
+	if (__sys_set_debug(device, eva_msm_cvp_fw_debug))
 		dprintk(CVP_WARN, "Setting fw_debug msg ON failed\n");
-	if (__sys_set_power_control(device, msm_cvp_fw_low_power_mode))
+	if (__sys_set_power_control(device, eva_msm_cvp_fw_low_power_mode))
 		dprintk(CVP_WARN, "Setting h/w power collapse ON failed\n");
 }
 
@@ -2242,8 +2242,8 @@ static int iris_hfi_session_end(void *session)
 
 	mutex_lock(&device->lock);
 
-	if (msm_cvp_fw_coverage) {
-		if (__sys_set_coverage(sess->device, msm_cvp_fw_coverage))
+	if (eva_msm_cvp_fw_coverage) {
+		if (__sys_set_coverage(sess->device, eva_msm_cvp_fw_coverage))
 			dprintk(CVP_WARN, "Fw_coverage msg ON failed\n");
 	}
 
@@ -2481,7 +2481,7 @@ static void iris_hfi_pm_handler(struct work_struct *work)
 	struct msm_cvp_core *core;
 	struct iris_hfi_device *device;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core)
 		device = core->device->hfi_device_data;
 	else
@@ -2507,7 +2507,7 @@ static void iris_hfi_pm_handler(struct work_struct *work)
 	}
 
 	mutex_lock(&device->lock);
-	if (gfa_cv.state == DSP_SUSPEND)
+	if (eva_gfa_cv.state == DSP_SUSPEND)
 		rc = __power_collapse(device, true);
 	else
 		rc = __power_collapse(device, false);
@@ -2788,7 +2788,7 @@ static void process_system_msg(struct msm_cvp_cb_info *info,
 		dprintk(CVP_CORE, "Received SYS_INIT_DONE\n");
 		sys_init_done.capabilities =
 			device->sys_init_capabilities;
-		cvp_hfi_process_sys_init_done_prop_read(
+		eva_cvp_hfi_process_sys_init_done_prop_read(
 			(struct cvp_hfi_msg_sys_init_done_packet *)
 				raw_packet, &sys_init_done);
 		info->response.cmd.data.sys_init_done = sys_init_done;
@@ -2910,7 +2910,7 @@ static int __response_handler(struct iris_hfi_device *device)
 		int rc = 0;
 
 		print_msg_hdr(hdr);
-		rc = cvp_hfi_process_msg_packet(device->device_id,
+		rc = eva_cvp_hfi_process_msg_packet(device->device_id,
 					raw_packet, info);
 		if (rc) {
 			dprintk(CVP_WARN,
@@ -2954,7 +2954,7 @@ static int __response_handler(struct iris_hfi_device *device)
 			*session_id = session->session_id;
 		}
 
-		if (packet_count >= cvp_max_packets) {
+		if (packet_count >= eva_cvp_max_packets) {
 			dprintk(CVP_WARN,
 				"Too many packets in message queue!\n");
 			break;
@@ -2988,7 +2988,7 @@ static void iris_hfi_core_work_handler(struct work_struct *work)
 	u32 intr_status;
 	static bool warning_on = true;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core)
 		device = core->device->hfi_device_data;
 	else
@@ -3021,7 +3021,7 @@ static void iris_hfi_core_work_handler(struct work_struct *work)
 
 	__core_clear_interrupt(device);
 	num_responses = __response_handler(device);
-	dprintk(CVP_HFI, "%s:: cvp_driver_debug num_responses = %d ",
+	dprintk(CVP_HFI, "%s:: eva_cvp_driver_debug num_responses = %d ",
 		__func__, num_responses);
 
 err_no_work:
@@ -3258,7 +3258,7 @@ static void __deinit_bus(struct iris_hfi_device *device)
 		return;
 
 	kfree(device->bus_vote.data);
-	device->bus_vote = CVP_DEFAULT_BUS_VOTE;
+	device->bus_vote = eva_CVP_DEFAULT_BUS_VOTE;
 
 	iris_hfi_for_each_bus_reverse(device, bus) {
 		dev_set_drvdata(bus->dev, NULL);
@@ -3417,7 +3417,7 @@ static int __init_resources(struct iris_hfi_device *device,
 		return -ENODEV;
 	}
 
-	rc = msm_cvp_init_clocks(device);
+	rc = eva_msm_cvp_init_clocks(device);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to init clocks\n");
 		rc = -ENODEV;
@@ -3451,7 +3451,7 @@ static int __init_resources(struct iris_hfi_device *device,
 
 err_init_reset_clk:
 err_init_bus:
-	msm_cvp_deinit_clocks(device);
+	eva_msm_cvp_deinit_clocks(device);
 err_init_clocks:
 	__deinit_regulators(device);
 	return rc;
@@ -3461,7 +3461,7 @@ static void __deinit_resources(struct iris_hfi_device *device)
 {
 	__deinit_subcaches(device);
 	__deinit_bus(device);
-	msm_cvp_deinit_clocks(device);
+	eva_msm_cvp_deinit_clocks(device);
 	__deinit_regulators(device);
 	kfree(device->sys_init_capabilities);
 	device->sys_init_capabilities = NULL;
@@ -3514,7 +3514,7 @@ static int __enable_hw_power_collapse(struct iris_hfi_device *device)
 {
 	int rc = 0;
 
-	if (!msm_cvp_fw_low_power_mode) {
+	if (!eva_msm_cvp_fw_low_power_mode) {
 		dprintk(CVP_PWR, "Not enabling hardware power collapse\n");
 		return 0;
 	}
@@ -3583,7 +3583,7 @@ static int __enable_subcaches(struct iris_hfi_device *device)
 	u32 c = 0;
 	struct subcache_info *sinfo;
 
-	if (msm_cvp_syscache_disable || !is_sys_cache_present(device))
+	if (eva_msm_cvp_syscache_disable || !is_sys_cache_present(device))
 		return 0;
 
 	/* Activate subcaches */
@@ -3620,7 +3620,7 @@ static int __set_subcaches(struct iris_hfi_device *device)
 	struct cvp_hfi_resource_subcache_type *sc_res;
 	struct cvp_resource_hdr rhdr;
 
-	if (device->res->sys_cache_res_set || msm_cvp_syscache_disable) {
+	if (device->res->sys_cache_res_set || eva_msm_cvp_syscache_disable) {
 		dprintk(CVP_CORE, "Subcaches already set or disabled\n");
 		return 0;
 	}
@@ -3680,7 +3680,7 @@ static int __release_subcaches(struct iris_hfi_device *device)
 	struct cvp_hfi_resource_subcache_type *sc_res;
 	struct cvp_resource_hdr rhdr;
 
-	if (msm_cvp_syscache_disable || !is_sys_cache_present(device))
+	if (eva_msm_cvp_syscache_disable || !is_sys_cache_present(device))
 		return 0;
 
 	memset((void *)resource, 0x0, (sizeof(u32) * CVP_MAX_SUBCACHE_SIZE));
@@ -3720,7 +3720,7 @@ static int __disable_subcaches(struct iris_hfi_device *device)
 	struct subcache_info *sinfo;
 	int rc = 0;
 
-	if (msm_cvp_syscache_disable || !is_sys_cache_present(device))
+	if (eva_msm_cvp_syscache_disable || !is_sys_cache_present(device))
 		return 0;
 
 	/* De-activate subcaches */
@@ -3816,13 +3816,13 @@ static int __power_on_controller(struct iris_hfi_device *device)
 		goto fail_reset_clks;
 	}
 
-	rc = msm_cvp_prepare_enable_clk(device, "gcc_video_axi1");
+	rc = eva_msm_cvp_prepare_enable_clk(device, "gcc_video_axi1");
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to enable axi1 clk: %d\n", rc);
 		goto fail_reset_clks;
 	}
 
-	rc = msm_cvp_prepare_enable_clk(device, "cvp_clk");
+	rc = eva_msm_cvp_prepare_enable_clk(device, "cvp_clk");
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to enable cvp_clk: %d\n", rc);
 		goto fail_enable_clk;
@@ -3832,7 +3832,7 @@ static int __power_on_controller(struct iris_hfi_device *device)
 	return 0;
 
 fail_enable_clk:
-	msm_cvp_disable_unprepare_clk(device, "gcc_video_axi1");
+	eva_msm_cvp_disable_unprepare_clk(device, "gcc_video_axi1");
 fail_reset_clks:
 	__disable_regulator(device, "cvp");
 	return rc;
@@ -3848,7 +3848,7 @@ static int __power_on_core(struct iris_hfi_device *device)
 		return rc;
 	}
 
-	rc = msm_cvp_prepare_enable_clk(device, "video_cc_mvs1_clk_src");
+	rc = eva_msm_cvp_prepare_enable_clk(device, "video_cc_mvs1_clk_src");
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to enable video_cc_mvs1_clk_src:%d\n",
 			rc);
@@ -3856,7 +3856,7 @@ static int __power_on_core(struct iris_hfi_device *device)
 		return rc;
 	}
 
-	rc = msm_cvp_prepare_enable_clk(device, "core_clk");
+	rc = eva_msm_cvp_prepare_enable_clk(device, "core_clk");
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to enable core_clk: %d\n", rc);
 		__disable_regulator(device, "cvp-core");
@@ -3891,7 +3891,7 @@ static int __iris_power_on(struct iris_hfi_device *device)
 	if (rc)
 		goto fail_enable_core;
 
-	rc = msm_cvp_scale_clocks(device);
+	rc = eva_msm_cvp_scale_clocks(device);
 	if (rc) {
 		dprintk(CVP_WARN,
 			"Failed to scale clocks, perf may regress\n");
@@ -4102,10 +4102,10 @@ static int __power_off_controller(struct iris_hfi_device *device)
 	__write_register(device, CVP_WRAPPER_AXI_CLOCK_CONFIG, 0x0);
 #endif
 	/* HPG 6.2.2 Step 5 */
-	msm_cvp_disable_unprepare_clk(device, "cvp_clk");
+	eva_msm_cvp_disable_unprepare_clk(device, "cvp_clk");
 
 	/* HPG 6.2.2 Step 7 */
-	msm_cvp_disable_unprepare_clk(device, "gcc_video_axi1");
+	eva_msm_cvp_disable_unprepare_clk(device, "gcc_video_axi1");
 
 	/* Added to avoid pending transaction after power off */
 	rc = call_iris_op(device, reset_ahb2axi_bridge, device);
@@ -4138,8 +4138,8 @@ static int __power_off_core(struct iris_hfi_device *device)
 			__print_sidebandmanager_regs(device);
 		}
 		__disable_regulator(device, "cvp-core");
-		msm_cvp_disable_unprepare_clk(device, "core_clk");
-		msm_cvp_disable_unprepare_clk(device, "video_cc_mvs1_clk_src");
+		eva_msm_cvp_disable_unprepare_clk(device, "core_clk");
+		eva_msm_cvp_disable_unprepare_clk(device, "video_cc_mvs1_clk_src");
 		return 0;
 	}
 
@@ -4219,8 +4219,8 @@ static int __power_off_core(struct iris_hfi_device *device)
 	__write_register(device, CVP_WRAPPER_CORE_CLOCK_CONFIG, config);
 
 	__disable_regulator(device, "cvp-core");
-	msm_cvp_disable_unprepare_clk(device, "core_clk");
-	msm_cvp_disable_unprepare_clk(device, "video_cc_mvs1_clk_src");
+	eva_msm_cvp_disable_unprepare_clk(device, "core_clk");
+	eva_msm_cvp_disable_unprepare_clk(device, "video_cc_mvs1_clk_src");
 	return 0;
 }
 
@@ -4261,7 +4261,7 @@ static inline int __resume(struct iris_hfi_device *device)
 		return -EINVAL;
 	}
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 
 	dprintk(CVP_PWR, "Resuming from power collapse\n");
 	rc = __iris_power_on(device);
@@ -4289,7 +4289,7 @@ static inline int __resume(struct iris_hfi_device *device)
 	rc = __boot_firmware(device);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to reset cvp core\n");
-		msm_cvp_trigger_ssr(core, SSR_ERR_FATAL);
+		eva_msm_cvp_trigger_ssr(core, SSR_ERR_FATAL);
 		goto err_reset_core;
 	}
 
@@ -4302,7 +4302,7 @@ static inline int __resume(struct iris_hfi_device *device)
 	if (device->res->pm_qos.latency_us && device->res->pm_qos.pm_qos_hdls)
 		cvp_pm_qos_update(device, true);
 
-	__sys_set_debug(device, msm_cvp_fw_debug);
+	__sys_set_debug(device, eva_msm_cvp_fw_debug);
 
 	__enable_subcaches(device);
 	__set_subcaches(device);
@@ -4350,7 +4350,7 @@ static int __load_fw(struct iris_hfi_device *device)
 
 	if ((!device->res->use_non_secure_pil && !device->res->firmware_base)
 			|| device->res->use_non_secure_pil) {
-		rc = load_cvp_fw_impl(device);
+		rc = eva_load_cvp_fw_impl(device);
 		if (rc)
 			goto fail_load_fw;
 	}
@@ -4375,7 +4375,7 @@ static void __unload_fw(struct iris_hfi_device *device)
 	if (device->state != IRIS_STATE_DEINIT)
 		flush_workqueue(device->iris_pm_workq);
 
-	unload_cvp_fw_impl(device);
+	uneva_load_cvp_fw_impl(device);
 	__interface_queues_release(device);
 	call_iris_op(device, power_off, device);
 	__deinit_resources(device);
@@ -4397,7 +4397,7 @@ static int iris_hfi_get_fw_info(void *dev, struct cvp_hal_fw_info *fw_info)
 
 	mutex_lock(&device->lock);
 
-	while (cvp_driver->fw_version[i++] != 'V' && i < CVP_VERSION_LENGTH)
+	while (eva_cvp_driver->fw_version[i++] != 'V' && i < CVP_VERSION_LENGTH)
 		;
 
 	if (i == CVP_VERSION_LENGTH - 1) {
@@ -4406,7 +4406,7 @@ static int iris_hfi_get_fw_info(void *dev, struct cvp_hal_fw_info *fw_info)
 		goto fail_version_string;
 	}
 
-	memcpy(&fw_info->version[0], &cvp_driver->fw_version[0],
+	memcpy(&fw_info->version[0], &eva_cvp_driver->fw_version[0],
 			CVP_VERSION_LENGTH);
 	fw_info->version[CVP_VERSION_LENGTH - 1] = '\0';
 
@@ -4471,7 +4471,7 @@ static void __noc_error_info_iris2(struct iris_hfi_device *device)
 	u32 val = 0, regi, i;
 	bool log_required = false;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 
 	if (!core->ssr_count && core->resources.max_ssr_allowed > 1)
 		log_required = true;
@@ -4621,7 +4621,7 @@ static int __initialize_packetization(struct iris_hfi_device *device)
 
 	device->packetization_type = HFI_PACKETIZATION_4XX;
 
-	device->pkt_ops = cvp_hfi_get_pkt_ops_handle(
+	device->pkt_ops = eva_cvp_hfi_get_pkt_ops_handle(
 		device->packetization_type);
 	if (!device->pkt_ops) {
 		rc = -EINVAL;
@@ -4631,7 +4631,7 @@ static int __initialize_packetization(struct iris_hfi_device *device)
 	return rc;
 }
 
-void __init_cvp_ops(struct iris_hfi_device *device)
+void eva___init_cvp_ops(struct iris_hfi_device *device)
 {
 	device->vpu_ops = &iris2_ops;
 }
@@ -4656,7 +4656,7 @@ static struct iris_hfi_device *__add_device(u32 device_id,
 		goto exit;
 	}
 
-	hdevice->response_pkt = kmalloc_array(cvp_max_packets,
+	hdevice->response_pkt = kmalloc_array(eva_cvp_max_packets,
 				sizeof(*hdevice->response_pkt), GFP_KERNEL);
 	if (!hdevice->response_pkt) {
 		dprintk(CVP_ERR, "failed to allocate response_pkt\n");
@@ -4678,7 +4678,7 @@ static struct iris_hfi_device *__add_device(u32 device_id,
 	hdevice->device_id = device_id;
 	hdevice->callback = callback;
 
-	__init_cvp_ops(hdevice);
+	eva___init_cvp_ops(hdevice);
 
 	hdevice->cvp_workq = create_singlethread_workqueue(
 		"msm_cvp_workerq_iris");
@@ -4723,7 +4723,7 @@ static struct iris_hfi_device *__get_device(u32 device_id,
 	return __add_device(device_id, res, callback);
 }
 
-void cvp_iris_hfi_delete_device(void *device)
+void eva_cvp_iris_hfi_delete_device(void *device)
 {
 	struct msm_cvp_core *core;
 	struct iris_hfi_device *dev = NULL;
@@ -4731,7 +4731,7 @@ void cvp_iris_hfi_delete_device(void *device)
 	if (!device)
 		return;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core)
 		dev = core->device->hfi_device_data;
 
@@ -4795,7 +4795,7 @@ static void iris_init_hfi_callbacks(struct cvp_hfi_device *hdev)
 	hdev->pm_qos_update = iris_pm_qos_update;
 }
 
-int cvp_iris_hfi_initialize(struct cvp_hfi_device *hdev, u32 device_id,
+int eva_cvp_iris_hfi_initialize(struct cvp_hfi_device *hdev, u32 device_id,
 		struct msm_cvp_platform_resources *res,
 		hfi_cmd_response_callback callback)
 {

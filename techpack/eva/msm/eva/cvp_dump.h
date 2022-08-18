@@ -31,12 +31,12 @@ enum cvp_dump_type {
  * @phys: Physical address of the buffer which needs to be dumped
  * @size: Size of the buffer which needs to be dumped
 */
-int md_eva_static_dump_register(const char *name, u64 virt, u64 phys, u64 size);
+int eva_md_eva_static_dump_register(const char *name, u64 virt, u64 phys, u64 size);
 
 /*
  * wrapper for static minidump unregister
 */
-void md_eva_static_dump_unregister(void);
+void eva_md_eva_static_dump_unregister(void);
 
 /*
  * Fucntion to add dump region to queue
@@ -48,7 +48,7 @@ void md_eva_static_dump_unregister(void);
  * @copy: Flag to indicate if the buffer data needs to be copied
  *		to the intermidiate buffer allocated by kzmalloc.
 */
-void add_va_node_to_list(enum cvp_dump_type type, void *buff_va,
+void eva_add_va_node_to_list(enum cvp_dump_type type, void *buff_va,
 			u32 buff_size, const char *region_name, bool copy);
 
 /*
@@ -59,23 +59,23 @@ void add_va_node_to_list(enum cvp_dump_type type, void *buff_va,
  *		notifier_call mentioned in this block will be triggered by
  *		minidump driver in case of crash
 */
-void cvp_va_md_register(char *name, void* notf_blk_ptr);
+void eva_cvp_va_md_register(char *name, void* notf_blk_ptr);
 
 /* One function where we will register all the regions */
-void cvp_register_va_md_region(void);
+void eva_cvp_register_va_md_region(void);
 
 /*
  * Free up the memory allocated for different va_md_list
  * Do not forget to add code for any new list in this function
 */
-void cvp_free_va_md_list(void);
+void eva_cvp_free_va_md_list(void);
 
 /* Adds the HFI queues(both for CPU and DSP) to the global hfi list head*/
-void add_hfi_queue_to_va_md_list(void *device);
+void eva_add_hfi_queue_to_va_md_list(void *device);
 
 /*Add queue header structures(both for CPU and DSP)
 to the global struct list head*/
-void add_queue_header_to_va_md_list(void *device);
+void eva_add_queue_header_to_va_md_list(void *device);
 
 /*
  * Node structure for VA_MD Linked List
@@ -106,37 +106,37 @@ struct eva_static_md {
 	struct md_region md_entry;
 };
 #else
-static inline int md_eva_static_dump_register(const char *name, u64 virt, u64 phys, u64 size)
+static inline int eva_md_eva_static_dump_register(const char *name, u64 virt, u64 phys, u64 size)
 {
 	return 0;
 }
 
-static inline void md_eva_static_dump_unregister(void)
+static inline void eva_md_eva_static_dump_unregister(void)
 {
 }
 
-static inline void add_va_node_to_list(enum cvp_dump_type type, void *buff_va,
+static inline void eva_add_va_node_to_list(enum cvp_dump_type type, void *buff_va,
                         u32 buff_size, const char *region_name, bool copy)
 {
 }
 
-static inline void cvp_va_md_register(char *name, void* notf_blk_ptr)
+static inline void eva_cvp_va_md_register(char *name, void* notf_blk_ptr)
 {
 }
 
-static inline void cvp_register_va_md_region(void)
+static inline void eva_cvp_register_va_md_region(void)
 {
 }
 
-static inline void cvp_free_va_md_list(void)
+static inline void eva_cvp_free_va_md_list(void)
 {
 }
 
-static inline void add_hfi_queue_to_va_md_list(void *device)
+static inline void eva_add_hfi_queue_to_va_md_list(void *device)
 {
 }
 
-static inline void add_queue_header_to_va_md_list(void *device)
+static inline void eva_add_queue_header_to_va_md_list(void *device)
 {
 }
 

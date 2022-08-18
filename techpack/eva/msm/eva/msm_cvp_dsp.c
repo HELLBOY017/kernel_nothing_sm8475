@@ -13,7 +13,7 @@
 #include "cvp_hfi.h"
 #include "cvp_dump.h"
 
-struct cvp_dsp_apps gfa_cv;
+struct cvp_dsp_apps eva_gfa_cv;
 static int hlosVM[HLOS_VM_NUM] = {VMID_HLOS};
 static int dspVM[DSP_VM_NUM] = {VMID_HLOS, VMID_CDSP_Q6};
 static int dspVMperm[DSP_VM_NUM] = { PERM_READ | PERM_WRITE | PERM_EXEC,
@@ -52,7 +52,7 @@ static int __fastrpc_driver_invoke(struct fastrpc_device *dev,
 static int cvp_dsp_send_cmd(struct cvp_dsp_cmd_msg *cmd, uint32_t len)
 {
 	int rc = 0;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 
 	dprintk(CVP_DSP, "%s: cmd = %d\n", __func__, cmd->type);
 
@@ -76,7 +76,7 @@ static int cvp_dsp_send_cmd_sync(struct cvp_dsp_cmd_msg *cmd,
 		uint32_t len, struct cvp_dsp_rsp_msg *rsp)
 {
 	int rc = 0;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 
 	dprintk(CVP_DSP, "%s: cmd = %d\n", __func__, cmd->type);
 
@@ -139,7 +139,7 @@ exit:
 static int cvp_hyp_assign_to_dsp(uint64_t addr, uint32_t size)
 {
 	int rc = 0;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 
 	if (!me->hyp_assigned) {
 		rc = hyp_assign_phys(addr, size, hlosVM, HLOS_VM_NUM, dspVM,
@@ -159,7 +159,7 @@ static int cvp_hyp_assign_to_dsp(uint64_t addr, uint32_t size)
 static int cvp_hyp_assign_from_dsp(void)
 {
 	int rc = 0;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 
 	if (me->hyp_assigned) {
 		rc = hyp_assign_phys(me->addr, me->size, dspVM, DSP_VM_NUM,
@@ -178,7 +178,7 @@ static int cvp_hyp_assign_from_dsp(void)
 
 static int cvp_dsp_rpmsg_probe(struct rpmsg_device *rpdev)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	const char *edge_name = NULL;
 	int ret = 0;
 
@@ -247,7 +247,7 @@ static int delete_dsp_session(struct msm_cvp_inst *inst,
 					"%s Failed to unmap buffer 0x%x\n",
 					__func__, rc);
 
-			rc = cvp_release_dsp_buffers(inst, buf);
+			rc = eva_cvp_release_dsp_buffers(inst, buf);
 			if (rc)
 				dprintk(CVP_ERR,
 					"%s Failed to free buffer 0x%x\n",
@@ -255,7 +255,7 @@ static int delete_dsp_session(struct msm_cvp_inst *inst,
 
 			list_del(&buf->list);
 
-			kmem_cache_free(cvp_driver->buf_cache, buf);
+			kmem_cache_free(eva_cvp_driver->buf_cache, buf);
 		}
 	}
 
@@ -294,7 +294,7 @@ static int eva_fastrpc_driver_get_name(
 		struct cvp_dsp_fastrpc_driver_entry *frpc_node)
 {
     int i = 0;
-    struct cvp_dsp_apps *me = &gfa_cv;
+    struct cvp_dsp_apps *me = &eva_gfa_cv;
     for (i = 0; i < MAX_FASTRPC_DRIVER_NUM; i++) {
         if (me->cvp_fastrpc_name[i].status == DRIVER_NAME_AVAILABLE) {
             frpc_node->driver_name_idx = i;
@@ -314,14 +314,14 @@ static int eva_fastrpc_driver_get_name(
 static void eva_fastrpc_driver_release_name(
 		struct cvp_dsp_fastrpc_driver_entry *frpc_node)
 {
-    struct cvp_dsp_apps *me = &gfa_cv;
+    struct cvp_dsp_apps *me = &eva_gfa_cv;
     me->cvp_fastrpc_name[frpc_node->driver_name_idx].status =
 		DRIVER_NAME_AVAILABLE;
 }
 
 static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
 	struct list_head *ptr = NULL, *next = NULL;
@@ -378,7 +378,7 @@ static int cvp_dsp_rpmsg_callback(struct rpmsg_device *rpdev,
 	void *data, int len, void *priv, u32 addr)
 {
 	struct cvp_dsp_rsp_msg *rsp = (struct cvp_dsp_rsp_msg *)data;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 
 	dprintk(CVP_DSP, "%s: type = 0x%x ret = 0x%x len = 0x%x\n",
 		__func__, rsp->type, rsp->ret, len);
@@ -420,11 +420,11 @@ exit:
 	return 0;
 }
 
-int cvp_dsp_suspend(uint32_t session_flag)
+int eva_cvp_dsp_suspend(uint32_t session_flag)
 {
 	int rc = 0;
 	struct cvp_dsp_cmd_msg cmd;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp;
 	bool retried = false;
 
@@ -476,11 +476,11 @@ exit:
 	return rc;
 }
 
-int cvp_dsp_resume(uint32_t session_flag)
+int eva_cvp_dsp_resume(uint32_t session_flag)
 {
 	int rc = 0;
 	struct cvp_dsp_cmd_msg cmd;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 
 	cmd.type = CPU2DSP_RESUME;
 
@@ -497,9 +497,9 @@ exit:
 	return rc;
 }
 
-int cvp_dsp_shutdown(uint32_t session_flag)
+int eva_cvp_dsp_shutdown(uint32_t session_flag)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	int rc = 0;
 	struct cvp_dsp_cmd_msg cmd;
 	struct cvp_dsp_rsp_msg rsp;
@@ -527,14 +527,14 @@ exit:
 	return rc;
 }
 
-int cvp_dsp_register_buffer(uint32_t session_id, uint32_t buff_fd,
+int eva_cvp_dsp_register_buffer(uint32_t session_id, uint32_t buff_fd,
 			uint32_t buff_fd_size, uint32_t buff_size,
 			uint32_t buff_offset, uint32_t buff_index,
 			uint32_t buff_fd_iova)
 {
 	struct cvp_dsp_cmd_msg cmd;
 	int rc;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp;
 	bool retried = false;
 
@@ -597,14 +597,14 @@ exit:
 	return rc;
 }
 
-int cvp_dsp_deregister_buffer(uint32_t session_id, uint32_t buff_fd,
+int eva_cvp_dsp_deregister_buffer(uint32_t session_id, uint32_t buff_fd,
 			uint32_t buff_fd_size, uint32_t buff_size,
 			uint32_t buff_offset, uint32_t buff_index,
 			uint32_t buff_fd_iova)
 {
 	struct cvp_dsp_cmd_msg cmd;
 	int rc;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp;
 	bool retried = false;
 
@@ -698,7 +698,7 @@ static void cvp_dsp_set_queue_hdr_defaults(struct cvp_hfi_queue_header *q_hdr)
 	q_hdr->qhdr_write_idx = 0x0;
 }
 
-void cvp_dsp_init_hfi_queue_hdr(struct iris_hfi_device *device)
+void eva_cvp_dsp_init_hfi_queue_hdr(struct iris_hfi_device *device)
 {
 	u32 i;
 	struct cvp_hfi_queue_table_header *q_tbl_hdr;
@@ -750,12 +750,12 @@ static int __reinit_dsp(void)
 	uint32_t flag = 0;
 	uint64_t addr;
 	uint32_t size;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp;
 	struct msm_cvp_core *core;
 	struct iris_hfi_device *device;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core && core->device)
 		device = core->device->hfi_device_data;
 	else
@@ -767,7 +767,7 @@ static int __reinit_dsp(void)
 	}
 
 	/* Force shutdown DSP */
-	rc = cvp_dsp_shutdown(flag);
+	rc = eva_cvp_dsp_shutdown(flag);
 	if (rc)
 		return rc;
 
@@ -814,7 +814,7 @@ exit:
 static int cvp_reinit_dsp(void)
 {
 	int rc;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 
 	rc = __reinit_dsp();
 	if (rc)	{
@@ -829,7 +829,7 @@ static int cvp_reinit_dsp(void)
 static struct cvp_dsp_fastrpc_driver_entry *cvp_find_fastrpc_node_with_handle(
 			uint32_t handle)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct list_head *ptr = NULL, *next = NULL;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL, *tmp_node = NULL;
 
@@ -1022,7 +1022,7 @@ int cvp_dsp_del_sess(uint32_t process_id, struct msm_cvp_inst *inst)
 
 static int eva_fastrpc_driver_register(uint32_t handle)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	int rc = 0;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
 	bool skip_deregister = true;
@@ -1109,7 +1109,7 @@ fail_fastrpc_driver_get_name:
 
 static void eva_fastrpc_driver_unregister(uint32_t handle, bool force_exit)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
 
@@ -1147,7 +1147,7 @@ static void eva_fastrpc_driver_unregister(uint32_t handle, bool force_exit)
 void cvp_dsp_send_debug_mask(void)
 {
 	struct cvp_dsp_cmd_msg cmd;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp;
 	int rc;
 
@@ -1165,17 +1165,17 @@ void cvp_dsp_send_debug_mask(void)
 			__func__, rc);
 }
 
-void cvp_dsp_send_hfi_queue(void)
+void eva_cvp_dsp_send_hfi_queue(void)
 {
 	struct msm_cvp_core *core;
 	struct iris_hfi_device *device;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct cvp_dsp_rsp_msg rsp = {0};
 	uint64_t addr;
 	uint32_t size;
 	int rc;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core && core->device)
 		device = core->device->hfi_device_data;
 	else
@@ -1215,7 +1215,7 @@ void cvp_dsp_send_hfi_queue(void)
 	}
 
 	if (me->state == DSP_PROBED) {
-		cvp_dsp_init_hfi_queue_hdr(device);
+		eva_cvp_dsp_init_hfi_queue_hdr(device);
 		dprintk(CVP_WARN,
 			"%s: Done init of HFI queue headers\n", __func__);
 	}
@@ -1298,7 +1298,7 @@ static void print_power(const struct eva_power_req *pwr_req)
 
 static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct msm_cvp_inst *inst = NULL;
 	uint64_t inst_handle = 0;
 	int rc = 0;
@@ -1338,7 +1338,7 @@ static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 	inst->prop.is_secure = dsp2cpu_cmd->is_secure;
 	inst->prop.dsp_mask = dsp2cpu_cmd->dsp_access_mask;
 
-	rc = msm_cvp_session_create(inst);
+	rc = eva_msm_cvp_session_create(inst);
 	if (rc) {
 		dprintk(CVP_ERR, "Warning: send Session Create failed\n");
 		goto fail_session_create;
@@ -1402,7 +1402,7 @@ fail_msm_cvp_open:
 
 static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct msm_cvp_inst *inst;
 	int rc;
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
@@ -1477,7 +1477,7 @@ dsp_fail_delete:
 
 static void __dsp_cvp_power_req(struct cvp_dsp_cmd_msg *cmd)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct msm_cvp_inst *inst;
 	int rc;
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
@@ -1534,7 +1534,7 @@ dsp_fail_power_req:
 
 static void __dsp_cvp_buf_register(struct cvp_dsp_cmd_msg *cmd)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct msm_cvp_inst *inst;
 	struct eva_kmd_arg *kmd;
 	struct eva_kmd_buffer *kmd_buf;
@@ -1592,7 +1592,7 @@ dsp_fail_buf_reg:
 
 static void __dsp_cvp_buf_deregister(struct cvp_dsp_cmd_msg *cmd)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct msm_cvp_inst *inst;
 	struct eva_kmd_arg *kmd;
 	struct eva_kmd_buffer *kmd_buf;
@@ -1645,7 +1645,7 @@ fail_dsp_buf_dereg:
 
 static void __dsp_cvp_mem_alloc(struct cvp_dsp_cmd_msg *cmd)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct msm_cvp_inst *inst;
 	int rc;
 	struct cvp_internal_buf *buf = NULL;
@@ -1676,11 +1676,11 @@ static void __dsp_cvp_mem_alloc(struct cvp_dsp_cmd_msg *cmd)
 			dsp2cpu_cmd->session_cpu_high,
 			dsp2cpu_cmd->session_cpu_low);
 
-	buf = kmem_cache_zalloc(cvp_driver->buf_cache, GFP_KERNEL);
+	buf = kmem_cache_zalloc(eva_cvp_driver->buf_cache, GFP_KERNEL);
 	if (!buf)
 		goto fail_kzalloc_buf;
 
-	rc = cvp_allocate_dsp_bufs(inst, buf,
+	rc = eva_cvp_allocate_dsp_bufs(inst, buf,
 			dsp2cpu_cmd->sbuf.size,
 			dsp2cpu_cmd->sbuf.type);
 	if (rc)
@@ -1714,9 +1714,9 @@ static void __dsp_cvp_mem_alloc(struct cvp_dsp_cmd_msg *cmd)
 	return;
 
 fail_fastrpc_dev_map_dma:
-	cvp_release_dsp_buffers(inst, buf);
+	eva_cvp_release_dsp_buffers(inst, buf);
 fail_allocate_dsp_buf:
-	kmem_cache_free(cvp_driver->buf_cache, buf);
+	kmem_cache_free(eva_cvp_driver->buf_cache, buf);
 fail_kzalloc_buf:
 fail_fastrpc_node:
 	cmd->ret = -1;
@@ -1726,7 +1726,7 @@ fail_fastrpc_node:
 
 static void __dsp_cvp_mem_free(struct cvp_dsp_cmd_msg *cmd)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct msm_cvp_inst *inst;
 	int rc;
 	struct cvp_internal_buf *buf = NULL;
@@ -1791,7 +1791,7 @@ static void __dsp_cvp_mem_free(struct cvp_dsp_cmd_msg *cmd)
 				goto fail_fastrpc_dev_unmap_dma;
 			}
 
-			rc = cvp_release_dsp_buffers(inst, buf);
+			rc = eva_cvp_release_dsp_buffers(inst, buf);
 			if (rc) {
 				dprintk(CVP_ERR,
 					"%s Failed to free buffer 0x%x\n",
@@ -1802,7 +1802,7 @@ static void __dsp_cvp_mem_free(struct cvp_dsp_cmd_msg *cmd)
 
 			list_del(&buf->list);
 
-			kmem_cache_free(cvp_driver->buf_cache, buf);
+			kmem_cache_free(eva_cvp_driver->buf_cache, buf);
 			break;
 		}
 	}
@@ -1815,12 +1815,12 @@ fail_fastrpc_dev_unmap_dma:
 static int cvp_dsp_thread(void *data)
 {
 	int rc = 0, old_state;
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	struct cvp_dsp_cmd_msg cmd;
 	struct cvp_hfi_device *hdev;
 	struct msm_cvp_core *core;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (!core) {
 		dprintk(CVP_ERR, "%s: Failed to find core\n", __func__);
 		rc = -EINVAL;
@@ -1845,7 +1845,7 @@ wait_dsp:
 		goto wait_dsp;
 
 	if (me->state == DSP_PROBED) {
-		cvp_dsp_send_hfi_queue();
+		eva_cvp_dsp_send_hfi_queue();
 		goto wait_dsp;
 	}
 
@@ -1948,16 +1948,16 @@ exit:
 	return rc;
 }
 
-int cvp_dsp_device_init(void)
+int eva_cvp_dsp_device_init(void)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	char tname[16];
 	int rc;
 	int i;
 	char name[CVP_FASTRPC_DRIVER_NAME_SIZE] = "qcom,fastcv0\0";
 
-	add_va_node_to_list(CVP_DBG_DUMP, &gfa_cv, sizeof(struct cvp_dsp_apps),
-        "cvp_dsp_apps-gfa_cv", false);
+	eva_add_va_node_to_list(CVP_DBG_DUMP, &eva_gfa_cv, sizeof(struct cvp_dsp_apps),
+        "cvp_dsp_apps-eva_gfa_cv", false);
 
 	mutex_init(&me->tx_lock);
 	mutex_init(&me->rx_lock);
@@ -2001,9 +2001,9 @@ register_bail:
 	return rc;
 }
 
-void cvp_dsp_device_exit(void)
+void eva_cvp_dsp_device_exit(void)
 {
-	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_apps *me = &eva_gfa_cv;
 	int i;
 
 	mutex_lock(&me->tx_lock);

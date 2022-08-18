@@ -37,10 +37,10 @@
 #define MAX_DSP_SESSION_NUM			(8)
 #define MAX_FASTRPC_DRIVER_NUM		(MAX_DSP_SESSION_NUM)
 
-int cvp_dsp_device_init(void);
-void cvp_dsp_device_exit(void);
-void cvp_dsp_send_hfi_queue(void);
-void cvp_dsp_init_hfi_queue_hdr(struct iris_hfi_device *device);
+int eva_cvp_dsp_device_init(void);
+void eva_cvp_dsp_device_exit(void);
+void eva_cvp_dsp_send_hfi_queue(void);
+void eva_cvp_dsp_init_hfi_queue_hdr(struct iris_hfi_device *device);
 
 enum CPU2DSP_STATUS {
 	CPU2DSP_SUCCESS = 0,
@@ -214,7 +214,7 @@ struct cvp_dsp_apps {
 	struct driver_name cvp_fastrpc_name[MAX_FASTRPC_DRIVER_NUM];
 };
 
-extern struct cvp_dsp_apps gfa_cv;
+extern struct cvp_dsp_apps eva_gfa_cv;
 /*
  * API for CVP driver to suspend CVP session during
  * power collapse
@@ -222,7 +222,7 @@ extern struct cvp_dsp_apps gfa_cv;
  * @param session_flag
  * Flag to share details of session.
  */
-int cvp_dsp_suspend(uint32_t session_flag);
+int eva_cvp_dsp_suspend(uint32_t session_flag);
 
 /*
  * API for CVP driver to resume CVP session during
@@ -231,7 +231,7 @@ int cvp_dsp_suspend(uint32_t session_flag);
  * @param session_flag
  * Flag to share details of session.
  */
-int cvp_dsp_resume(uint32_t session_flag);
+int eva_cvp_dsp_resume(uint32_t session_flag);
 
 /*
  * API for CVP driver to shutdown CVP session during
@@ -240,7 +240,7 @@ int cvp_dsp_resume(uint32_t session_flag);
  * @param session_flag
  * Flag to share details of session.
  */
-int cvp_dsp_shutdown(uint32_t session_flag);
+int eva_cvp_dsp_shutdown(uint32_t session_flag);
 
 /*
  * API to register iova buffer address with CDSP
@@ -253,7 +253,7 @@ int cvp_dsp_shutdown(uint32_t session_flag);
  * @buff_index:     buffer index
  * @iova_buff_addr: IOVA buffer address
  */
-int cvp_dsp_register_buffer(uint32_t session_id, uint32_t buff_fd,
+int eva_cvp_dsp_register_buffer(uint32_t session_id, uint32_t buff_fd,
 			uint32_t buff_fd_size, uint32_t buff_size,
 			uint32_t buff_offset, uint32_t buff_index,
 			uint32_t buff_fd_iova);
@@ -269,7 +269,7 @@ int cvp_dsp_register_buffer(uint32_t session_id, uint32_t buff_fd,
  * @buff_index:     buffer index
  * @iova_buff_addr: IOVA buffer address
  */
-int cvp_dsp_deregister_buffer(uint32_t session_id, uint32_t buff_fd,
+int eva_cvp_dsp_deregister_buffer(uint32_t session_id, uint32_t buff_fd,
 			uint32_t buff_fd_size, uint32_t buff_size,
 			uint32_t buff_offset, uint32_t buff_index,
 			uint32_t buff_fd_iova);
