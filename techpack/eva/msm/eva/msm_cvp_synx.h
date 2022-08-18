@@ -47,14 +47,14 @@ enum cvp_synx_type {
 #ifdef CVP_SYNX_ENABLED
 int cvp_sess_init_synx(struct msm_cvp_inst *inst);
 int cvp_sess_deinit_synx(struct msm_cvp_inst *inst);
-int cvp_import_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc,
+int eva_cvp_import_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc,
 		u32 *fence);
-int cvp_release_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc);
-int cvp_cancel_synx(struct msm_cvp_inst *inst, enum cvp_synx_type type,
+int eva_cvp_release_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc);
+int eva_cvp_cancel_synx(struct msm_cvp_inst *inst, enum cvp_synx_type type,
 		struct cvp_fence_command *fc, int synx_state);
-int cvp_synx_ops(struct msm_cvp_inst *inst, enum cvp_synx_type type,
+int eva_cvp_synx_ops(struct msm_cvp_inst *inst, enum cvp_synx_type type,
 		struct cvp_fence_command *fc, u32 *synx_state);
-void cvp_dump_fence_queue(struct msm_cvp_inst *inst);
+void eva_cvp_dump_fence_queue(struct msm_cvp_inst *inst);
 #else
 static inline int cvp_sess_init_synx(struct msm_cvp_inst *inst)
 {
@@ -66,20 +66,20 @@ static inline int cvp_sess_deinit_synx(struct msm_cvp_inst *inst)
 	return -ENODEV;
 }
 
-static inline int cvp_import_synx(struct msm_cvp_inst *inst,
+static inline int eva_cvp_import_synx(struct msm_cvp_inst *inst,
 				struct cvp_fence_command *fc,
 				u32 *fence)
 {
 	return -ENODEV;
 }
 
-static inline int cvp_release_synx(struct msm_cvp_inst *inst,
+static inline int eva_cvp_release_synx(struct msm_cvp_inst *inst,
 				struct cvp_fence_command *fc)
 {
 	return -ENODEV;
 }
 
-static inline int cvp_cancel_synx(struct msm_cvp_inst *inst,
+static inline int eva_cvp_cancel_synx(struct msm_cvp_inst *inst,
 				enum cvp_synx_type type,
 				struct cvp_fence_command *fc,
 				int synx_state)
@@ -87,7 +87,7 @@ static inline int cvp_cancel_synx(struct msm_cvp_inst *inst,
 	return -ENODEV;
 }
 
-static inline int cvp_synx_ops(struct msm_cvp_inst *inst,
+static inline int eva_cvp_synx_ops(struct msm_cvp_inst *inst,
 			enum cvp_synx_type type,
 			struct cvp_fence_command *fc,
 			u32 *synx_state)
@@ -95,7 +95,7 @@ static inline int cvp_synx_ops(struct msm_cvp_inst *inst,
 	return -ENODEV;
 }
 
-static inline void cvp_dump_fence_queue(struct msm_cvp_inst *inst)
+static inline void eva_cvp_dump_fence_queue(struct msm_cvp_inst *inst)
 {
 	return;
 }

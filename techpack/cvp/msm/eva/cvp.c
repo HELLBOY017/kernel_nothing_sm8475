@@ -143,8 +143,8 @@ static int msm_cvp_initialize_core(struct platform_device *pdev,
 		init_completion(&core->completions[i]);
 	}
 
-	INIT_DELAYED_WORK(&core->fw_unload_work, msm_cvp_fw_unload_handler);
-	INIT_WORK(&core->ssr_work, msm_cvp_ssr_handler);
+	INIT_DELAYED_WORK(&core->fw_unload_work, cvp_msm_cvp_fw_unload_handler);
+	INIT_WORK(&core->ssr_work, cvp_msm_cvp_ssr_handler);
 	init_cycle_info(&core->dyn_clk);
 
 	return rc;
@@ -181,7 +181,7 @@ static ssize_t pwr_collapse_delay_store(struct device *dev,
 	else if (!val)
 		return -EINVAL;
 
-	core = get_cvp_core(MSM_CORE_CVP);
+	core = cvp_get_cvp_core(MSM_CORE_CVP);
 	if (!core)
 		return -EINVAL;
 	core->resources.msm_cvp_pwr_collapse_delay = val;
@@ -194,7 +194,7 @@ static ssize_t pwr_collapse_delay_show(struct device *dev,
 {
 	struct msm_cvp_core *core = NULL;
 
-	core = get_cvp_core(MSM_CORE_CVP);
+	core = cvp_get_cvp_core(MSM_CORE_CVP);
 	if (!core)
 		return -EINVAL;
 
@@ -230,7 +230,7 @@ static ssize_t thermal_level_store(struct device *dev,
 		return count;
 	cvp_driver->thermal_level = val;
 
-	msm_cvp_comm_handle_thermal_event();
+	cvp_msm_cvp_comm_handle_thermal_event();
 	return count;
 }
 
@@ -283,7 +283,7 @@ static ssize_t boot_store(struct device *dev,
 			"Failed to create eva instance\n");
 			return -ENOMEM;
 		}
-		rc = msm_cvp_session_create(inst);
+		rc = cvp_msm_cvp_session_create(inst);
 		if (rc)
 			dprintk(CVP_ERR, "Failed to create eva session\n");
 
@@ -409,11 +409,11 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 	list_add_tail(&core->list, &cvp_driver->cores);
 	mutex_unlock(&cvp_driver->lock);
 
-	cvp_driver->debugfs_root = msm_cvp_debugfs_init_drv();
+	cvp_driver->debugfs_root = cvp_msm_cvp_debugfs_init_drv();
 	if (!cvp_driver->debugfs_root)
 		dprintk(CVP_ERR, "Failed to create debugfs for msm_cvp\n");
 
-	core->debugfs_root = msm_cvp_debugfs_init_core(
+	core->debugfs_root = cvp_msm_cvp_debugfs_init_core(
 		core, cvp_driver->debugfs_root);
 
 	cvp_driver->sku_version = core->resources.sku_version;
@@ -532,7 +532,7 @@ static int msm_cvp_remove(struct platform_device *pdev)
 	}
 
 	cvp_hfi_deinitialize(core->hfi_type, core->device);
-	msm_cvp_free_platform_resources(&core->resources);
+	cvp_msm_cvp_free_platform_resources(&core->resources);
 	sysfs_remove_group(&pdev->dev.kobj, &msm_cvp_core_attr_group);
 	dev_set_drvdata(&pdev->dev, NULL);
 	mutex_destroy(&core->lock);

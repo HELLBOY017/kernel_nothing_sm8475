@@ -29,10 +29,10 @@ static inline bool is_buf_param_valid(u32 buf_num, u32 offset)
 	return true;
 }
 
-int msm_cvp_handle_syscall(struct msm_cvp_inst *inst, struct eva_kmd_arg *arg);
-int msm_cvp_session_init(struct msm_cvp_inst *inst);
-int msm_cvp_session_deinit(struct msm_cvp_inst *inst);
-int msm_cvp_session_queue_stop(struct msm_cvp_inst *inst);
-int msm_cvp_session_create(struct msm_cvp_inst *inst);
+int cvp_msm_cvp_handle_syscall(struct msm_cvp_inst *inst, struct eva_kmd_arg *arg);
+int cvp_msm_cvp_session_init(struct msm_cvp_inst *inst);
+int cvp_msm_cvp_session_deinit(struct msm_cvp_inst *inst);
+int cvp_msm_cvp_session_queue_stop(struct msm_cvp_inst *inst);
+int cvp_msm_cvp_session_create(struct msm_cvp_inst *inst);
 int cvp_stop_clean_fence_queue(struct msm_cvp_inst *inst);
 #endif

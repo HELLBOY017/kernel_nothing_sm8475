@@ -18,23 +18,23 @@ EXPORT_SYMBOL(msm_cvp_debug);
 int msm_cvp_debug_out = CVP_OUT_PRINTK;
 EXPORT_SYMBOL(msm_cvp_debug_out);
 
-int msm_cvp_fw_debug = 0x18;
-int msm_cvp_fw_debug_mode = 1;
-int msm_cvp_fw_low_power_mode = 1;
-bool msm_cvp_fw_coverage = !true;
-bool msm_cvp_cacheop_enabled = true;
-bool msm_cvp_thermal_mitigation_disabled = !true;
-bool msm_cvp_cacheop_disabled = !true;
-int msm_cvp_clock_voting = !1;
-bool msm_cvp_syscache_disable = !true;
-bool msm_cvp_dsp_disable = !true;
+int eva_msm_cvp_fw_debug = 0x18;
+int eva_msm_cvp_fw_debug_mode = 1;
+int eva_msm_cvp_fw_low_power_mode = 1;
+bool eva_msm_cvp_fw_coverage = !true;
+bool eva_msm_cvp_cacheop_enabled = true;
+bool eva_msm_cvp_thermal_mitigation_disabled = !true;
+bool eva_msm_cvp_cacheop_disabled = !true;
+int eva_msm_cvp_clock_voting = !1;
+bool eva_msm_cvp_syscache_disable = !true;
+bool eva_msm_cvp_dsp_disable = !true;
 #ifdef CVP_MMRM_ENABLED
-bool msm_cvp_mmrm_enabled = true;
+bool eva_msm_cvp_mmrm_enabled = true;
 #else
-bool msm_cvp_mmrm_enabled = !true;
+bool eva_msm_cvp_mmrm_enabled = !true;
 #endif
-bool msm_cvp_dcvs_disable = !true;
-int msm_cvp_minidump_enable = !1;
+bool eva_msm_cvp_dcvs_disable = !true;
+int eva_msm_cvp_minidump_enable = !1;
 
 #define MAX_DBG_BUF_SIZE 4096
 
@@ -160,7 +160,7 @@ static ssize_t trigger_ssr_write(struct file *filp, const char __user *buf,
 		dprintk(CVP_WARN, "returning error err %d\n", rc);
 		rc = -EINVAL;
 	} else {
-		msm_cvp_trigger_ssr(core, ssr_trigger_val);
+		eva_msm_cvp_trigger_ssr(core, ssr_trigger_val);
 		rc = count;
 	}
 exit:
@@ -178,7 +178,7 @@ static int cvp_power_get(void *data, u64 *val)
 	struct msm_cvp_core *core;
 	struct iris_hfi_device *hfi_device;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (!core)
 		return 0;
 	hfi_ops = core->device;
@@ -203,7 +203,7 @@ static int cvp_power_set(void *data, u64 val)
 	struct iris_hfi_device *hfi_device;
 	int rc = 0;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (!core)
 		return -EINVAL;
 
@@ -236,7 +236,7 @@ static int cvp_power_set(void *data, u64 val)
 
 DEFINE_DEBUGFS_ATTRIBUTE(cvp_pwr_fops, cvp_power_get, cvp_power_set, "%llu\n");
 
-struct dentry *msm_cvp_debugfs_init_drv(void)
+struct dentry *eva_msm_cvp_debugfs_init_drv(void)
 {
 	struct dentry *dir = NULL;
 
@@ -247,22 +247,22 @@ struct dentry *msm_cvp_debugfs_init_drv(void)
 	}
 
 	debugfs_create_x32("debug_level", 0644, dir, &msm_cvp_debug);
-	debugfs_create_x32("fw_level", 0644, dir, &msm_cvp_fw_debug);
-	debugfs_create_u32("fw_debug_mode", 0644, dir, &msm_cvp_fw_debug_mode);
+	debugfs_create_x32("fw_level", 0644, dir, &eva_msm_cvp_fw_debug);
+	debugfs_create_u32("fw_debug_mode", 0644, dir, &eva_msm_cvp_fw_debug_mode);
 	debugfs_create_u32("fw_low_power_mode", 0644, dir,
-		&msm_cvp_fw_low_power_mode);
+		&eva_msm_cvp_fw_low_power_mode);
 	debugfs_create_u32("debug_output", 0644, dir, &msm_cvp_debug_out);
 	debugfs_create_u32("minidump_enable", 0644, dir,
-			&msm_cvp_minidump_enable);
-	debugfs_create_bool("fw_coverage", 0644, dir, &msm_cvp_fw_coverage);
+			&eva_msm_cvp_minidump_enable);
+	debugfs_create_bool("fw_coverage", 0644, dir, &eva_msm_cvp_fw_coverage);
 	debugfs_create_bool("disable_thermal_mitigation", 0644, dir,
-			&msm_cvp_thermal_mitigation_disabled);
+			&eva_msm_cvp_thermal_mitigation_disabled);
 	debugfs_create_bool("enable_cacheop", 0644, dir,
-			&msm_cvp_cacheop_enabled);
+			&eva_msm_cvp_cacheop_enabled);
 	debugfs_create_bool("disable_cvp_syscache", 0644, dir,
-			&msm_cvp_syscache_disable);
+			&eva_msm_cvp_syscache_disable);
 	debugfs_create_bool("disable_dcvs", 0644, dir,
-			&msm_cvp_dcvs_disable);
+			&eva_msm_cvp_dcvs_disable);
 
 	debugfs_create_file("cvp_power", 0644, dir, NULL, &cvp_pwr_fops);
 
@@ -270,7 +270,7 @@ struct dentry *msm_cvp_debugfs_init_drv(void)
 
 failed_create_dir:
 	if (dir)
-		debugfs_remove_recursive(cvp_driver->debugfs_root);
+		debugfs_remove_recursive(eva_cvp_driver->debugfs_root);
 
 	dprintk(CVP_WARN, "Failed to create debugfs\n");
 	return NULL;
@@ -283,7 +283,7 @@ static int _clk_rate_set(void *data, u64 val)
 	struct allowed_clock_rates_table *tbl = NULL;
 	unsigned int tbl_size, i;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	dev = core->device;
 	tbl = core->resources.allowed_clks_tbl;
 	tbl_size = core->resources.allowed_clks_tbl_size;
@@ -291,7 +291,7 @@ static int _clk_rate_set(void *data, u64 val)
 	if (val == 0) {
 		struct iris_hfi_device *hdev = dev->hfi_device_data;
 
-		msm_cvp_clock_voting = 0;
+		eva_msm_cvp_clock_voting = 0;
 		call_hfi_op(dev, scale_clocks, hdev, hdev->clk_freq);
 		return 0;
 	}
@@ -301,15 +301,15 @@ static int _clk_rate_set(void *data, u64 val)
 			break;
 
 	if (i == tbl_size)
-		msm_cvp_clock_voting = tbl[tbl_size-1].clock_rate;
+		eva_msm_cvp_clock_voting = tbl[tbl_size-1].clock_rate;
 	else
-		msm_cvp_clock_voting = tbl[i].clock_rate;
+		eva_msm_cvp_clock_voting = tbl[i].clock_rate;
 
 	dprintk(CVP_WARN, "Override cvp_clk_rate with %d\n",
-			msm_cvp_clock_voting);
+			eva_msm_cvp_clock_voting);
 
 	call_hfi_op(dev, scale_clocks, dev->hfi_device_data,
-		msm_cvp_clock_voting);
+		eva_msm_cvp_clock_voting);
 
 	return 0;
 }
@@ -319,10 +319,10 @@ static int _clk_rate_get(void *data, u64 *val)
 	struct msm_cvp_core *core;
 	struct iris_hfi_device *hdev;
 
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	hdev = core->device->hfi_device_data;
-	if (msm_cvp_clock_voting)
-		*val = msm_cvp_clock_voting;
+	if (eva_msm_cvp_clock_voting)
+		*val = eva_msm_cvp_clock_voting;
 	else
 		*val = hdev->clk_freq;
 
@@ -339,7 +339,7 @@ static int _dsp_dbg_set(void *data, u64 val)
 		return 0;
 	}
 
-	gfa_cv.debug_mask = (uint32_t)val;
+	eva_gfa_cv.debug_mask = (uint32_t)val;
 
 	cvp_dsp_send_debug_mask();
 
@@ -348,7 +348,7 @@ static int _dsp_dbg_set(void *data, u64 val)
 
 static int _dsp_dbg_get(void *data, u64 *val)
 {
-	*val = gfa_cv.debug_mask;
+	*val = eva_gfa_cv.debug_mask;
 
 	return 0;
 }
@@ -358,7 +358,7 @@ DEFINE_DEBUGFS_ATTRIBUTE(dsp_debug_fops, _dsp_dbg_get, _dsp_dbg_set, "%llu\n");
 static int _max_ssr_set(void *data, u64 val)
 {
 	struct msm_cvp_core *core;
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core) {
 		if (val < 1) {
 			dprintk(CVP_WARN,
@@ -374,7 +374,7 @@ static int _max_ssr_set(void *data, u64 val)
 static int _max_ssr_get(void *data, u64 *val)
 {
 	struct msm_cvp_core *core;
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core)
 		*val = core->resources.max_ssr_allowed;
 
@@ -386,7 +386,7 @@ DEFINE_DEBUGFS_ATTRIBUTE(max_ssr_fops, _max_ssr_get, _max_ssr_set, "%llu\n");
 static int _ssr_stall_set(void *data, u64 val)
 {
 	struct msm_cvp_core *core;
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core)
 		core->resources.fatal_ssr = (val >= 1) ? true : false;
 
@@ -396,7 +396,7 @@ static int _ssr_stall_set(void *data, u64 val)
 static int _ssr_stall_get(void *data, u64 *val)
 {
 	struct msm_cvp_core *core;
-	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	core = list_first_entry(&eva_cvp_driver->cores, struct msm_cvp_core, list);
 	if (core)
 		*val = core->resources.fatal_ssr ? 1 : 0;
 
@@ -406,7 +406,7 @@ static int _ssr_stall_get(void *data, u64 *val)
 DEFINE_DEBUGFS_ATTRIBUTE(ssr_stall_fops, _ssr_stall_get, _ssr_stall_set, "%llu\n");
 
 
-struct dentry *msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
+struct dentry *eva_msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
 		struct dentry *parent)
 {
 	struct dentry *dir = NULL;
@@ -478,7 +478,7 @@ static void put_inst_helper(struct kref *kref)
 	struct msm_cvp_inst *inst = container_of(kref,
 			struct msm_cvp_inst, kref);
 
-	msm_cvp_destroy(inst);
+	eva_msm_cvp_destroy(inst);
 }
 
 static ssize_t inst_info_read(struct file *file, char __user *buf,
@@ -559,7 +559,7 @@ static const struct file_operations inst_info_fops = {
 	.release = inst_info_release,
 };
 
-struct dentry *msm_cvp_debugfs_init_inst(struct msm_cvp_inst *inst,
+struct dentry *eva_msm_cvp_debugfs_init_inst(struct msm_cvp_inst *inst,
 		struct dentry *parent)
 {
 	struct dentry *dir = NULL, *info = NULL;
@@ -608,7 +608,7 @@ exit:
 	return dir;
 }
 
-void msm_cvp_debugfs_deinit_inst(struct msm_cvp_inst *inst)
+void eva_msm_cvp_debugfs_deinit_inst(struct msm_cvp_inst *inst)
 {
 	struct dentry *dentry = NULL;
 

@@ -9,10 +9,10 @@
 #include <media/msm_eva_private.h>
 #include "msm_cvp_debug.h"
 
-long cvp_unblocked_ioctl(struct file *filp,
+long eva_cvp_unblocked_ioctl(struct file *filp,
 		unsigned int cmd, unsigned long arg);
 
-long cvp_compat_ioctl(struct file *filp,
+long eva_cvp_compat_ioctl(struct file *filp,
 		unsigned int cmd, unsigned long arg);
 
 #endif

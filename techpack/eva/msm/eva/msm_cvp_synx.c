@@ -33,7 +33,7 @@ int cvp_sess_deinit_synx(struct msm_cvp_inst *inst)
 	return 0;
 }
 
-void cvp_dump_fence_queue(struct msm_cvp_inst *inst)
+void eva_cvp_dump_fence_queue(struct msm_cvp_inst *inst)
 {
 	struct cvp_fence_queue *q;
 	struct cvp_fence_command *f;
@@ -68,7 +68,7 @@ void cvp_dump_fence_queue(struct msm_cvp_inst *inst)
 	mutex_unlock(&q->lock);
 }
 
-int cvp_import_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc,
+int eva_cvp_import_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc,
 		u32 *fence)
 {
 	int rc = 0, rr = 0;
@@ -107,7 +107,7 @@ int cvp_import_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc,
 	return rr;
 }
 
-int cvp_release_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc)
+int eva_cvp_release_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc)
 {
 	int rc = 0;
 	int i;
@@ -133,7 +133,7 @@ int cvp_release_synx(struct msm_cvp_inst *inst, struct cvp_fence_command *fc)
 	return rc;
 }
 
-static int cvp_cancel_synx_impl(struct msm_cvp_inst *inst,
+static int eva_cvp_cancel_synx_impl(struct msm_cvp_inst *inst,
 			enum cvp_synx_type type,
 			struct cvp_fence_command *fc,
 			int synx_state)
@@ -175,7 +175,7 @@ static int cvp_cancel_synx_impl(struct msm_cvp_inst *inst,
 
 }
 
-int cvp_cancel_synx(struct msm_cvp_inst *inst, enum cvp_synx_type type,
+int eva_cvp_cancel_synx(struct msm_cvp_inst *inst, enum cvp_synx_type type,
 		struct cvp_fence_command *fc, int synx_state)
 {
 	if (fc->signature != 0xFEEDFACE) {
@@ -183,7 +183,7 @@ int cvp_cancel_synx(struct msm_cvp_inst *inst, enum cvp_synx_type type,
 			return -EINVAL;
 		}
 
-	return cvp_cancel_synx_impl(inst, type, fc, synx_state);
+	return eva_cvp_cancel_synx_impl(inst, type, fc, synx_state);
 }
 
 static int cvp_wait_synx(struct synx_session ssid, u32 *synx, u32 num_synx,
@@ -242,7 +242,7 @@ static int cvp_signal_synx(struct synx_session ssid, u32 *synx, u32 num_synx,
 	return rc;
 }
 
-int cvp_synx_ops(struct msm_cvp_inst *inst, enum cvp_synx_type type,
+int eva_cvp_synx_ops(struct msm_cvp_inst *inst, enum cvp_synx_type type,
 		struct cvp_fence_command *fc, u32 *synx_state)
 {
 	struct synx_session ssid;
