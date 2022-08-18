@@ -318,17 +318,17 @@ struct msm_cvp_inst {
 extern struct msm_cvp_drv *cvp_driver;
 
 void cvp_handle_cmd_response(enum hal_command_response cmd, void *data);
-int msm_cvp_trigger_ssr(struct msm_cvp_core *core,
+int cvp_msm_cvp_trigger_ssr(struct msm_cvp_core *core,
 	enum hal_ssr_trigger_type type);
-int msm_cvp_noc_error_info(struct msm_cvp_core *core);
-void msm_cvp_comm_handle_thermal_event(void);
+int cvp_msm_cvp_noc_error_info(struct msm_cvp_core *core);
+void cvp_msm_cvp_comm_handle_thermal_event(void);
 
-void msm_cvp_fw_unload_handler(struct work_struct *work);
-void msm_cvp_ssr_handler(struct work_struct *work);
+void cvp_msm_cvp_fw_unload_handler(struct work_struct *work);
+void cvp_msm_cvp_ssr_handler(struct work_struct *work);
 /*
  * XXX: normally should be in msm_cvp_core.h, but that's meant for public APIs,
  * whereas this is private
  */
-int msm_cvp_destroy(struct msm_cvp_inst *inst);
+int cvp_msm_cvp_destroy(struct msm_cvp_inst *inst);
 void *cvp_get_drv_data(struct device *dev);
 #endif

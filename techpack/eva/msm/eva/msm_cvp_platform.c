@@ -211,7 +211,7 @@ static const struct of_device_id msm_cvp_dt_match[] = {
 	{},
 };
 
-const struct msm_cvp_hfi_defs cvp_hfi_defs[] = {
+const struct msm_eva_cvp_hfi_defs eva_cvp_hfi_defs[] = {
 	{
 		.size = HFI_DFS_CONFIG_CMD_SIZE,
 		.type = HFI_CMD_SESSION_CVP_DFS_CONFIG,
@@ -457,15 +457,15 @@ const struct msm_cvp_hfi_defs cvp_hfi_defs[] = {
 
 int get_pkt_array_size(void)
 {
-	return ARRAY_SIZE(cvp_hfi_defs);
+	return ARRAY_SIZE(eva_cvp_hfi_defs);
 }
 
-int get_pkt_index(struct cvp_hal_session_cmd_pkt *hdr)
+int eva_get_pkt_index(struct cvp_hal_session_cmd_pkt *hdr)
 {
 	int i;
 
 	for (i = 0; i < get_pkt_array_size(); i++)
-		if (cvp_hfi_defs[i].type == hdr->packet_type)
+		if (eva_cvp_hfi_defs[i].type == hdr->packet_type)
 			return i;
 
 	return -EINVAL;
@@ -483,7 +483,7 @@ int cvp_of_fdt_get_ddrtype(void)
 #endif
 }
 
-void *cvp_get_drv_data(struct device *dev)
+void *eva_cvp_get_drv_data(struct device *dev)
 {
 	struct msm_cvp_platform_data *driver_data;
 	const struct of_device_id *match;

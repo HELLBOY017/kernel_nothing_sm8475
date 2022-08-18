@@ -70,6 +70,6 @@ struct cvp_hfi_packetization_ops {
 			struct eva_kmd_hfi_packet *in_pkt);
 };
 
-struct cvp_hfi_packetization_ops *cvp_hfi_get_pkt_ops_handle(
+struct cvp_hfi_packetization_ops *eva_cvp_hfi_get_pkt_ops_handle(
 		enum hfi_packetization_type);
 #endif

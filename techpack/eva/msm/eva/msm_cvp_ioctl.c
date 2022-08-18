@@ -23,7 +23,7 @@ static int _get_pkt_hdr_from_user(struct eva_kmd_arg __user *up,
 	if (get_user(pkt_hdr->packet_type, &u->pkt_data[1]))
 		return -EFAULT;
 
-	if (get_pkt_index(pkt_hdr) < 0) {
+	if (eva_get_pkt_index(pkt_hdr) < 0) {
 		dprintk(CVP_ERR, "user mode provides incorrect hfi\n");
 		goto set_default_pkt_hdr;
 	}
@@ -37,7 +37,7 @@ static int _get_pkt_hdr_from_user(struct eva_kmd_arg __user *up,
 	return 0;
 
 set_default_pkt_hdr:
-	pkt_hdr->size = get_msg_size(hdr);
+	pkt_hdr->size = eva_get_msg_size(hdr);
 	return 0;
 }
 
@@ -377,7 +377,7 @@ static int convert_from_user(struct eva_kmd_arg *kp,
 		dprintk(CVP_HFI, "system call cmd pkt: %d 0x%x\n",
 				pkt_hdr.size, pkt_hdr.packet_type);
 
-		pkt_idx = get_pkt_index(&pkt_hdr);
+		pkt_idx = eva_get_pkt_index(&pkt_hdr);
 		if (pkt_idx < 0) {
 			dprintk(CVP_ERR, "%s incorrect packet %d, %x\n",
 				__func__,
@@ -476,7 +476,7 @@ static int convert_to_user(struct eva_kmd_arg *kp, unsigned long arg)
 		k = &kp->data.hfi_pkt;
 		u = &up->data.hfi_pkt;
 		hdr = (struct cvp_hfi_msg_session_hdr *)k;
-		size = get_msg_size(hdr) >> 2;
+		size = eva_get_msg_size(hdr) >> 2;
 		for (i = 0; i < size; i++)
 			if (put_user(k->pkt_data[i], &u->pkt_data[i]))
 				return -EFAULT;
@@ -628,7 +628,7 @@ static long cvp_ioctl(struct msm_cvp_inst *inst,
 	return rc;
 }
 
-long cvp_unblocked_ioctl(struct file *filp,
+long eva_cvp_unblocked_ioctl(struct file *filp,
 		unsigned int cmd, unsigned long arg)
 {
 	struct msm_cvp_inst *inst;
@@ -642,7 +642,7 @@ long cvp_unblocked_ioctl(struct file *filp,
 	return cvp_ioctl(inst, cmd, arg);
 }
 
-long cvp_compat_ioctl(struct file *filp,
+long eva_cvp_compat_ioctl(struct file *filp,
 		unsigned int cmd, unsigned long arg)
 {
 	struct msm_cvp_inst *inst;

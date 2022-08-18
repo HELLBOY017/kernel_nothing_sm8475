@@ -96,7 +96,7 @@ struct cvp_dsp_apps {
  	struct msm_cvp_list fastrpc_driver_list;
 };
 
-extern struct cvp_dsp_apps gfa_cv;
+extern struct cvp_dsp_apps cvp_gfa_cv;
 /*
  * API for CVP driver to suspend CVP session during
  * power collapse

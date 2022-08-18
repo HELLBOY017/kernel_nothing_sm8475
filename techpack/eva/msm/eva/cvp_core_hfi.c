@@ -8,7 +8,7 @@
 #include "cvp_hfi_api.h"
 #include "cvp_core_hfi.h"
 
-struct cvp_hfi_device *cvp_hfi_initialize(enum msm_cvp_hfi_type hfi_type,
+struct cvp_hfi_device *eva_cvp_hfi_initialize(enum msm_cvp_hfi_type hfi_type,
 		u32 device_id, struct msm_cvp_platform_resources *res,
 		hfi_cmd_response_callback callback)
 {
@@ -21,7 +21,7 @@ struct cvp_hfi_device *cvp_hfi_initialize(enum msm_cvp_hfi_type hfi_type,
 		return NULL;
 	}
 
-	rc = cvp_iris_hfi_initialize(hdev, device_id, res, callback);
+	rc = eva_cvp_iris_hfi_initialize(hdev, device_id, res, callback);
 
 	if (rc) {
 		if (rc != -EPROBE_DEFER)
@@ -37,7 +37,7 @@ err_hfi_init:
 	return ERR_PTR(rc);
 }
 
-void cvp_hfi_deinitialize(enum msm_cvp_hfi_type hfi_type,
+void eva_cvp_hfi_deinitialize(enum msm_cvp_hfi_type hfi_type,
 			struct cvp_hfi_device *hdev)
 {
 	if (!hdev) {
@@ -45,7 +45,7 @@ void cvp_hfi_deinitialize(enum msm_cvp_hfi_type hfi_type,
 		return;
 	}
 
-	cvp_iris_hfi_delete_device(hdev->hfi_device_data);
+	eva_cvp_iris_hfi_delete_device(hdev->hfi_device_data);
 
 	kfree(hdev);
 }

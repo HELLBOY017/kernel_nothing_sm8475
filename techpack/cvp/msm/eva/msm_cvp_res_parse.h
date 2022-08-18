@@ -8,7 +8,7 @@
 #include <linux/of.h>
 #include "msm_cvp_resources.h"
 #include "msm_cvp_common.h"
-void msm_cvp_free_platform_resources(
+void cvp_msm_cvp_free_platform_resources(
 		struct msm_cvp_platform_resources *res);
 
 int read_hfi_type(struct platform_device *pdev);
