@@ -56,6 +56,9 @@
 #define WLAN_MODULE_NAME  "wlan"
 #endif
 
+// Hack qcacld-3.0 to work properly when built-in
+#define MODULE
+
 #define SSR_MAX_FAIL_CNT 3
 static uint8_t re_init_fail_cnt, probe_fail_cnt;
 
