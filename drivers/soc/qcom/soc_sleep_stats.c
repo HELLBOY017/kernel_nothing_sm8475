@@ -106,7 +106,7 @@ struct appended_stats {
 };
 
 struct ddr_stats_g_data *ddr_gdata;
-bool ddr_freq_update;
+static bool ddr_freq_update;
 ktime_t send_msg_time;
 
 static void print_sleep_stats(struct seq_file *s, struct sleep_stats *stat)
