@@ -2138,6 +2138,43 @@ config MODULE_SIG_FORMAT
 	def_bool n
 	select SYSTEM_DATA_VERIFICATION
 
+menuconfig LAZY_INITCALL
+	bool "Lazy built-in modules initialization"
+	depends on !MODULES
+	help
+	  Android now heavily relies on loadable kernel modules, especially
+	  with GKI. Now with vendors essentially not testing !CONFIG_MODULES,
+	  problems arise when one tries to have everything built-in for a
+	  monolithic kernel.
+
+	  Lazy initcall will defer initializations for specific kernel drivers
+	  until userspace tries to load a kernel module with the same module
+	  name, so that drivers are loaded when Android intended it to.
+
+	  You must know what you're doing here and do the homework of adding
+	  module names to kernel/lazy_initcall.c.
+	  Read the comments at kernel/lazy_initcall.c for instructions.
+
+if LAZY_INITCALL
+
+config LAZY_INITCALL_DEBUG
+	bool "Enable lazy initcall debug (bring-up)"
+	help
+	  By default, lazy initcall will cause a kernel panic when an unknown
+	  kernel module is provided to insmod. Enabling this will relax that
+	  restriction so that you can deal with it (e.g., find and enable
+	  previously disabled kernel driver or add it to the ignorelist to
+	  kernel/lazy_initcall.c.)
+
+	  Additionally, this will repeatedly print warnings every 5 seconds if
+	  there are some modules still yet to be initialized.
+
+	  These must be addressed so that __init memory are properly released
+	  and it's highly recommended that you enable this during the initial
+	  bring-up.
+
+endif
+
 menuconfig MODULES
 	bool "Enable loadable module support"
 	option modules
