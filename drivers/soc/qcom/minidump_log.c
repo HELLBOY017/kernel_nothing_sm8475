@@ -718,11 +718,6 @@ static void md_dump_task_info(struct task_struct *task, char *status,
 	seq_buf_printf(md_runq_seq_buf,
 		       " prio: %d aff: %*pb",
 		       task->prio, cpumask_pr_args(&task->cpus_mask));
-#ifdef CONFIG_SCHED_WALT
-	seq_buf_printf(md_runq_seq_buf, " enq: %lu wake: %lu sleep: %lu",
-		       task->wts.last_enqueued_ts, task->wts.last_wake_ts,
-		       task->wts.last_sleep_ts);
-#endif
 	seq_buf_printf(md_runq_seq_buf,
 		       " vrun: %lu arr: %lu sum_ex: %lu\n",
 		       (unsigned long)se->vruntime,
@@ -1151,6 +1146,7 @@ static void md_register_panic_data(void)
 }
 #endif
 
+#ifdef CONFIG_MODULES
 static int print_module(const char *name, void *mod_addr, void *data)
 {
 	if (!md_mod_info_seq_buf) {
@@ -1206,6 +1202,7 @@ static void md_register_module_data(void)
 
 	android_debug_for_each_module(print_module, NULL);
 }
+#endif
 
 #ifdef CONFIG_QCOM_MINIDUMP_PSTORE
 static void register_pstore_info(void)
@@ -1309,7 +1306,9 @@ int msm_minidump_log_init(void)
 #ifdef CONFIG_QCOM_MINIDUMP_FTRACE
 	md_register_trace_buf();
 #endif
+#ifdef CONFIG_MODULES
 	md_register_module_data();
+#endif
 #ifdef CONFIG_QCOM_MINIDUMP_PANIC_DUMP
 	md_register_panic_data();
 	atomic_notifier_chain_register(&panic_notifier_list, &md_panic_blk);
