@@ -258,7 +258,28 @@ extern bool initcall_debug;
 #define ___define_initcall(fn, id, __sec)			\
 	__unique_initcall(fn, id, __sec, __initcall_id(fn))
 
+#ifdef CONFIG_LAZY_INITCALL
+struct lazy_initcall {
+	initcall_t fn;
+	char *modname;
+	char *filename;
+	bool loaded;
+};
+
+extern bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[]);
+
+#define __define_initcall(fn, id) \
+static int __init initcall_wrapper_##fn(void) {			\
+	bool lazy;						\
+	lazy = add_lazy_initcall(fn, KBUILD_MODNAME, __FILE__);	\
+	if (!lazy)						\
+		return fn();					\
+	return 0;						\
+}								\
+___define_initcall(initcall_wrapper_##fn, id, .initcall##id)
+#else
 #define __define_initcall(fn, id) ___define_initcall(fn, id, .initcall##id)
+#endif
 
 /*
  * Early initcalls run before initializing SMP.
