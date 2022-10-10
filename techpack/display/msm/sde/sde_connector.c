@@ -185,6 +185,8 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
 			display->panel->bl_config.brightness_max_level);
 
+	display->panel->bl_config.real_bl_level = bl_lvl;
+
 	if (finger_hbm_flag) {
 		SDE_ERROR("update hbm brightness\n");
 		bl_lvl = display->panel->bl_config.bl_hbm_level;
