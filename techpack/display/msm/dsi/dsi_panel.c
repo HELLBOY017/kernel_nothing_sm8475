@@ -735,8 +735,6 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		rc = -ENOTSUPP;
 	}
 
-	bl->real_bl_level = bl_lvl;
-
 	panel->fod_dim_alpha = dsi_panel_get_fod_dim_alpha(panel);
 
 	return rc;
