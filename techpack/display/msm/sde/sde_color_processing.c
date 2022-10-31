@@ -12,6 +12,7 @@
 #include "sde_color_processing.h"
 #include "sde_kms.h"
 #include "sde_crtc.h"
+#include "sde_plane.h"
 #include "sde_hw_dspp.h"
 #include "sde_hw_lm.h"
 #include "sde_ad4.h"
@@ -1679,6 +1680,9 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 			continue;
 		hw_cfg.dspp[i] = hw_dspp;
 	}
+
+	if (prop_node->feature == SDE_CP_CRTC_DSPP_PCC)
+		return;
 
 	if ((prop_node->feature >= SDE_CP_CRTC_MAX_FEATURES) ||
 			set_crtc_feature_wrappers[prop_node->feature] == NULL) {
@@ -4980,3 +4984,23 @@ void sde_cp_set_skip_blend_plane_info(struct drm_crtc *drm_crtc,
 	mutex_unlock(&crtc->crtc_cp_lock);
 }
 
+const struct drm_msm_pcc *sde_cp_crtc_get_pcc_cfg(struct drm_crtc *drm_crtc)
+{
+	struct drm_property_blob *blob = NULL;
+	struct sde_cp_node *prop_node = NULL;
+	struct sde_crtc *crtc;
+
+	crtc = to_sde_crtc(drm_crtc);
+
+	mutex_lock(&crtc->crtc_cp_lock);
+	list_for_each_entry(prop_node, &crtc->cp_feature_list, cp_feature_list) {
+		if (prop_node->feature == SDE_CP_CRTC_DSPP_PCC) {
+			blob = prop_node->blob_ptr;
+			break;
+		}
+	}
+
+	mutex_unlock(&crtc->crtc_cp_lock);
+
+	return blob ? blob->data : NULL;
+}
