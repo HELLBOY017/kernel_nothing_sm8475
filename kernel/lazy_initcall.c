@@ -141,13 +141,74 @@ static void __init show_unused_modules(struct work_struct *unused)
 }
 #endif
 
+static noinline void __init load_modname(const char * const modname)
+{
+	int i, ret;
+	bool match = false;
+	initcall_t fn;
+
+	pr_debug("trying to load \"%s\"\n", modname);
+
+	// Check if the driver is blacklisted (built-in, but not lazy-loaded)
+	for (i = 0; blacklist[i]; i++) {
+		if (!strcmp(blacklist[i], modname)) {
+			pr_debug("\"%s\" is blacklisted (not lazy-loaded)\n", modname);
+			return;
+		}
+	}
+
+	// Find the function pointer from lazy_initcalls[]
+	for (i = 0; i < counter; i++) {
+		if (!strcmp(lazy_initcalls[i].modname, modname)) {
+			fn = lazy_initcalls[i].fn;
+			if (lazy_initcalls[i].loaded) {
+				pr_debug("lazy_initcalls[%d]: %s already loaded\n", i, modname);
+				return;
+			}
+			lazy_initcalls[i].loaded = true;
+			match = true;
+			break;
+		}
+	}
+
+	// Unable to find the driver that the userspace requested
+	if (!match) {
+		// Check if this module is built-in without module_init()
+		for (i = 0; builtin_list[i]; i++) {
+			if (!strcmp(builtin_list[i], modname))
+				return;
+		}
+		__fatal("failed to find a built-in module with the name \"%s\"\n", modname);
+		return;
+	}
+
+	ret = fn();
+	pr_info("lazy_initcalls[%d]: %s's init function returned %d\n", i, modname, ret);
+
+	// Check if all modules are loaded so that __init memory can be released
+	match = false;
+	for (i = 0; i < counter; i++) {
+		if (!lazy_initcalls[i].loaded)
+			match = true;
+	}
+
+#ifdef CONFIG_LAZY_INITCALL_DEBUG
+	if (!match)
+		cancel_delayed_work_sync(&show_unused_work);
+	else
+		queue_delayed_work(system_freezable_power_efficient_wq,
+				&show_unused_work, 5 * HZ);
+#endif
+	if (!match)
+		WRITE_ONCE(completed, true);
+
+	return;
+}
+
 static noinline int __init __load_module(struct load_info *info, const char __user *uargs,
 		       int flags)
 {
 	long err;
-	int i, ret;
-	bool match = false;
-	initcall_t fn;
 
 	/*
 	 * Do basic sanity checks against the ELF header and
@@ -167,63 +228,7 @@ static noinline int __init __load_module(struct load_info *info, const char __us
 	if (err)
 		goto err;
 
-	pr_debug("trying to load \"%s\"\n", info->name);
-
-	// Check if the driver is blacklisted (built-in, but not lazy-loaded)
-	for (i = 0; blacklist[i]; i++) {
-		if (!strcmp(blacklist[i], info->name)) {
-			pr_debug("\"%s\" is blacklisted (not lazy-loaded)\n", info->name);
-			goto err;
-		}
-	}
-
-	// Find the function pointer from lazy_initcalls[]
-	for (i = 0; i < counter; i++) {
-		if (!strcmp(lazy_initcalls[i].modname, info->name)) {
-			fn = lazy_initcalls[i].fn;
-			if (lazy_initcalls[i].loaded) {
-				pr_debug("lazy_initcalls[%d]: %s already loaded\n", i, info->name);
-				goto err;
-			}
-			lazy_initcalls[i].loaded = true;
-			match = true;
-			break;
-		}
-	}
-
-	// Unable to find the driver that the userspace requested
-	if (!match) {
-		// Check if this module is built-in without module_init()
-		for (i = 0; builtin_list[i]; i++) {
-			if (!strcmp(builtin_list[i], info->name))
-				goto err;
-		}
-		__fatal("failed to find a built-in module with the name \"%s\"\n", info->name);
-		goto err;
-	}
-
-	ret = fn();
-	pr_info("lazy_initcalls[%d]: %s's init function returned %d\n", i, info->name, ret);
-	free_copy(info);
-
-	// Check if all modules are loaded so that __init memory can be released
-	match = false;
-	for (i = 0; i < counter; i++) {
-		if (!lazy_initcalls[i].loaded)
-			match = true;
-	}
-
-#ifdef CONFIG_LAZY_INITCALL_DEBUG
-	if (!match)
-		cancel_delayed_work_sync(&show_unused_work);
-	else
-		queue_delayed_work(system_freezable_power_efficient_wq,
-				&show_unused_work, 5 * HZ);
-#endif
-	if (!match)
-		WRITE_ONCE(completed, true);
-
-	return 0;
+	load_modname(info->name);
 
 err:
 	free_copy(info);
