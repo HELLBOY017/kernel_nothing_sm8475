@@ -3802,6 +3802,19 @@ static int vibrator_init(struct aw_haptic *aw_haptic)
 		aw_err("error creating sysfs attr files");
 		return ret;
 	}
+
+	/*
+	 * Android has a habit of trying to set the vibrator trigger to "transient",
+	 * which destroys our own "activate", "duration", and "state" attributes.
+	 * Remove the "trigger" attribute provided by leds_class so that no one can
+	 * change the trigger of the vibrator LED device.
+	 *
+	 * Luckily, `sysfs_remove_file` only uses the `name` field, so we can use a
+	 * compound literal instead of having to find the proper attribute struct
+	 */
+	sysfs_remove_file(&aw_haptic->vib_dev.dev->kobj,
+	                  &((struct attribute){.name = "trigger"}));
+
 #endif
 	hrtimer_init(&aw_haptic->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	aw_haptic->timer.function = vibrator_timer_func;
