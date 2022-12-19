@@ -480,4 +480,6 @@ bool dsi_panel_get_fod_ui(struct dsi_panel *panel);
 void dsi_panel_set_fod_ui(struct dsi_panel *panel, bool status);
 bool dsi_panel_get_force_fod_ui(struct dsi_panel *panel);
 
+u8 dsi_panel_get_fod_dim_alpha(struct dsi_panel *panel);
+
 #endif /* _DSI_PANEL_H_ */
