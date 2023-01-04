@@ -259,11 +259,17 @@ extern bool initcall_debug;
 	__unique_initcall(fn, id, __sec, __initcall_id(fn))
 
 #ifdef CONFIG_LAZY_INITCALL
+enum lazy_initcall_type {
+	NORMAL,
+	DEFERRED
+};
+
 struct lazy_initcall {
 	initcall_t fn;
 	char *modname;
 	char *filename;
 	bool loaded;
+	enum lazy_initcall_type type;
 };
 
 extern bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[]);

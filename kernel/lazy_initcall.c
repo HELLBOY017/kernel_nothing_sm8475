@@ -87,13 +87,24 @@ static const __initconst char * const blacklist[] = {
 	NULL
 };
 
-static struct lazy_initcall __initdata lazy_initcalls[ARRAY_SIZE(targets_list) - ARRAY_SIZE(blacklist)];
+/*
+ * You may want some specific drivers to load after all lazy modules have been
+ * loaded.
+ *
+ * Add them here.
+ */
+static const __initconst char * const deferred_list[] = {
+	NULL
+};
+
+static struct lazy_initcall __initdata lazy_initcalls[ARRAY_SIZE(targets_list) - ARRAY_SIZE(blacklist) + ARRAY_SIZE(deferred_list)];
 static int __initdata counter;
 
 bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[])
 {
 	int i;
 	bool match = false;
+	enum lazy_initcall_type type = NORMAL;
 
 	for (i = 0; blacklist[i]; i++) {
 		if (!strcmp(blacklist[i], modname))
@@ -103,6 +114,14 @@ bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[])
 	for (i = 0; targets_list[i]; i++) {
 		if (!strcmp(targets_list[i], modname)) {
 			match = true;
+			break;
+		}
+	}
+
+	for (i = 0; deferred_list[i]; i++) {
+		if (!strcmp(deferred_list[i], modname)) {
+			match = true;
+			type = DEFERRED;
 			break;
 		}
 	}
@@ -118,6 +137,7 @@ bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[])
 	lazy_initcalls[counter].fn = fn;
 	lazy_initcalls[counter].modname = modname;
 	lazy_initcalls[counter].filename = filename;
+	lazy_initcalls[counter].type = type;
 	counter++;
 
 	mutex_unlock(&lazy_initcall_mutex);
@@ -188,7 +208,7 @@ static noinline void __init load_modname(const char * const modname)
 	// Check if all modules are loaded so that __init memory can be released
 	match = false;
 	for (i = 0; i < counter; i++) {
-		if (!lazy_initcalls[i].loaded)
+		if (lazy_initcalls[i].type == NORMAL && !lazy_initcalls[i].loaded)
 			match = true;
 	}
 
@@ -238,7 +258,7 @@ err:
 static int __ref load_module(struct load_info *info, const char __user *uargs,
 		       int flags)
 {
-	int ret = 0;
+	int i, ret = 0;
 
 	mutex_lock(&lazy_initcall_mutex);
 
@@ -251,6 +271,12 @@ static int __ref load_module(struct load_info *info, const char __user *uargs,
 	smp_wmb();
 
 	if (completed) {
+		if (deferred_list[0] != NULL) {
+			pr_info("all userspace modules loaded, now loading built-in deferred drivers\n");
+
+			for (i = 0; deferred_list[i]; i++)
+				load_modname(deferred_list[i]);
+		}
 		pr_info("all modules loaded, calling free_initmem()\n");
 		free_initmem();
 		mark_readonly();
