@@ -228,6 +228,9 @@ cpp_flags      = -Wp,-MMD,$(depfile) $(NOSTDINC_FLAGS) $(LINUXINCLUDE)     \
 
 ld_flags       = $(KBUILD_LDFLAGS) $(ldflags-y) $(LDFLAGS_$(@F))
 
+KBUILD_DTC_INCLUDE += $(srctree)/techpack/audio/include
+KBUILD_DTC_INCLUDE += $(srctree)/techpack/camera
+
 # ANDROID: Allow DTC_INCLUDE to be set by the BUILD_CONFIG. This allows one to
 # compile an out-of-tree device tree.
 DTC_INCLUDE    += $(srctree)/scripts/dtc/include-prefixes $(KBUILD_DTC_INCLUDE)
