@@ -1,6 +1,15 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
-KDIR := $(TOP)/kernel_platform/common
+ifeq ($(MODNAME),)
+	KERNEL_BUILD := 1
+else
+	KERNEL_BUILD := 0
+endif
+
+ifeq ($(KERNEL_BUILD), 1)
+	KERNEL_ROOT = $(srctree)
+	DISPLAY_ROOT = $(KERNEL_ROOT)/techpack/display
+endif
 
 ifeq ($(CONFIG_ARCH_WAIPIO), y)
 ifeq ($(CONFIG_ARCH_QTI_VM), y)
@@ -54,7 +63,6 @@ LINUX_INC +=	-Iinclude/linux \
 LINUX_INC +=	-I$(DISPLAY_ROOT) \
 	-I$(DISPLAY_ROOT)/include \
 	-I$(KERNEL_ROOT)/drivers/clk/qcom \
-	-I$(KERNEL_SRC)/drivers/clk/qcom \
 	-I$(DISPLAY_ROOT)/include/linux \
 	-I$(DISPLAY_ROOT)/rotator \
 	-I$(DISPLAY_ROOT)/msm \
@@ -62,6 +70,8 @@ LINUX_INC +=	-I$(DISPLAY_ROOT) \
 	-I$(DISPLAY_ROOT)/msm/dsi \
 	-I$(DISPLAY_ROOT)/msm/sde \
 	-I$(DISPLAY_ROOT)/include/uapi/display \
+
+USERINCLUDE +=	-I$(DISPLAY_ROOT)/include/uapi/display
 
 CDEFINES +=	-DANI_LITTLE_BYTE_ENDIAN \
 	-DANI_LITTLE_BIT_ENDIAN \
