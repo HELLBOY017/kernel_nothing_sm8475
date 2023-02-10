@@ -1352,9 +1352,9 @@ static int check_version(const struct load_info *info,
 	return 1;
 
 bad_version:
-	pr_warn("%s: disagrees about version of symbol %s\n",
-	       info->name, symname);
-	return 0;
+	pr_warn_once("%s: disagrees about version of symbol %s\n",
+			info->name, symname);
+	return 1;
 }
 
 static inline int check_modstruct_version(const struct load_info *info,
