@@ -1,3 +1,4 @@
+DTC_INCLUDE += $(srctree)/techpack/audio/include
 
 dtbo-$(CONFIG_ARCH_WAIPIO) += waipio-audio.dtbo \
                  waipio-audio-cdp.dtbo \
