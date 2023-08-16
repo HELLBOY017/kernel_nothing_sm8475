@@ -137,8 +137,6 @@ struct sde_plane {
 	/* debugfs related stuff */
 	struct dentry *debugfs_root;
 	bool debugfs_default_scale;
-
-	u8 fod_dim_alpha;
 };
 
 #define to_sde_plane(x) container_of(x, struct sde_plane, base)
@@ -1170,7 +1168,6 @@ static inline void _sde_plane_setup_csc(struct sde_plane *psde)
 #define CSC_8BIT_LIMIT			0xff
 #define PCC_MASK			0x3ffff
 #define PCC_ONE				(1 << 15)
-#define FOD_DIM_ALPHA_MAX		255
 
 #define CSC_BIAS_CLAMP(value) \
 	{ 0, 0, 0 }, \
@@ -1178,11 +1175,6 @@ static inline void _sde_plane_setup_csc(struct sde_plane *psde)
 	{ 0, value, 0, value, 0, value }, \
 	{ 0, value, 0, value, 0, value }
 
-static const struct drm_msm_pcc sde_identity_pcc_cfg = {
-	.r = { .r = PCC_ONE },
-	.g = { .g = PCC_ONE },
-	.b = { .b = PCC_ONE },
-};
 static const struct sde_csc_cfg sde_identity_csc_cfg = {
 	{
 		CSC_ONE, 0, 0,
@@ -1225,7 +1217,6 @@ static inline s32 pcc_to_signed(u32 v)
 static inline void _sde_plane_mul_csc_pcc(struct sde_plane *psde,
 					  const struct sde_csc_cfg *csc_cfg)
 {
-	unsigned int fod_dim_scale = FOD_DIM_ALPHA_MAX - psde->fod_dim_alpha;
 	unsigned int i, j, u;
 
 	memcpy(&psde->csc_pcc_cfg, csc_cfg, sizeof(psde->csc_pcc_cfg));
@@ -1244,8 +1235,7 @@ static inline void _sde_plane_mul_csc_pcc(struct sde_plane *psde,
 				sum += csc * pcc;
 			}
 
-			sum = mult_frac(sum, fod_dim_scale,
-					PCC_ONE * FOD_DIM_ALPHA_MAX);
+			sum = div_s64(sum, PCC_ONE);
 
 			psde->csc_pcc_cfg.csc_mv[ij] = csc_to_unsigned(sum);
 		}
@@ -3472,26 +3462,12 @@ static void _sde_plane_check_lut_dirty(struct sde_plane *psde,
 	SDE_EVT32(DRMID(&psde->base), pstate->scaler3_cfg.lut_flag, SDE_EVTLOG_ERROR);
 }
 
-static inline void _sde_plane_set_fod_dim_alpha(struct sde_plane *psde,
-						struct sde_plane_state *pstate)
-{
-	if (psde->fod_dim_alpha == pstate->fod_dim_alpha)
-		return;
-
-	psde->fod_dim_alpha = pstate->fod_dim_alpha;
-
-	pstate->dirty |= SDE_PLANE_DIRTY_RECTS;
-}
-
 static inline void _sde_plane_set_csc_pcc(struct sde_plane *psde,
 					  struct sde_plane_state *pstate,
 					  struct drm_crtc *crtc)
 {
 	const struct drm_msm_pcc *pcc_cfg = sde_cp_crtc_get_pcc_cfg(crtc);
 	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
-
-	if (!pcc_cfg && psde->fod_dim_alpha)
-		pcc_cfg = &sde_identity_pcc_cfg;
 
 	if (pcc_cfg == psde->pcc_cfg)
 		return;
@@ -3605,7 +3581,6 @@ static int sde_plane_sspp_atomic_update(struct drm_plane *plane,
 	_sde_plane_sspp_atomic_check_mode_changed(psde, state,
 								old_state);
 
-	_sde_plane_set_fod_dim_alpha(psde, pstate);
 	_sde_plane_set_csc_pcc(psde, pstate, crtc);
 
 	/* re-program the output rects always if partial update roi changed */
@@ -3696,11 +3671,6 @@ int sde_plane_is_fod_layer(const struct drm_plane_state *drm_state)
 	pstate = to_sde_plane_state(drm_state);
 
 	return sde_plane_get_property(pstate, PLANE_PROP_FOD);
-}
-
-void sde_plane_set_fod_dim_alpha(struct sde_plane_state *pstate, u8 alpha)
-{
-	pstate->fod_dim_alpha = alpha;
 }
 
 static void sde_plane_atomic_update(struct drm_plane *plane,

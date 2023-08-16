@@ -1028,6 +1028,15 @@ static int _sde_connector_update_dirty_properties(
 	return 0;
 }
 
+static bool sde_connector_is_fod_enabled(struct sde_connector *c_conn)
+{
+	if (!c_conn->encoder || !c_conn->encoder->crtc ||
+	    !c_conn->encoder->crtc->state)
+		return false;
+
+	return !!to_sde_crtc_state(c_conn->encoder->crtc->state)->fod_dim_layer;
+}
+
 static int _sde_connector_update_finger_hbm_status(
 				struct drm_connector *connector)
 {
@@ -1051,7 +1060,7 @@ static int _sde_connector_update_finger_hbm_status(
 		return -EINVAL;
 	}
 
-        status = sde_crtc_is_fod_enabled(connector->state->crtc->state);
+        status = sde_connector_is_fod_enabled(c_conn);
         if ((!c_conn->fingerlayer_dirty) && (status == dsi_panel_get_fod_ui(display->panel)))
                 return 0;
 
