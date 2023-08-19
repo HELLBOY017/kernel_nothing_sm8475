@@ -228,7 +228,6 @@ fail:
 }
 #else /* CONFIG_DEBUG_FS */
 static void rmnet_ll_ipa3_debugfs_init(void){}
-static void rmnet_ll_ipa3_debugfs_remove(void){}
 #endif /* CONFIG_DEBUG_FS */
 
 int ipa3_rmnet_ll_init(void)

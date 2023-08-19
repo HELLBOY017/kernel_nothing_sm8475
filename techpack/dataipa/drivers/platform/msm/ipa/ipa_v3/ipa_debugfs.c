@@ -4,12 +4,12 @@
  * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
-#ifdef CONFIG_DEBUG_FS
+#include "ipa_i.h"
 
+#ifdef CONFIG_DEBUG_FS
 #include <linux/debugfs.h>
 #include <linux/kernel.h>
 #include <linux/stringify.h>
-#include "ipa_i.h"
 #include "ipa_rm_i.h"
 #include "ipahal_nat.h"
 #include "ipa_odl.h"
@@ -3981,5 +3981,5 @@ int _ipa_read_ep_reg_v4_0(char *buf, int max_len, int pipe)
 	return INVALID_NO_OF_CHAR;
 }
 void ipa3_eth_debugfs_init(void) {}
-void ipa3_eth_debugfs_add(struct ipa_eth_client *client) {}
+void ipa3_eth_debugfs_add_node(struct ipa_eth_client *client) {}
 #endif
