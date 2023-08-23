@@ -523,6 +523,7 @@ struct sde_crtc_state {
 		cp_range_payload[SDE_CP_CRTC_MAX_FEATURES];
 	bool cont_splash_populated;
 	u8 fod_dim_alpha;
+	bool color_invert_on;
 };
 
 enum sde_crtc_irq_state {
