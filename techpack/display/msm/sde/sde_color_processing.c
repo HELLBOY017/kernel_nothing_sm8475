@@ -209,6 +209,9 @@ typedef int (*feature_wrapper)(struct sde_hw_dspp *hw_dspp,
 				   struct sde_hw_cp_cfg *hw_cfg,
 				   struct sde_crtc *hw_crtc);
 
+struct drm_msm_pcc save_pcc;
+bool pcc_enabled = false;
+bool skip_pcc = false;
 
 static struct sde_kms *get_kms(struct drm_crtc *crtc)
 {
@@ -1641,12 +1644,74 @@ static int _sde_cp_crtc_checkfeature(u32 feature,
 	return ret;
 }
 
+bool sde_is_fod_pressed(struct drm_crtc *crtc)
+{
+	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
+
+	return !!cstate->fod_dim_layer;
+}
+
+bool sde_cp_crtc_update_pcc(struct drm_crtc *crtc)
+{
+	struct sde_hw_cp_cfg hw_cfg;
+	struct sde_hw_dspp *hw_dspp;
+	struct sde_hw_mixer *hw_lm;
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+	struct sde_mdss_cfg *catalog = NULL;
+	u32 num_mixers = sde_crtc->num_mixers;
+	bool pcc_skip_mode;
+	int i = 0;
+
+	pcc_skip_mode = sde_is_fod_pressed(crtc);
+	if (skip_pcc == pcc_skip_mode)
+		return false;
+
+	skip_pcc = pcc_skip_mode;
+	memset(&hw_cfg, 0, sizeof(hw_cfg));
+
+	if (!pcc_skip_mode && pcc_enabled) {
+		hw_cfg.payload = &save_pcc;
+		hw_cfg.len = sizeof(save_pcc);
+	}
+
+	hw_cfg.num_of_mixers = sde_crtc->num_mixers;
+	hw_cfg.last_feature = 0;
+
+	for (i = 0; i < num_mixers; i++) {
+		hw_dspp = sde_crtc->mixers[i].hw_dspp;
+		if (!hw_dspp || i >= DSPP_MAX)
+			continue;
+		hw_cfg.dspp[i] = hw_dspp;
+	}
+
+	catalog = get_kms(&sde_crtc->base)->catalog;
+	hw_cfg.broadcast_disabled = catalog->dma_cfg.broadcast_disabled;
+	for (i = 0; i < num_mixers; i++) {
+
+		hw_lm = sde_crtc->mixers[i].hw_lm;
+		hw_dspp = sde_crtc->mixers[i].hw_dspp;
+		if (!hw_lm)
+			continue;
+		if (!hw_dspp || !hw_dspp->ops.setup_pcc)
+			continue;
+
+		hw_cfg.ctl = sde_crtc->mixers[i].hw_ctl;
+		hw_cfg.mixer_info = hw_lm;
+		hw_cfg.displayh = num_mixers * hw_lm->cfg.out_width;
+		hw_cfg.displayv = hw_lm->cfg.out_height;
+		hw_dspp->ops.setup_pcc(hw_dspp, &hw_cfg);
+	}
+	return true;
+}
+
 static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 				   struct sde_crtc *sde_crtc)
 {
 	struct sde_hw_cp_cfg hw_cfg;
 	struct sde_hw_mixer *hw_lm;
 	struct sde_hw_dspp *hw_dspp;
+	struct drm_property_blob *blob;
+	struct drm_msm_pcc *pcc_cfg;
 	u32 num_mixers = sde_crtc->num_mixers;
 	int i = 0, ret = 0;
 	bool feature_enabled = false;
@@ -1678,6 +1743,28 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 		if (!hw_dspp || i >= DSPP_MAX)
 			continue;
 		hw_cfg.dspp[i] = hw_dspp;
+	}
+
+	if (prop_node->feature == SDE_CP_CRTC_DSPP_PCC) {
+		blob = prop_node->blob_ptr;
+		pcc_cfg = blob->data;
+
+		if (!(pcc_cfg->r.c == 0 && pcc_cfg->g.c == 0 && pcc_cfg->b.c == 0)) {
+			if (hw_cfg.payload && (hw_cfg.len == sizeof(save_pcc))) {
+				memcpy(&save_pcc, hw_cfg.payload, hw_cfg.len);
+				pcc_enabled = true;
+
+				if (sde_is_fod_pressed(&sde_crtc->base)) {
+					hw_cfg.payload = NULL;
+					hw_cfg.len = 0;
+					skip_pcc = true;
+				} else {
+					skip_pcc = false;
+				}
+			} else {
+				pcc_enabled = false;
+			}
+		}
 	}
 
 	if ((prop_node->feature >= SDE_CP_CRTC_MAX_FEATURES) ||
@@ -2122,6 +2209,7 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 	int rc = 0;
 	bool need_flush = false;
 	struct sde_crtc_state *cstate;
+	bool dirty_pcc = false;
 	bool disable_pending_cp = false;
 
 	if (!crtc || !crtc->dev) {
@@ -2154,6 +2242,11 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 
 	disable_pending_cp = sde_crtc->disable_pending_cp;
 	sde_crtc->disable_pending_cp = false;
+
+	dirty_pcc = sde_cp_crtc_update_pcc(crtc);
+	if (dirty_pcc)
+		set_dspp_flush = true;
+
 	if (list_empty(&sde_crtc->cp_dirty_list) &&
 			list_empty(&sde_crtc->ad_dirty) &&
 			list_empty(&sde_crtc->ad_active) &&
