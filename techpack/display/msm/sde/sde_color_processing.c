@@ -1648,6 +1648,10 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 	struct sde_hw_cp_cfg hw_cfg;
 	struct sde_hw_mixer *hw_lm;
 	struct sde_hw_dspp *hw_dspp;
+	struct drm_crtc *drm_crtc = &sde_crtc->base;
+	struct sde_crtc_state *cstate = to_sde_crtc_state(drm_crtc->state);
+	struct drm_property_blob *blob;
+	struct drm_msm_pcc *pcc_cfg;
 	u32 num_mixers = sde_crtc->num_mixers;
 	int i = 0, ret = 0;
 	bool feature_enabled = false;
@@ -1681,8 +1685,17 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 		hw_cfg.dspp[i] = hw_dspp;
 	}
 
-	if (prop_node->feature == SDE_CP_CRTC_DSPP_PCC)
-		return;
+	if (prop_node->feature == SDE_CP_CRTC_DSPP_PCC) {
+		blob = prop_node->blob_ptr;
+		pcc_cfg = blob->data;
+
+		if (pcc_cfg->r.c == 0 && pcc_cfg->g.c == 0 && pcc_cfg->b.c == 0) {
+			cstate->color_invert_on = false;
+			hw_cfg.payload = NULL;
+			hw_cfg.len = 0;
+		} else
+			cstate->color_invert_on = true;
+	}
 
 	if ((prop_node->feature >= SDE_CP_CRTC_MAX_FEATURES) ||
 			set_crtc_feature_wrappers[prop_node->feature] == NULL) {
