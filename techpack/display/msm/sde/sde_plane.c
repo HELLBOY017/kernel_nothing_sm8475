@@ -1250,7 +1250,7 @@ inline bool is_array_empty(const u64 array[], size_t size)
  * visual changes are with those PCC transformations.
  *
  * The actual mathematical equation would be:
- * y = pcc_one * ((z * (sqrt(x) / sqrt(32768))) + ((100 - z) * (x / 32768)^2)) / 100
+ * y = pcc_one * ((z * sqrt(x / pcc_one)) + ((100 - z) * (x / pcc_one))) / 100
  * with z = 115
  *
  * input: pcc The current value of the PCC coefficient.
@@ -1261,12 +1261,12 @@ inline u64 pcc_nonlin_conv(u64 pcc)
 {
 	const u8 mul_const = 15;
 	const u8 div_const = 100;
-	u64 res, sqrt, pow;
+	u64 res, sqrt, lin;
 
 	sqrt = DIV_ROUND_CLOSEST_ULL(PREC_INDEX * int_sqrt(pcc * PREC_INDEX),
 						int_sqrt(PCC_ONE * PREC_INDEX));
-	pow = DIV_ROUND_CLOSEST_ULL(PREC_INDEX * pcc * pcc, PCC_ONE * PCC_ONE);
-	res = ((div_const + mul_const) * sqrt) - (mul_const * pow);
+	lin = DIV_ROUND_CLOSEST_ULL(PREC_INDEX * pcc, PCC_ONE);
+	res = ((div_const + mul_const) * sqrt) - (mul_const * lin);
 	res = DIV_ROUND_CLOSEST_ULL(res * PCC_ONE, div_const);
 
 	return res;
