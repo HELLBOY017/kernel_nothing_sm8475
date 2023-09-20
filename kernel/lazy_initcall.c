@@ -161,10 +161,60 @@ static void __init show_unused_modules(struct work_struct *unused)
 }
 #endif
 
-static noinline void __init load_modname(const char * const modname)
+static int __init unknown_integrated_module_param_cb(char *param, char *val,
+					      const char *modname, void *arg)
+{
+	pr_err("%s: unknown parameter '%s' ignored\n", modname, param);
+	return 0;
+}
+
+static int __init integrated_module_param_cb(char *param, char *val,
+				      const char *modname, void *arg)
+{
+	size_t nlen, plen, vlen;
+	char *modparam;
+
+	nlen = strlen(modname);
+	plen = strlen(param);
+	vlen = val ? strlen(val) : 0;
+	if (vlen)
+		/* Parameter formatted as "modname.param=val" */
+		modparam = kmalloc(nlen + plen + vlen + 3, GFP_KERNEL);
+	else
+		/* Parameter formatted as "modname.param" */
+		modparam = kmalloc(nlen + plen + 2, GFP_KERNEL);
+	if (!modparam) {
+		pr_err("%s: allocation failed for module '%s' parameter '%s'\n",
+		       __func__, modname, param);
+		return 0;
+	}
+
+	/* Construct the correct parameter name for the built-in module */
+	memcpy(modparam, modname, nlen);
+	modparam[nlen] = '.';
+	memcpy(&modparam[nlen + 1], param, plen);
+	if (vlen) {
+		modparam[nlen + 1 + plen] = '=';
+		memcpy(&modparam[nlen + 1 + plen + 1], val, vlen);
+		modparam[nlen + 1 + plen + 1 + vlen] = '\0';
+	} else {
+		modparam[nlen + 1 + plen] = '\0';
+	}
+
+	/* Now have parse_args() look for the correct parameter name */
+	parse_args(modname, modparam, __start___param,
+		   __stop___param - __start___param,
+		   -32768, 32767, NULL,
+		   unknown_integrated_module_param_cb);
+	kfree(modparam);
+	return 0;
+}
+
+static noinline void __init load_modname(const char * const modname, const char __user *uargs)
 {
 	int i, ret;
 	bool match = false;
+	char *args;
 	initcall_t fn;
 
 	pr_debug("trying to load \"%s\"\n", modname);
@@ -200,6 +250,36 @@ static noinline void __init load_modname(const char * const modname)
 		}
 		__fatal("failed to find a built-in module with the name \"%s\"\n", modname);
 		return;
+	}
+
+	// Setup args
+	if (uargs != NULL) {
+		args = strndup_user(uargs, ~0UL >> 1);
+		if (IS_ERR(args)) {
+			pr_err("failed to parse args: %d\n", PTR_ERR(args));
+		} else {
+			/*
+			 * Parameter parsing is done in two steps for integrated modules
+			 * because built-in modules have their parameter names set as
+			 * "modname.param", which means that each parameter name in the
+			 * arguments must have "modname." prepended to it, or it won't
+			 * be found.
+			 *
+			 * Since parse_args() has a lot of complex logic for actually
+			 * parsing out arguments, do parsing in two parse_args() steps.
+			 * The first step just makes parse_args() parse out each
+			 * parameter/value pair and then pass it to
+			 * integrated_module_param_cb(), which builds the correct
+			 * parameter name for the built-in module and runs parse_args()
+			 * for real. This means that parse_args() recurses, but the
+			 * recursion is fixed because integrated_module_param_cb()
+			 * passes a different unknown handler,
+			 * unknown_integrated_module_param_cb().
+			 */
+			if (*args)
+				parse_args(modname, args, NULL, 0, 0, 0, NULL,
+					   integrated_module_param_cb);
+		}
 	}
 
 	ret = fn();
@@ -251,7 +331,7 @@ static noinline int __init __load_module(struct load_info *info, const char __us
 	if (err)
 		goto err;
 
-	load_modname(info->name);
+	load_modname(info->name, uargs);
 
 err:
 	free_copy(info);
@@ -278,7 +358,7 @@ static int __ref load_module(struct load_info *info, const char __user *uargs,
 			pr_info("all userspace modules loaded, now loading built-in deferred drivers\n");
 
 			for (i = 0; deferred_list[i]; i++)
-				load_modname(deferred_list[i]);
+				load_modname(deferred_list[i], NULL);
 		}
 		pr_info("all modules loaded, calling free_initmem()\n");
 		free_initmem();
