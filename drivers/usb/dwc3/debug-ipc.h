@@ -193,6 +193,7 @@ static struct debugfs_reg32 qscratch_reg[] = {
 #define dbg_trace_event(event, dwc) \
 	dwc3_dbg_trace_event(dwc_trace_ipc_log_ctxt, event, dwc)
 
+#ifdef CONFIG_IPC_LOGGING
 void dwc3_dbg_trace_log_ctrl(void *log_ctxt, struct usb_ctrlrequest *ctrl);
 void dwc3_dbg_trace_log_request(void *log_ctxt, struct dwc3_request *req,
 				char *tag);
@@ -224,5 +225,38 @@ void dwc3_dbg_dma_map(void *log_ctxt, u8 ep_num,
 void dwc3_dbg_dma_unmap(void *log_ctxt, u8 ep_num,
 			struct dwc3_request *req);
 void dbg_dwc3_dump_regs(void *log_ctxt, char *name, int offset, int value);
+#else
+static inline void dwc3_dbg_trace_log_ctrl(void *log_ctxt, struct usb_ctrlrequest *ctrl) {}
+static inline void dwc3_dbg_trace_log_request(void *log_ctxt, struct dwc3_request *req,
+				char *tag) {}
+static inline void dwc3_dbg_trace_ep_cmd(void *log_ctxt, struct dwc3_ep *dep,
+				unsigned int cmd,
+				struct dwc3_gadget_ep_cmd_params *params,
+				int cmd_status) {}
+static inline void dwc3_dbg_trace_trb_complete(void *log_ctxt, struct dwc3_ep *dep,
+					struct dwc3_trb *trb, char *tag) {}
+static inline void dwc3_dbg_trace_event(void *log_ctxt, u32 event, struct dwc3 *dwc) {}
+static inline void dwc3_dbg_print(void *log_ctxt, u8 ep_num,
+		const char *name, int status, const char *extra) {}
+static inline void dwc3_dbg_done(void *log_ctxt, u8 ep_num,
+		const u32 count, int status) {}
+static inline void dwc3_dbg_event(void *log_ctxt, u8 ep_num,
+		const char *name, int status) {}
+static inline void dwc3_dbg_queue(void *log_ctxt, u8 ep_num,
+		const struct usb_request *req, int status) {}
+static inline void dwc3_dbg_setup(void *log_ctxt, u8 ep_num,
+		const struct usb_ctrlrequest *req) {}
+static inline void dwc3_dbg_print_reg(void *log_ctxt,
+		const char *name, int reg) {}
+static inline void dwc3_dbg_dma_queue(void *log_ctxt, u8 ep_num,
+			struct dwc3_request *req) {}
+static inline void dwc3_dbg_dma_dequeue(void *log_ctxt, u8 ep_num,
+			struct dwc3_request *req) {}
+static inline void dwc3_dbg_dma_map(void *log_ctxt, u8 ep_num,
+			struct dwc3_request *req) {}
+static inline void dwc3_dbg_dma_unmap(void *log_ctxt, u8 ep_num,
+			struct dwc3_request *req) {}
+static inline void dbg_dwc3_dump_regs(void *log_ctxt, char *name, int offset, int value) {}
+#endif
 
 #endif /* __DWC3_DEBUG_IPC_H */
