@@ -17,13 +17,12 @@
 #include <linux/syscalls.h>
 #include <linux/kmemleak.h>
 #include <uapi/linux/module.h>
+#include <uapi/linux/time.h>
 
 #include "module-internal.h"
 
-#ifdef CONFIG_LAZY_INITCALL_DEBUG
-static void __init show_unused_modules(struct work_struct *unused);
-static __initdata DECLARE_DELAYED_WORK(show_unused_work, show_unused_modules);
-#endif
+static void __init show_errors(struct work_struct *unused);
+static __initdata DECLARE_DELAYED_WORK(show_errors_work, show_errors);
 static DEFINE_MUTEX(lazy_initcall_mutex);
 static bool completed;
 
@@ -145,26 +144,61 @@ bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[])
 	return true;
 }
 
-#ifdef CONFIG_LAZY_INITCALL_DEBUG
-static void __init show_unused_modules(struct work_struct *unused)
+static char __initdata errors_str[16 * 1024];
+
+#define __err(...) do { \
+	size_t len = strlen(errors_str); \
+	char *ptr = errors_str + len; \
+	snprintf(ptr, sizeof(errors_str) - len, __VA_ARGS__); \
+	smp_mb(); \
+	pr_err("%s", ptr); \
+} while (0)
+
+static bool __init show_errors_str(void)
+{
+	char *s, *p, *tok;
+
+	if (strlen(errors_str) == 0)
+		return false;
+
+	s = kstrdup(errors_str, GFP_KERNEL);
+	if (!s)
+		return true;
+
+	for (p = s; (tok = strsep(&p, "\n")) != NULL; )
+		if (tok[0] != '\0')
+			pr_err("%s\n", tok);
+
+	kfree(s);
+
+	return true;
+}
+
+static void __init show_errors(struct work_struct *unused)
 {
 	int i;
 
+	// Start printing only after 30s of uptime
+	if (ktime_to_us(ktime_get_boottime()) < 30 * USEC_PER_SEC)
+		goto out;
+
+	show_errors_str();
+
 	for (i = 0; i < counter; i++) {
 		if (!lazy_initcalls[i].loaded) {
-			pr_info("lazy_initcalls[%d]: %s not loaded yet\n", i, lazy_initcalls[i].modname);
+			pr_err("lazy_initcalls[%d]: %s not loaded yet\n", i, lazy_initcalls[i].modname);
 		}
 	}
 
+out:
 	queue_delayed_work(system_freezable_power_efficient_wq,
-			&show_unused_work, 5 * HZ);
+			&show_errors_work, 5 * HZ);
 }
-#endif
 
 static int __init unknown_integrated_module_param_cb(char *param, char *val,
 					      const char *modname, void *arg)
 {
-	pr_err("%s: unknown parameter '%s' ignored\n", modname, param);
+	__err("%s: unknown parameter '%s' ignored\n", modname, param);
 	return 0;
 }
 
@@ -283,10 +317,8 @@ static noinline void __init load_modname(const char * const modname, const char 
 	}
 
 	ret = fn();
-#ifndef DEBUG
 	if (ret != 0)
-#endif
-		pr_info("lazy_initcalls[%d]: %s's init function returned %d\n", i, modname, ret);
+		__err("lazy_initcalls[%d]: %s's init function returned %d\n", i, modname, ret);
 
 	// Check if all modules are loaded so that __init memory can be released
 	match = false;
@@ -295,13 +327,12 @@ static noinline void __init load_modname(const char * const modname, const char 
 			match = true;
 	}
 
-#ifdef CONFIG_LAZY_INITCALL_DEBUG
 	if (!match)
-		cancel_delayed_work_sync(&show_unused_work);
+		cancel_delayed_work_sync(&show_errors_work);
 	else
 		queue_delayed_work(system_freezable_power_efficient_wq,
-				&show_unused_work, 5 * HZ);
-#endif
+				&show_errors_work, 5 * HZ);
+
 	if (!match)
 		WRITE_ONCE(completed, true);
 
@@ -361,6 +392,8 @@ static int __ref load_module(struct load_info *info, const char __user *uargs,
 				load_modname(deferred_list[i], NULL);
 		}
 		pr_info("all modules loaded, calling free_initmem()\n");
+		if (show_errors_str())
+			WARN(1, "all modules loaded with errors, review if necessary");
 		free_initmem();
 		mark_readonly();
 	}
