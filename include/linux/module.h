@@ -79,7 +79,7 @@ extern struct module_attribute module_uevent;
 extern int init_module(void);
 extern void cleanup_module(void);
 
-#ifndef MODULE
+#if !defined(MODULE) || defined(CONFIG_LAZY_INITCALL)
 /**
  * module_init() - driver initialization entry point
  * @x: function to be run at kernel boot time or module insertion
@@ -241,12 +241,12 @@ extern void cleanup_module(void);
 /* What your module does. */
 #define MODULE_DESCRIPTION(_description) MODULE_INFO(description, _description)
 
-#ifdef MODULE
+#if defined(MODULE) && !defined(CONFIG_LAZY_INITCALL)
 /* Creates an alias so file2alias.c can find device table. */
 #define MODULE_DEVICE_TABLE(type, name)					\
 extern typeof(name) __mod_##type##__##name##_device_table		\
   __attribute__ ((unused, alias(__stringify(name))))
-#else  /* !MODULE */
+#else  /* !MODULE || CONFIG_LAZY_INITCALL */
 #define MODULE_DEVICE_TABLE(type, name)
 #endif
 
