@@ -5,15 +5,12 @@
  * Partially based on kernel/module.c.
  */
 
-#ifdef CONFIG_LAZY_INITCALL_DEBUG
-#define DEBUG
-#define __fatal pr_err
-#else
-#define __fatal panic
-#endif
+//#define DEBUG
 
 #define pr_fmt(fmt) "lazy_initcall: " fmt
+#define LAZY_INITCALL_INTERNAL
 
+#include <linux/printk.h>
 #include <linux/syscalls.h>
 #include <linux/kmemleak.h>
 #include <uapi/linux/module.h>
@@ -27,52 +24,12 @@ static DEFINE_MUTEX(lazy_initcall_mutex);
 static bool completed;
 
 /*
- * Why is this here, instead of defconfig?
+ * Number of lazy modules.
  *
- * Data used in defconfig isn't freed in free_initmem() and putting a list this
- * big into the defconfig isn't really ideal anyways.
- *
- * Since lazy_initcall isn't meant to be generic, set this here.
- *
- * This list is generatable by putting .ko modules from vendor, vendor_boot and
- * vendor_dlkm to a directory and running the following:
- *
- * MODDIR=/path/to/modules
- * find "$MODDIR" -name '*.ko' -exec modinfo {} + | grep '^name:' | awk '{print $2}' | sort | uniq | while read f; do printf '\t"'$f'",\n'; done
- * find "$MODDIR" -name '*.ko' | while read f; do if ! modinfo $f | grep -q "^name:"; then n=$(basename $f); n="${n%.*}"; printf '\t"'$n'",\n'; fi; done | sort | uniq
+ * Memory allocated from this is freed later anyways, so a large value
+ * is not going to hog the memory down the road.
  */
-
-static const __initconst char * const targets_list[] = {
-	NULL
-};
-
-/*
- * Some drivers don't have module_init(), which will lead to lookup failure
- * from lazy_initcall when a module with the same name is asked to be loaded
- * from the userspace.
- *
- * Lazy initcall can optionally maintain a list of kernel drivers built into
- * the kernel that matches the name from the firmware so that those aren't
- * treated as errors.
- *
- * Ew, is this the best approach?
- *
- * Detecting the presense of .init.text section or initcall_t function is
- * unreliable as .init.text might not exist when a driver doesn't use __init
- * and modpost adds an empty .init stub even if a driver doesn't declare a
- * function for module_init().
- *
- * This list is generatable by putting .ko modules from vendor, vendor_boot and
- * vendor_dlkm to a directory, cd'ing to kernel's O directory and running the
- * following:
- *
- * MODDIR=/path/to/modules
- * find -name '*.o' | tr '-' '_' > list
- * find "$MODDIR" -name '*.ko' -exec modinfo {} + | grep '^name:' | awk '{print $2}' | sort | uniq | while read f; do if grep -q /"$f".o list; then printf '\t"'$f'",\n'; fi; done
- */
-static const __initconst char * const builtin_list[] = {
-	NULL,
-};
+#define MODULE_LIST_LIMIT 1024
 
 /*
  * Some drivers behave differently when it's built-in, so deferring its
@@ -96,13 +53,12 @@ static const __initconst char * const deferred_list[] = {
 	NULL
 };
 
-static struct lazy_initcall __initdata lazy_initcalls[ARRAY_SIZE(targets_list) - ARRAY_SIZE(blacklist) + ARRAY_SIZE(deferred_list)];
+static struct lazy_initcall __initdata lazy_initcalls[MODULE_LIST_LIMIT];
 static int __initdata counter;
 
 bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[])
 {
 	int i;
-	bool match = false;
 	enum lazy_initcall_type type = NORMAL;
 
 	for (i = 0; blacklist[i]; i++) {
@@ -110,23 +66,12 @@ bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[])
 			return false;
 	}
 
-	for (i = 0; targets_list[i]; i++) {
-		if (!strcmp(targets_list[i], modname)) {
-			match = true;
-			break;
-		}
-	}
-
 	for (i = 0; deferred_list[i]; i++) {
 		if (!strcmp(deferred_list[i], modname)) {
-			match = true;
 			type = DEFERRED;
 			break;
 		}
 	}
-
-	if (!match)
-		return false;
 
 	mutex_lock(&lazy_initcall_mutex);
 
@@ -278,11 +223,15 @@ static noinline void __init load_modname(const char * const modname, const char 
 	// Unable to find the driver that the userspace requested
 	if (!match) {
 		// Check if this module is built-in without module_init()
-		for (i = 0; builtin_list[i]; i++) {
-			if (!strcmp(builtin_list[i], modname))
-				return;
-		}
-		__fatal("failed to find a built-in module with the name \"%s\"\n", modname);
+		char kmod[MODULE_NAME_LEN + 24];
+		void *found;
+
+		snprintf(kmod, sizeof(kmod), "__mod_present__kmod_%s__", modname);
+		found = (void *)kallsyms_lookup_name(kmod);
+		if (found != NULL)
+			return;
+
+		__err("failed to find a built-in module with the name \"%s\"\n", modname);
 		return;
 	}
 
