@@ -131,7 +131,7 @@ bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[])
 
 	mutex_lock(&lazy_initcall_mutex);
 
-	pr_info("adding lazy_initcalls[%d] from %s - %s\n",
+	pr_debug("adding lazy_initcalls[%d] from %s - %s\n",
 				counter, modname, filename);
 
 	lazy_initcalls[counter].fn = fn;
@@ -203,7 +203,10 @@ static noinline void __init load_modname(const char * const modname)
 	}
 
 	ret = fn();
-	pr_info("lazy_initcalls[%d]: %s's init function returned %d\n", i, modname, ret);
+#ifndef DEBUG
+	if (ret != 0)
+#endif
+		pr_info("lazy_initcalls[%d]: %s's init function returned %d\n", i, modname, ret);
 
 	// Check if all modules are loaded so that __init memory can be released
 	match = false;
