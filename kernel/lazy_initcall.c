@@ -56,6 +56,16 @@ static const __initconst char * const deferred_list[] = {
 static struct lazy_initcall __initdata lazy_initcalls[MODULE_LIST_LIMIT];
 static int __initdata counter;
 
+static char __initdata errors_str[16 * 1024];
+
+#define __err(...) do { \
+	size_t len = strlen(errors_str); \
+	char *ptr = errors_str + len; \
+	snprintf(ptr, sizeof(errors_str) - len, __VA_ARGS__); \
+	smp_mb(); \
+	pr_err("%s", ptr); \
+} while (0)
+
 bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[])
 {
 	int i;
@@ -70,6 +80,14 @@ bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[])
 		if (!strcmp(deferred_list[i], modname)) {
 			type = DEFERRED;
 			break;
+		}
+	}
+
+	// Check for duplicates
+	for (i = 0; i < counter; i++) {
+		if (!strcmp(lazy_initcalls[i].modname, modname)) {
+			__err("duplicate module detected: %s - %s\n", modname, filename);
+			__err("enable DEBUG from %s to debug further\n", __FILE__);
 		}
 	}
 
@@ -88,16 +106,6 @@ bool __init add_lazy_initcall(initcall_t fn, char modname[], char filename[])
 
 	return true;
 }
-
-static char __initdata errors_str[16 * 1024];
-
-#define __err(...) do { \
-	size_t len = strlen(errors_str); \
-	char *ptr = errors_str + len; \
-	snprintf(ptr, sizeof(errors_str) - len, __VA_ARGS__); \
-	smp_mb(); \
-	pr_err("%s", ptr); \
-} while (0)
 
 static bool __init show_errors_str(void)
 {
