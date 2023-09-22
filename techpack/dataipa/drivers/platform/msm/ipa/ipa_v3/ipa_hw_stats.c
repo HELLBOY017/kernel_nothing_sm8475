@@ -31,7 +31,7 @@ int ipa_hw_stats_init(void)
 {
 	int ret = 0, ep_index;
 	struct ipa_teth_stats_endpoints *teth_stats_init;
-	u32 reg_idx;
+	u32 reg_idx = 0;
 	u32 mask = 0;
 
 	if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_0)

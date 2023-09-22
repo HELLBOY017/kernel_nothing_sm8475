@@ -2884,7 +2884,7 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 	enum sde_crtc_vm_req old_vm_req = VM_REQ_NONE, new_vm_req = VM_REQ_NONE;
 	int i, rc = 0;
 	bool vm_req_active = false, prev_vm_req = false;
-	bool vm_owns_hw;
+	bool vm_owns_hw = false;
 
 	if (!kms || !state)
 		return -EINVAL;

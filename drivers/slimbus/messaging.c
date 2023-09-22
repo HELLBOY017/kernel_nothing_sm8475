@@ -113,7 +113,7 @@ int slim_do_transfer(struct slim_controller *ctrl, struct slim_msg_txn *txn)
 	DECLARE_COMPLETION_ONSTACK(done);
 	bool need_tid = false, clk_pause_msg = false;
 	int ret, timeout;
-	struct completion *comp;
+	struct completion *comp = NULL;
 
 	/*
 	 * do not vote for runtime-PM if the transactions are part of clock

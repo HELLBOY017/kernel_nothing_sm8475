@@ -7005,7 +7005,7 @@ policy_mgr_update_indoor_concurrency(struct wlan_objmgr_psoc *psoc,
 				     uint32_t discon_freq,
 				     enum indoor_conc_update_type type)
 {
-	uint32_t ch_freq;
+	uint32_t ch_freq = 0;
 	enum QDF_OPMODE mode;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	enum phy_ch_width ch_width = CH_WIDTH_INVALID;
