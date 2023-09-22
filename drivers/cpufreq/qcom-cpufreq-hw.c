@@ -445,7 +445,7 @@ static int qcom_cpufreq_hw_read_lut(struct platform_device *pdev,
 				    struct cpufreq_qcom *c, u32 max_cores)
 {
 	struct device *dev = &pdev->dev, *cpu_dev;
-	u32 data, src, lval, i, core_count, prev_cc, prev_freq, freq, volt;
+	u32 data, src, lval, i, core_count, prev_cc, prev_freq = 0, freq, volt;
 	unsigned long cpu;
 
 	c->table = devm_kcalloc(dev, lut_max_entries + 1,

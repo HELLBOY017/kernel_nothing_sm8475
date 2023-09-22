@@ -2332,6 +2332,7 @@ int ipa3_nat_del_cmd(struct ipa_ioc_v4_nat_del *del)
 	struct ipa_ioc_nat_ipv6ct_table_del tmp;
 
 	tmp.table_index = del->table_index;
+	tmp.mem_type = 0;
 
 	return ipa3_del_nat_table(&tmp);
 }
