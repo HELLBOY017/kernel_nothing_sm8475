@@ -2759,13 +2759,9 @@ static void _set_preferred_cluster(struct walt_related_thread_group *grp)
 	bool prev_skip_min = grp->skip_min;
 	struct walt_task_struct *wts;
 
-	if (list_empty(&grp->tasks)) {
+	if (list_empty(&grp->tasks) || !hmp_capable()) {
 		grp->skip_min = false;
-		goto out;
-	}
-
-	if (!hmp_capable()) {
-		grp->skip_min = false;
+		wallclock = 0;
 		goto out;
 	}
 

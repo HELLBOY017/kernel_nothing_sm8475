@@ -5514,7 +5514,7 @@ void sde_hw_catalog_deinit(struct sde_mdss_cfg *sde_cfg)
 static int sde_hw_ver_parse_dt(struct drm_device *dev, struct device_node *np,
 			struct sde_mdss_cfg *cfg)
 {
-	int rc, len, prop_count[SDE_HW_PROP_MAX];
+	int rc, len, prop_count[SDE_HW_PROP_MAX] = { 0, };
 	struct sde_prop_value *prop_value = NULL;
 	bool prop_exists[SDE_HW_PROP_MAX];
 
