@@ -657,7 +657,7 @@ void sde_mini_dump_add_va_region(const char *name, u32 size, void *virt_addr)
 	return;
 }
 #else
-static int sde_register_md_panic_notifer()
+static int sde_register_md_panic_notifer(void)
 {
 	return 0;
 }
