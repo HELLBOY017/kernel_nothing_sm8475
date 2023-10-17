@@ -40,6 +40,28 @@ static bool completed;
  * You can also use this as an ignorelist.
  */
 static const __initconst char * const blacklist[] = {
+        // Custom load order
+	"hdcp",
+
+	// Disabled
+	"f_fs_ipc_log",
+	"mem_offline",
+	"msm_show_resume_irq",
+	"phy_qcom_ufs_qmp_v4_anarok",
+	"phy_qcom_ufs_qmp_v4_diwali",
+	"phy_qcom_ufs_qmp_v4_lahaina",
+	"phy_qcom_ufs_qmp_v4_parrot",
+	"phy_qcom_ufs_qmp_v4_waipio",
+	"qcom_ipc_logging",
+	"qcom_logbuf_vendor_hooks",
+	"rimps_log",
+	"wcd937x_dlkm",
+	"wcd937x_slave_dlkm",
+
+	// Renamed
+	"hdcp_qseecom",
+	"qti_battery_charger",
+
 	NULL
 };
 
@@ -50,6 +72,8 @@ static const __initconst char * const blacklist[] = {
  * Add them here.
  */
 static const __initconst char * const deferred_list[] = {
+        "qti_battery_charger_main",
+
 	NULL
 };
 
