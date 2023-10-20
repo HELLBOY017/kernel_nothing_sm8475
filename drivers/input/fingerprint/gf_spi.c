@@ -94,11 +94,16 @@ static struct gf_key_map maps[] = {
 
 static void gf_enable_irq(struct gf_dev *gf_dev)
 {
+        struct irq_data *irq_data = NULL;
+
 	if (gf_dev->irq_enabled) {
 		pr_warn("IRQ has been enabled.\n");
 	} else {
-		enable_irq(gf_dev->irq);
-		gf_dev->irq_enabled = 1;
+                irq_data = irq_get_irq_data(gf_dev->irq);
+                if (irq_data && irqd_irq_disabled(irq_data)) {
+		        enable_irq(gf_dev->irq);
+		        gf_dev->irq_enabled = 1;
+                }
 	}
 }
 
