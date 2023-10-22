@@ -4,5 +4,5 @@
 
 hostprogs-always-y	+= fixdep
 
-hostprogs-always-y	+= cc-wrapper
-$(obj)/cc-wrapper: $(obj)/fixdep
+#hostprogs-always-y	+= cc-wrapper
+#$(obj)/cc-wrapper: $(obj)/fixdep
