@@ -5134,7 +5134,7 @@ void init_manual_gc(struct ufs_hba *hba)
 {
 	struct ufs_qcom_host *host = ufshcd_get_variant(hba);
 	struct ufs_manual_gc *mgc = &host->manual_gc;
-	char wq_name[sizeof("ufs_mgc_hibern8_work")];
+	char wq_name[23];
 
 	mgc->state = MANUAL_GC_ENABLE;
 	mgc->hagc_support = true;
