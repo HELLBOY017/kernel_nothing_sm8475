@@ -537,6 +537,8 @@ struct goodix_ts_core {
 	struct notifier_block fb_notifier;
 	void *notifier_cookie;
 #endif
+
+        int single_tap_pressed;
 };
 
 /* external module structures */

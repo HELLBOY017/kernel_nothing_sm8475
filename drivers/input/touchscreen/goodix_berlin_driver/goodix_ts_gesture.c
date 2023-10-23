@@ -26,6 +26,7 @@
 #include <linux/delay.h>
 #include <linux/atomic.h>
 #include <linux/input/mt.h>
+#include <linux/namei.h>
 #include "goodix_ts_core.h"
 
 
@@ -50,6 +51,8 @@ struct gesture_module {
 
 static struct gesture_module *gsx_gesture; /*allocated in gesture init module*/
 static bool module_initialized;
+
+uint8_t aosp_gesture_enable = 0;               // aosp gestures
 
 static ssize_t gsx_double_type_show(struct goodix_ext_module *module,
 		char *buf)
@@ -280,14 +283,21 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 	case GOODIX_GESTURE_SINGLE_TAP:
 		if (cd->gesture_type & GESTURE_SINGLE_TAP) {
 			ts_info("get SINGLE-TAP gesture");
-			input_report_key(cd->input_dev, KEY_WAKEUP, 1);
-			// input_report_key(cd->input_dev, KEY_GOTO, 1);
-			input_sync(cd->input_dev);
-			input_report_key(cd->input_dev, KEY_WAKEUP, 0);
-			// input_report_key(cd->input_dev, KEY_GOTO, 0);
-			input_sync(cd->input_dev);
+                        if (aosp_gesture_enable) {
+                                core->single_tap_pressed = 1;
+                                sysfs_notify(&cd->pdev->dev.kobj, NULL, "single_tap");
+                        } else {
+                                input_report_key(cd->input_dev, KEY_WAKEUP, 1);
+			        // input_report_key(cd->input_dev, KEY_GOTO, 1);
+			        input_sync(cd->input_dev);
+			        input_report_key(cd->input_dev, KEY_WAKEUP, 0);
+			        // input_report_key(cd->input_dev, KEY_GOTO, 0);
+			        input_sync(cd->input_dev);
+                        }
 		} else {
 			ts_debug("not enable SINGLE-TAP");
+                        core->single_tap_pressed = 0;
+                        sysfs_notify(&cd->pdev->dev.kobj, NULL, "single_tap");
 		}
 		break;
 	case GOODIX_GESTURE_DOUBLE_TAP:
@@ -408,6 +418,7 @@ int gesture_module_init(void)
 	int i;
 	struct kobject *def_kobj = goodix_get_default_kobj();
 	struct kobj_type *def_kobj_type = goodix_get_default_ktype();
+        struct path path;
 
 	gsx_gesture = kzalloc(sizeof(struct gesture_module), GFP_KERNEL);
 	if (!gsx_gesture)
@@ -419,6 +430,12 @@ int gesture_module_init(void)
 	gsx_gesture->module.priv_data = gsx_gesture;
 
 	atomic_set(&gsx_gesture->registered, 0);
+
+        /* If nothing framework is not present then consider that the device is running a custom OS */
+	if (kern_path("/system/framework/nt-framework.jar", LOOKUP_FOLLOW, &path)) {
+	    ts_info("enable aosp gesture support");
+	    aosp_gesture_enable = 1;
+	}
 
 	/* gesture sysfs init */
 	ret = kobject_init_and_add(&gsx_gesture->module.kobj,
