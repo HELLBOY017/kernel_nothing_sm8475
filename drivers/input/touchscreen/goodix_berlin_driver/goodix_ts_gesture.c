@@ -51,6 +51,8 @@ struct gesture_module {
 static struct gesture_module *gsx_gesture; /*allocated in gesture init module*/
 static bool module_initialized;
 
+uint8_t aosp_gesture_enable = 0;               // aosp gestures
+
 static ssize_t gsx_double_type_show(struct goodix_ext_module *module,
 		char *buf)
 {
@@ -137,6 +139,48 @@ static ssize_t gsx_single_type_store(struct goodix_ext_module *module,
 	return count;
 }
 
+static ssize_t aosp_gesture_show(struct goodix_ext_module *module,
+		char *buf)
+{
+        struct gesture_module *gsx = module->priv_data;
+
+	if (!gsx)
+		return -EIO;
+
+	if (atomic_read(&gsx->registered) == 0) {
+		ts_err("gesture module is not registered");
+		return 0;
+	}
+
+	return sprintf(buf, "%s\n",
+			aosp_gesture_enable ? "enable" : "disable");
+}
+
+static ssize_t aosp_gesture_store(struct goodix_ext_module *module,
+		const char *buf, size_t count)
+{
+        struct gesture_module *gsx = module->priv_data;
+
+	if (!gsx)
+		return -EIO;
+
+	if (atomic_read(&gsx->registered) == 0) {
+		ts_err("gesture module is not registered");
+		return 0;
+	}
+
+	if (buf[0] == '1') {
+                ts_info("enable aosp gesture support");
+		aosp_gesture_enable = 1;
+	} else if (buf[0] == '0') {
+                ts_info("disable aosp gesture support");
+		aosp_gesture_enable = 0;
+	} else
+		ts_err("invalid cmd[%d]", buf[0]);
+
+	return count;
+}
+
 static ssize_t gsx_fod_type_show(struct goodix_ext_module *module,
 		char *buf)
 {
@@ -202,6 +246,8 @@ const struct goodix_ext_attribute gesture_attrs[] = {
 			gsx_double_type_show, gsx_double_type_store),
 	__EXTMOD_ATTR(single_en, 0664,
 			gsx_single_type_show, gsx_single_type_store),
+        __EXTMOD_ATTR(aosp_gesture_en, 0664,
+			aosp_gesture_show, aosp_gesture_store),
 	__EXTMOD_ATTR(fod_en, 0664,
 			gsx_fod_type_show, gsx_fod_type_store),
 	__EXTMOD_ATTR(touch_data, 0444,
@@ -280,14 +326,21 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 	case GOODIX_GESTURE_SINGLE_TAP:
 		if (cd->gesture_type & GESTURE_SINGLE_TAP) {
 			ts_info("get SINGLE-TAP gesture");
-			input_report_key(cd->input_dev, KEY_WAKEUP, 1);
-			// input_report_key(cd->input_dev, KEY_GOTO, 1);
-			input_sync(cd->input_dev);
-			input_report_key(cd->input_dev, KEY_WAKEUP, 0);
-			// input_report_key(cd->input_dev, KEY_GOTO, 0);
-			input_sync(cd->input_dev);
+                        if (aosp_gesture_enable) {
+                                core->single_tap_pressed = 1;
+                                sysfs_notify(&cd->pdev->dev.kobj, NULL, "single_tap");
+                        } else {
+                                input_report_key(cd->input_dev, KEY_WAKEUP, 1);
+			        // input_report_key(cd->input_dev, KEY_GOTO, 1);
+			        input_sync(cd->input_dev);
+			        input_report_key(cd->input_dev, KEY_WAKEUP, 0);
+			        // input_report_key(cd->input_dev, KEY_GOTO, 0);
+			        input_sync(cd->input_dev);
+                        }
 		} else {
 			ts_debug("not enable SINGLE-TAP");
+                        core->single_tap_pressed = 0;
+                        sysfs_notify(&cd->pdev->dev.kobj, NULL, "single_tap");
 		}
 		break;
 	case GOODIX_GESTURE_DOUBLE_TAP:
