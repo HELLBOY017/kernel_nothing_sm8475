@@ -197,7 +197,6 @@ static ssize_t gsx_single_touch_data_show(struct goodix_ext_module *module,
 			"x:%x\ny:%x\n", gsx->ts_core->gesture_x, gsx->ts_core->gesture_y);
 }
 
-
 const struct goodix_ext_attribute gesture_attrs[] = {
 	__EXTMOD_ATTR(double_en, 0664,
 			gsx_double_type_show, gsx_double_type_store),
@@ -317,6 +316,7 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 			input_report_abs(cd->input_dev, ABS_MT_WIDTH_MAJOR, overlay_area);
 			input_sync(cd->input_dev);
 			core->gesture_up_flag = 1;
+                        sysfs_notify(&cd->pdev->dev.kobj, NULL, "fp_state");
 		} else {
 			ts_debug("not enable FOD-DOWN");
 		}
@@ -333,6 +333,7 @@ static int gsx_gesture_ist(struct goodix_ts_core *cd,
 					MT_TOOL_FINGER, 0);
 			input_sync(cd->input_dev);
 			core->gesture_up_flag = 0;
+                        sysfs_notify(&cd->pdev->dev.kobj, NULL, "fp_state");
 		} else {
 			ts_debug("not enable FOD-UP");
 		}
