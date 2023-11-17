@@ -2392,7 +2392,7 @@ static int __battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
 static int battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
 					int val)
 {
-	int rc;
+	int rc, therm_lim, lim, save;
 	u32 fcc_ua, prev_fcc_ua;
 
 	if (!bcdev->num_thermal_levels)
@@ -2401,6 +2401,32 @@ static int battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
 	if (bcdev->num_thermal_levels < 0) {
 		pr_err("Incorrect num_thermal_levels\n");
 		return -EINVAL;
+	}
+
+	therm_lim = val >> 16;
+	lim = val & 0xffff;
+
+	// Use previous values if needed
+	if (therm_lim == 0)
+		therm_lim = bcdev->curr_thermal_level >> 16;
+	else
+		lim = bcdev->curr_thermal_level & 0xffff;
+
+	// Reset MSB
+	therm_lim &= ~0x4000;
+	lim &= ~0x4000;
+
+	save = therm_lim << 16 | lim;
+
+	if (therm_lim > lim) {
+		pr_info("charging current limited by thermals: %d\n", therm_lim);
+		val = therm_lim;
+	} else {
+		if (lim)
+			pr_info("charging current manually limited: %d\n", lim);
+		else
+			pr_info("charging current limit unlocked\n");
+		val = lim;
 	}
 
 	if (val < 0 || val > bcdev->num_thermal_levels) {
@@ -2420,7 +2446,7 @@ static int battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
 
 	rc = __battery_psy_set_charge_current(bcdev, fcc_ua);
 	if (!rc)
-		bcdev->curr_thermal_level = val;
+		bcdev->curr_thermal_level = save;
 	else
 		bcdev->thermal_fcc_ua = prev_fcc_ua;
 
