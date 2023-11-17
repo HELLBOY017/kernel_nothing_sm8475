@@ -2382,7 +2382,7 @@ static int __battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
 	if (rc < 0) {
 		pr_err("Failed to set FCC %u, rc=%d\n", fcc_ua, rc);
 	} else {
-		pr_debug("Set FCC to %u uA\n", fcc_ua);
+		pr_info("Charge current limited to %umA (last: %umA)\n", fcc_ua / 1000, bcdev->last_fcc_ua / 1000);
 		bcdev->last_fcc_ua = fcc_ua;
 	}
 
