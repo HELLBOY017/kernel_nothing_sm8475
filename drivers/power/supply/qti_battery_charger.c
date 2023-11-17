@@ -2403,8 +2403,11 @@ static int battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
 		return -EINVAL;
 	}
 
-	if (val < 0 || val > bcdev->num_thermal_levels)
+	if (val < 0 || val > bcdev->num_thermal_levels) {
+		pr_err("charging current index out of range: 0 <= %d <= %d\n",
+			val, bcdev->num_thermal_levels);
 		return -EINVAL;
+	}
 
 	if (bcdev->thermal_fcc_step == 0)
 		fcc_ua = bcdev->thermal_levels[val];
