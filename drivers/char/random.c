@@ -441,7 +441,7 @@ static void _get_random_bytes(void *buf, size_t len)
  * wait_for_random_bytes() should be called and return 0 at least once
  * at any point prior.
  */
-void get_random_bytes(void *buf, int len)
+void get_random_bytes(void *buf, size_t len)
 {
 	warn_unseeded_randomness();
 	_get_random_bytes(buf, len);
@@ -585,7 +585,7 @@ int __cold random_prepare_cpu(unsigned int cpu)
  * use. Use get_random_bytes() instead. It returns the number of
  * bytes filled in.
  */
-int __must_check get_random_bytes_arch(void *buf, int len)
+size_t __must_check get_random_bytes_arch(void *buf, size_t len)
 {
 	size_t left = len;
 	u8 *p = buf;
@@ -858,7 +858,7 @@ int __init random_init(const char *command_line)
  * the entropy pool having similar initial state across largely
  * identical devices.
  */
-void add_device_randomness(const void *buf, unsigned int len)
+void add_device_randomness(const void *buf, size_t len)
 {
 	unsigned long entropy = random_get_entropy();
 	unsigned long flags;
