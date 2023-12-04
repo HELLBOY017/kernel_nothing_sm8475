@@ -97,7 +97,7 @@
 	ibb-supply = <&display_panel_ibb>;
 	extvdd-supply = <&display_panel_extvdd>;
 
-	qcom,dsi-default-panel = <&dsi_r66451_amoled_120hz_cmd_cphy>;
+	qcom,dsi-default-panel = <&dsi_r66451_amoled_120hz_video_cphy>;
 };
 
 &qupv3_se1_spi {

@@ -66,16 +66,6 @@
 	};
 };
 
-&wpss_pas {
-	status = "disabled";
-	/delete-property/ memory-region;
-};
-
-&icnss2 {
-	status = "disabled";
-	/delete-property/ qcom,wlan-msa-fixed-region;
-};
-
 &reserved_memory {
 	cnss_wlan_mem: cnss_wlan_region {
 		compatible = "shared-dma-pool";
@@ -150,19 +140,6 @@
 			bias-pull-down;
 		};
 	};
-
-	cnss_dev_sol_default: cnss_dev_sol_default {
-		mux {
-			pins = "gpio112";
-			function = "gpio";
-		};
-
-		config {
-			pins = "gpio112";
-			drive-strength = <4>;
-			bias-pull-down;
-		};
-	};
 };
 
 &soc {
@@ -171,12 +148,9 @@
 		reg = <0xb0000000 0x10000>;
 		reg-names = "smmu_iova_ipa";
 		wlan-en-gpio = <&tlmm 45 0>;
-		wlan-dev-sol-gpio = <&tlmm 112 0>;
-		pinctrl-names = "wlan_en_active", "wlan_en_sleep",
-				"sol_default";
+		pinctrl-names = "wlan_en_active", "wlan_en_sleep";
 		pinctrl-0 = <&cnss_wlan_en_active>;
 		pinctrl-1 = <&cnss_wlan_en_sleep>;
-		pinctrl-2 = <&cnss_dev_sol_default>;
 		qcom,wlan;
 		qcom,wlan-rc-num = <0>;
 		qcom,wlan-ramdump-dynamic = <0x780000>;
@@ -260,6 +234,10 @@
 			" {class: wlan_pdc, ss: bb, res: s2a.v, upval: 830}",
 			" {class: wlan_pdc, ss: bb, res: s2a.v, dwnval: 410}",
 			" {class: wlan_pdc, ss: bb, res: pdc, enable: 1}";
+
+		cnss_cdev_apss: qcom,cnss_cdev1 {
+			#cooling-cells = <2>;
+		};
 	};
 
 	bluetooth: bt_wcn6x5x {
@@ -431,5 +409,13 @@
 };
 
 &lsr_1_tbu {
+	status = "disabled";
+};
+
+&wpss_etm {
+	status = "disabled";
+};
+
+&qcom_cedev {
 	status = "disabled";
 };

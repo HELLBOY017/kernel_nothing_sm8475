@@ -106,7 +106,7 @@
 
 	mpss_mem: mpss_region@8bc00000 {
 		no-map;
-		reg = <0x0 0x8bc00000 0x0 0xf000000>;
+		reg = <0x0 0x8bc00000 0x0 0xe600000>;
 	};
 
 	xbl_sc_mem: xbl_sc_region@a6e00000 {

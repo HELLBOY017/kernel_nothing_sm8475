@@ -28,6 +28,7 @@ dtbo-$(CONFIG_ARCH_PARROT) += parrot-audio.dtbo \
 
 dtbo-$(CONFIG_ARCH_RAVELIN) += ravelin-audio.dtbo \
                  ravelin-audio-idp.dtbo \
+                 ravelin-audio-idp-wsa-hac.dtbo \
                  ravelin-audio-idp-4gb.dtbo \
                  ravelin-audio-qrd.dtbo \
                  ravelin-audio-atp.dtbo

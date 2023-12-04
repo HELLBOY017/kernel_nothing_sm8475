@@ -11,6 +11,6 @@
 / {
 	model = "Qualcomm Technologies, Inc. Raveline QRD";
 	compatible = "qcom,raveline";
-	qcom,msm-id = <568 0x10000>;
-	qcom,board-id = <0x1000B 0>, <0x1000B 1>;
+	qcom,msm-id = <568 0x10000>, <581 0x10000>, <582 0x10000>;
+	qcom,board-id = <0x1000B 0>, <0x1000B 1>, <0x1000B 0x600>;
 };
