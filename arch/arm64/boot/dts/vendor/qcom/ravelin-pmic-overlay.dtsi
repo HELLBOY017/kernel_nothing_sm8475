@@ -609,7 +609,7 @@
 			L3N: pm8010n_l3: regulator@4200 {
 				reg = <0x4200>;
 				regulator-name = "pm8010n_l3";
-				regulator-min-microvolt = <1792000>;
+				regulator-min-microvolt = <1736000>;
 				regulator-max-microvolt = <3312000>;
 				qcom,hpm-min-load = <0>;
 				qcom,min-dropout-voltage = <120000>;
@@ -618,10 +618,10 @@
 			L4N: pm8010n_l4: regulator@4300 {
 				reg = <0x4300>;
 				regulator-name = "pm8010N_l4";
-				regulator-min-microvolt = <1792000>;
+				regulator-min-microvolt = <1704000>;
 				regulator-max-microvolt = <1900000>;
 				qcom,hpm-min-load = <0>;
-				qcom,min-dropout-voltage = <120000>;
+				qcom,min-dropout-voltage = <152000>;
 			};
 
 			L6N: pm8010n_l6: regulator@4500 {

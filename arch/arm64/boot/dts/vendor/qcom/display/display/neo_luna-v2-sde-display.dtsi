@@ -60,6 +60,11 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&display_panel_avee_default>;
 	};
+
+	disp_rdump_memory: disp_rdump_region@eca00000 {
+		reg = <0xeca00000 0x00800000>;
+		label = "disp_rdump_region";
+	};
 };
 
 &reserved_memory {
@@ -75,5 +80,7 @@
 };
 
 &mdss_mdp {
-	connectors = <&sde_dsi &smmu_sde_unsec &smmu_sde_sec &sde_rscc>;
+	qcom,sde-dram-efficiency = <64>;
+	qcom,sde-cdp-setting = <1 1>, <1 0>;
+	connectors = <&sde_dsi &sde_dsi1 &smmu_sde_unsec &smmu_sde_sec &sde_rscc &sde_wb>;
 };

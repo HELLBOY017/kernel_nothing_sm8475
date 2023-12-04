@@ -1596,7 +1596,18 @@
 					<DCC_READ 0x8b00404 1 0>,
 					<DCC_READ 0x8b00408 1 0>,
 					<DCC_READ 0x8a02028 1 0>,
-					<DCC_READ 0x8a00304 1 0>;
+					<DCC_READ 0x8a00304 1 0>,
+					<DCC_READ 0x13316c 1 0>,
+					<DCC_READ 0x13317c 1 0>,
+					<DCC_READ 0x128004 1 0>,
+					<DCC_READ 0x128008 1 0>,
+					<DCC_READ 0x12e008 1 0>,
+					<DCC_READ 0x12e00c 1 0>,
+					<DCC_READ 0x12e144 1 0>,
+					<DCC_READ 0x12e27c 1 0>,
+					<DCC_READ 0x12e3b4 1 0>,
+					<DCC_READ 0x12e4ec 1 0>,
+					<DCC_READ 0x12e624 1 0>;
 			};
 	};
 

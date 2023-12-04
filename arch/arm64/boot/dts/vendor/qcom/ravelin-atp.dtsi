@@ -1,6 +1,7 @@
 #include "ravelin-pmic-overlay.dtsi"
 #include "ravelin-pm7250b.dtsi"
 #include "ravelin-thermal-overlay.dtsi"
+#include "ravelin-adrastea.dtsi"
 
 &soc {
 };
@@ -55,9 +56,21 @@
 	qcom,vdd-voltage-level = <2960000 2960000>;
 	qcom,vdd-current-level = <0 800000>;
 
+	/*
+	 * min/max voltages are voted on L24B/L28B and L24B/L28B_PBS
+	 * regulators will only be voted for enabling/disabling conditions
+	 * to support FR84471 for chipsets where PMIC doesn't support
+	 * PBS ram sequence to turn OFF regulators automatically on
+	 * multicard tray removal and these new regulator resources are
+	 * exposed by PMIC team as part of this FR.
+	 */
+	vdd-en-dis-supply = <&L24B_PBS>;
+
 	vdd-io-supply = <&L28B>;
 	qcom,vdd-io-voltage-level = <1800000 2960000>;
 	qcom,vdd-io-current-level = <0 22000>;
+
+	vdd-io-en-dis-supply = <&L28B_PBS>;
 
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc2_on>;
@@ -147,5 +160,6 @@
 };
 
 &battery_charger {
+	qcom,thermal-mitigation-step = <500000>;
 	qcom,wireless-charging-not-supported;
 };

@@ -69,19 +69,9 @@
 		reg = <0x0 0x80c00000 0x0 0xe00000>;
 	};
 
-	wlan_msa_moselle_mem: wlan_msa_moselle_region@82a00000 {
-		no-map;
-		reg = <0x0 0x82a00000 0x0 0xc00000>;
-	};
-
 	camera_mem: camera_region@84e00000 {
 		no-map;
 		reg = <0x0 0x84e00000 0x0 0x800000>;
-	};
-
-	wpss_wlan_moselle_mem: wpss_wlan_moselle_region@85600000 {
-		no-map;
-		reg = <0x0 0x85600000 0x0 0x1900000>;
 	};
 
 	video_mem: video_region@86f00000 {

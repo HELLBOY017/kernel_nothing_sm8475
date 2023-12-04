@@ -96,6 +96,7 @@
 			power-domains = <&CPU_PD1>;
 			power-domain-names = "psci";
 			qcom,freq-domain = <&cpufreq_hw 0 4>;
+			#cooling-cells = <2>;
 		};
 
 		CPU2: cpu@200 {
@@ -110,6 +111,7 @@
 			power-domains = <&CPU_PD2>;
 			power-domain-names = "psci";
 			qcom,freq-domain = <&cpufreq_hw 0 4>;
+			#cooling-cells = <2>;
 			L2_2: l2-cache {
 			      compatible = "arm,arch-cache";
 			      cache-level = <2>;
@@ -129,6 +131,7 @@
 			power-domains = <&CPU_PD3>;
 			power-domain-names = "psci";
 			qcom,freq-domain = <&cpufreq_hw 0 4>;
+			#cooling-cells = <2>;
 		};
 
 		CPU4: cpu@400 {
@@ -163,6 +166,7 @@
 			power-domains = <&CPU_PD5>;
 			power-domain-names = "psci";
 			qcom,freq-domain = <&cpufreq_hw 1 4>;
+			#cooling-cells = <2>;
 			L2_5: l2-cache {
 			      compatible = "arm,arch-cache";
 			      cache-level = <2>;
@@ -182,6 +186,7 @@
 			power-domains = <&CPU_PD6>;
 			power-domain-names = "psci";
 			qcom,freq-domain = <&cpufreq_hw 1 4>;
+			#cooling-cells = <2>;
 			L2_6: l2-cache {
 			      compatible = "arm,arch-cache";
 			      cache-level = <2>;
@@ -1124,6 +1129,7 @@
 		qcom,hyplog-enabled;
 		hyplog-address-offset = <0x410>;
 		hyplog-size-offset = <0x414>;
+		tmecrashdump-address-offset = <0x808a0000>;
 	};
 
 	qcom_qseecom: qseecom@c1700000 {
@@ -1832,6 +1838,8 @@
 		phy-names = "ufsphy";
 		#reset-cells = <1>;
 
+		qcom,prime-mask = <0x70>;
+		qcom,silver-mask = <0x0f>;
 		lanes-per-direction = <2>;
 		dev-ref-clk-freq = <0>; /* 19.2 MHz */
 		clock-names =
@@ -3060,7 +3068,6 @@
 #include "cape-usb.dtsi"
 #include "cape-pcie.dtsi"
 #include "msm-rdbg.dtsi"
-#include "waipio-eva.dtsi"
 #include "ipcc-test.dtsi"
 
 &qupv3_se7_2uart {

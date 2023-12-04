@@ -2,6 +2,7 @@
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/iio/qcom,spmi-adc5-gen3-smb139x.h>
 #include <dt-bindings/iio/qcom,spmi-adc5-gen3-pmxr2230.h>
+#include <dt-bindings/iio/qcom,spmi-vadc.h>
 
 #include "pmxr2230.dtsi"
 #include "pm8550b.dtsi"
@@ -160,12 +161,11 @@
 &pmxr2230_gpios {
 	flash_default {
 		ext_flash_default: ext_flash_default {
-			pins = "gpio1";
+			pins = "gpio2";
 			function = "normal";
 			input-enable;
 			output-disable;
 			bias-disable;
-			bias-high-impedance;
 			power-source = <1>;
 		};
 	};
@@ -256,6 +256,15 @@
 		qcom,hw-settle-time = <200>;
 		qcom,pre-scaling = <1 1>;
 		qcom,adc-tm-type = <1>;
+	};
+
+	pmxr2230_pot_res {
+		reg = <PMXR2230_ADC5_GEN3_AMUX_THM5_100K_PU>;
+		label = "pmxr2230_pot_res";
+		qcom,ratiometric;
+		qcom,hw-settle-time = <200>;
+		qcom,pre-scaling = <1 1>;
+		qcom,scale-fn-type = <ADC_SCALE_HW_CALIB_RESISTANCE_100K_PU_PM7>;
 	};
 
 	pmxr2230_sd_card_therm {
@@ -584,12 +593,25 @@
 		compatible = "maxim,max31760";
 		#cooling-cells = <2>;
 		reg = <0x50>;
+		maxim,fan-num = <2>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pwr_en_gpio_default
 			&driver_en_gpio_default>;
-
 		maxim,driver-en-gpio = <&pm8550ve_f_gpios 5 GPIO_ACTIVE_LOW>;
 		maxim,pwr-en-gpio = <&pm8550ve_f_gpios 6 GPIO_ACTIVE_LOW>;
 		status = "ok";
+	};
+};
+
+&pmk8550_gpios {
+	imu_clk {
+		imu_clkin_default: imu_clkin_default {
+			pins = "gpio3";
+			function = "func1";
+			input-disable;
+			output-enable;
+			power-source = <0>;
+			qcom,drive-strength = <3>;
+		};
 	};
 };

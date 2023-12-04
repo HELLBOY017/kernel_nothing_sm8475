@@ -102,6 +102,7 @@ Main node
 		- "perst-gpio"		PCIe reset signal line
 		- "wake-gpio"		PCIe wake signal line
 		- "qcom,ep-gpio" (opt)	PCIe endpoint specific signal line
+		- "card-presence-pin"   Device presence detect signal line
 
 - pinctrl-names:
 	Usage: required
@@ -279,6 +280,11 @@ interconnects:
 	Usage: optional
 	Value type: <bool>
 	Definition: Apss based L1ss sleep is supported
+
+- qcom,no-client-based-bw-voting:
+	Usage: optional
+	Value type: <bool>
+	Definition: client based bw voting is not supported
 
 - qcom,no-aux-clk-sync:
 	Usage: optional

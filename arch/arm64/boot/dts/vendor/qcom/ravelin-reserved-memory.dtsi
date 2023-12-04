@@ -49,6 +49,11 @@
 		reg = <0x0 0x808e4000 0x0 0x10000>;
 	};
 
+	chipinfo_mem: chipinfo_region@808f4000 {
+		no-map;
+		reg = <0x0 0x808f4000 0x0 0x1000>;
+	};
+
 	smem_mem: smem_region@80900000 {
 		no-map;
 		reg = <0x0 0x80900000 0x0 0x200000>;
@@ -101,7 +106,7 @@
 
 	mpss_mem: mpss_region@8a000000 {
 		no-map;
-		reg = <0x0 0x8a000000 0x0 0xf000000>;
+		reg = <0x0 0x8a000000 0x0 0xda00000>;
 	};
 
 	xbl_sc_mem: xbl_sc_region@a6e00000 {

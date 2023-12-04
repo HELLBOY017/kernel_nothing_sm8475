@@ -1971,6 +1971,7 @@
 		qcom,hyplog-enabled;
 		hyplog-address-offset = <0x410>;
 		hyplog-size-offset = <0x414>;
+		tmecrashdump-address-offset = <0x808a0000>;
 	};
 
 	qcom_qseecom: qseecom@c1700000 {
@@ -3405,7 +3406,6 @@
 #include "waipio-coresight.dtsi"
 #include "waipio-dma-heaps.dtsi"
 #include "waipio-debug.dtsi"
-#include "waipio-eva.dtsi"
 #include "waipio-pcie.dtsi"
 #include "msm-rdbg.dtsi"
 #include "waipio-gpu.dtsi"

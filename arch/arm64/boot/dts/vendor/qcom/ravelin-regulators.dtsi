@@ -107,7 +107,7 @@
 			regulator-name = "pm6450_s9";
 			qcom,set = <RPMH_REGULATOR_SET_ALL>;
 			regulator-min-microvolt = <1856000>;
-			regulator-max-microvolt = <1940000>;
+			regulator-max-microvolt = <2040000>;
 			qcom,init-voltage = <1872000>;
 		};
 	};
@@ -781,6 +781,36 @@
 		sf1_vreg_mode: regulator-sf1-vreg-mode {
 			regulator-name = "sf1_vreg_mode";
 			qcom,set = <RPMH_REGULATOR_SET_ALL>;
+		};
+	};
+
+	rpmh-regulator-vrmsd {
+		compatible = "qcom,rpmh-pbs-regulator";
+		qcom,resource-name = "vrm.sd";
+
+		L24B_PBS:
+		pm6450_l24_pbs: regulator-pm6450-l24-pbs {
+			regulator-name = "pm6450_l24_pbs";
+			qcom,set = <RPMH_REGULATOR_SET_ALL>;
+			/*
+			 * min/max voltages are voted on L24B and this regulator will
+			 * only be voted for enabling/disabling conditions.
+			 */
+		};
+	};
+
+	rpmh-regulator-vrmpx2 {
+		compatible = "qcom,rpmh-pbs-regulator";
+		qcom,resource-name = "vrm.px2";
+
+		L28B_PBS:
+		pm6450_l28_pbs: regulator-pm6450-l28-pbs {
+			regulator-name = "pm6450_l28_pbs";
+			qcom,set = <RPMH_REGULATOR_SET_ALL>;
+			/*
+			 * min/max voltages are voted on L28B and this regulator will
+			 * only be voted for enabling/disabling conditions.
+			 */
 		};
 	};
 };

@@ -669,6 +669,8 @@ Optional properties:
  - qcom,cdc-static-supplies: List of supplies to be enabled prior to codec
 			     hardware probe.  Supplies in this list will be
 			     stay enabled.
+ - qcom,connect-to-left-port: Indicates whether the wsa883x is connected to left
+                 port or right port of wsa macro.
 
 Example:
 wsa883x_0221: wsa883x@02170221 {

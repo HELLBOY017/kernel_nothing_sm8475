@@ -1,16 +1,6 @@
 #include <dt-bindings/interconnect/qcom,neo.h>
 #include "neo-idp.dtsi"
 
-&icnss2 {
-	status = "disabled";
-	/delete-property/ qcom,wlan-msa-fixed-region;
-};
-
-&wpss_pas {
-	status = "disabled";
-	/delete-property/ memory-region;
-};
-
 &reserved_memory {
 	cnss_wlan_mem: cnss_wlan_region {
 		compatible = "shared-dma-pool";
@@ -151,11 +141,36 @@ wlan_kiwi: qcom,cnss-kiwi@b0000000 {
 			<175000 4300537>,
 			/* ddr: 547.2 MHz */
 			<7500 1094362>;
+
+		cnss_cdev_apss: qcom,cnss_cdev1 {
+			#cooling-cells = <2>;
+		};
 	};
 
 	bluetooth_kiwi: bt_wcn6x5x {
 		compatible = "qcom,kiwi";
 		pinctrl-names = "default";
 		pinctrl-0 = <&bt_en_sleep>;
+	};
+};
+
+&thermal_zones {
+	sys-therm-1 {
+		cooling-maps {
+			cnss_cdev0 {
+				trip = <&sys_therm1_config0>;
+				cooling-device = <&cnss_cdev_apss 3 3>;
+			};
+
+			cnss_cdev1 {
+				trip = <&sys_therm1_config1>;
+				cooling-device = <&cnss_cdev_apss 4 4>;
+			};
+
+			cnss_cdev2 {
+				trip = <&sys_therm1_config2>;
+				cooling-device = <&cnss_cdev_apss 5 5>;
+			};
+		};
 	};
 };
