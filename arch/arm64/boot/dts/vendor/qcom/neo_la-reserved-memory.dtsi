@@ -3,8 +3,6 @@
 	#size-cells = <2>;
 	ranges;
 
-	/delete-node/ wlan_msa_moselle_region@82a00000;
-	/delete-node/ wpss_wlan_moselle_region@85600000;
 	/delete-node/ ipa_fw_region@8a300000;
 	/delete-node/ ipa_gsi_region@8a310000;
 	/delete-node/ helios_ram_dump_region@80c00000;

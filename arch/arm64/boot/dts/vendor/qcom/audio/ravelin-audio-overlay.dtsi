@@ -376,6 +376,12 @@
 		qcom,tdm-clk-attribute = <0x1>, <0x1>, <0x1>, <0x1>, <0x1>, <0x1>;
 		qcom,mi2s-clk-attribute = <0x1>, <0x1>, <0x1>, <0x1>, <0x1>, <0x1>;
 		qcom,audio-routing =
+			"AMIC1", "Analog Mic1",
+			"AMIC1", "MIC BIAS1",
+			"AMIC2", "Analog Mic2",
+			"AMIC2", "MIC BIAS2",
+			"AMIC3", "Analog Mic3",
+			"AMIC3", "MIC BIAS3",
 			"TX DMIC0", "Digital Mic0",
 			"TX DMIC0", "MIC BIAS3",
 			"TX DMIC1", "Digital Mic1",

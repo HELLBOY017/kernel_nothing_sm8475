@@ -244,7 +244,7 @@
 	interconnect-names = "qcom,sde-data-bus0",
 			"qcom,sde-ebi-bus", "qcom,sde-reg-bus";
 
-	qcom,sde-ib-bw-vote = <2500000 0 200000>;
+	qcom,sde-ib-bw-vote = <2500000 0 800000>;
 	qcom,sde-has-idle-pc;
 
 	qcom,platform-supply-entries {

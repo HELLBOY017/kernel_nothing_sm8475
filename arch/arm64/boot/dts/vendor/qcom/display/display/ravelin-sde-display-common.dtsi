@@ -58,6 +58,7 @@
 			qcom,supply-disable-load = <100>;
 			qcom,supply-post-on-sleep = <10>;
 			qcom,supply-post-off-sleep = <10>;
+			qcom,supply-pre-off-sleep = <10>;
 		};
 	};
 
@@ -89,8 +90,8 @@
 		qcom,panel-supply-entry@2 {
 			reg = <0>;
 			qcom,supply-name = "lab";
-			qcom,supply-min-voltage = <4600000>;
-			qcom,supply-max-voltage = <6000000>;
+			qcom,supply-min-voltage = <5400000>;
+			qcom,supply-max-voltage = <5600000>;
 			qcom,supply-enable-load = <0>;
 			qcom,supply-disable-load = <0>;
 		 };
@@ -98,8 +99,8 @@
 		qcom,panel-supply-entry@3 {
 			reg = <1>;
 			qcom,supply-name = "ibb";
-			qcom,supply-min-voltage = <4600000>;
-			qcom,supply-max-voltage = <6000000>;
+			qcom,supply-min-voltage = <5400000>;
+			qcom,supply-max-voltage = <5600000>;
 			qcom,supply-enable-load = <0>;
 			qcom,supply-disable-load = <0>;
 			qcom,supply-post-on-sleep = <20>;
@@ -379,7 +380,7 @@
 	qcom,mdss-dsi-pan-fps-update = "dfps_immediate_porch_mode_vfp";
 
 	qcom,dsi-dyn-clk-enable;
-	qcom,dsi-dyn-clk-type = "constant-fps-adjust-vfp";
+	qcom,dsi-dyn-clk-type = "constant-fps-adjust-hfp";
 
 	qcom,esd-check-enabled;
 	qcom,mdss-dsi-panel-status-check-mode = "reg_read";
@@ -390,11 +391,11 @@
 
 	qcom,mdss-dsi-display-timings {
 		timing@0 {
-			qcom,mdss-dsi-panel-phy-timings = [00 1b 07 06 16 21 07
-				07 07 02 04 00 17 0c];
+			qcom,mdss-dsi-panel-phy-timings = [00 1c 07 07 17 15 07
+				07 08 02 04 00 18 0c];
 			qcom,display-topology = <1 1 1>;
 			qcom,default-topology-index = <0>;
-			qcom,dsi-dyn-clk-list = <798013440 794688384 791363328>;
+			qcom,dsi-dyn-clk-list = <801239040 797900544 794562048>;
 		};
 	};
 };
@@ -503,21 +504,21 @@
 				06 07 02 04 00 16 0b];
 			qcom,display-topology = <1 1 1>;
 			qcom,default-topology-index = <0>;
-			qcom,dsi-dyn-clk-list = <683455680 680607952 677760224>;
+			qcom,dsi-dyn-clk-list = <706233600 703290960 700348320>;
 		};
 		timing@1 {
 			qcom,mdss-dsi-panel-phy-timings = [00 19 06 06 15 20 07
 				06 07 02 04 00 16 0b];
 			qcom,display-topology = <1 1 1>;
 			qcom,default-topology-index = <0>;
-			qcom,dsi-dyn-clk-list = <683455680 680607952 677760224>;
+			qcom,dsi-dyn-clk-list = <706233600 703290960 700348320>;
 		};
 		timing@2 {
 			qcom,mdss-dsi-panel-phy-timings = [00 19 06 06 15 20 07
 				06 07 02 04 00 16 0b];
 			qcom,display-topology = <1 1 1>;
 			qcom,default-topology-index = <0>;
-			qcom,dsi-dyn-clk-list = <683455680 680607952 677760224>;
+			qcom,dsi-dyn-clk-list = <706233600 703290960 700348320>;
 		};
 	};
 };

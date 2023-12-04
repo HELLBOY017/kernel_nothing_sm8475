@@ -1739,6 +1739,66 @@
 		};
 	};
 
+	spkr_0_sd_n {
+		spkr_0_sd_n_sleep: spkr_0_sd_n_sleep {
+			mux {
+				pins = "gpio0";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio0";
+				drive-strength = <2>;   /* 2 mA */
+				bias-pull-down;
+				input-enable;
+			};
+		};
+
+		spkr_0_sd_n_active: spkr_0_sd_n_active {
+			mux {
+				pins = "gpio0";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio0";
+				drive-strength = <16>;   /* 16 mA */
+				bias-disable;
+				output-high;
+			};
+		};
+	};
+
+	spkr_3_sd_n {
+		spkr_3_sd_n_sleep: spkr_3_sd_n_sleep {
+			mux {
+				pins = "gpio3";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio3";
+				drive-strength = <2>;  /* 2 mA */
+				bias-pull-down;
+				input-enable;
+			};
+		};
+
+		spkr_3_sd_n_active: spkr_3_sd_n_active {
+			mux {
+				pins = "gpio3";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio3";
+				drive-strength = <16>;  /* 16 mA */
+				bias-disable;
+				output-high;
+			};
+		};
+	};
+
 	tx_swr_clk_sleep: tx_swr_clk_sleep {
 		mux {
 			pins = "gpio0";

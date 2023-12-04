@@ -101,9 +101,9 @@
 				"pcie_cfg_noc_pcie_anoc_ahb_clk",
 				"pcie_pipe_clk_mux", "pcie_0_pipe_div2_clk",
 				"pcie_qmip_pcie_ahb_clk", "pcie_pipe_clk_ext_src";
-		max-clock-frequency-hz = <0>, <0>, <19200000>, <0>, <0>, <0>,
-					<0>, <0>, <0>, <0>, <100000000>, <0>,
-					<0>, <0>, <0>, <0>, <0>, <0>;
+		max-clock-frequency-hz = <0>, <0>, <0>, <19200000>, <0>, <0>,
+					<0>, <0>, <0>, <0>, <0>, <100000000>,
+					<0>, <0>, <0>, <0>, <0>;
 
 		resets = <&gcc GCC_PCIE_0_BCR>,
 			<&gcc GCC_PCIE_0_PHY_BCR>;
@@ -126,7 +126,7 @@
 		qcom,num-parf-testbus-sel = <0xb9>;
 		qcom,config-recovery;
 
-		qcom,pcie-phy-ver = <107>;
+		qcom,pcie-phy-ver = <108>;
 		qcom,phy-status-offset = <0x214>;
 		qcom,phy-status-bit = <6>;
 		qcom,phy-power-down-offset = <0x240>;
@@ -202,8 +202,8 @@
 					0x18cc 0xf0 0x0
 					0x10d8 0x0f 0x0
 					0x18d8 0x0f 0x0
-					0x10dc 0x00 0x0
-					0x18dc 0x00 0x0
+					0x10dc 0x11 0x0
+					0x18dc 0x11 0x0
 					0x11a4 0x38 0x0
 					0x19a4 0x38 0x0
 					0x0e3c 0x1d 0x0
@@ -367,9 +367,9 @@
 				"pcie_aggre_noc_0_axi_clk", "pcie_aggre_noc_sf_axi_clk",
 				"pcie_cfg_noc_pcie_anoc_ahb_clk", "pcie_pipe_clk_mux",
 				"pcie_1_pipe_div2_clk", "pcie_pipe_clk_ext_src";
-		max-clock-frequency-hz = <0>, <0>, <19200000>, <0>, <0>, <0>,
-					 <0>, <0>, <0>, <0>, <100000000>, <0>,
-					 <0>, <0>, <0>, <0>, <0>;
+		max-clock-frequency-hz = <0>, <0>, <0>, <19200000>, <0>, <0>,
+					 <0>, <0>, <0>, <0>, <0>, <100000000>,
+					 <0>, <0>, <0>, <0>;
 
 		resets = <&gcc GCC_PCIE_1_BCR>,
 			<&gcc GCC_PCIE_1_PHY_BCR>;
@@ -391,7 +391,7 @@
 		qcom,l1-2-th-scale = <2>;
 		qcom,l1-2-th-value = <150>;
 
-		qcom,pcie-phy-ver = <107>;
+		qcom,pcie-phy-ver = <108>;
 		qcom,phy-status-offset = <0x214>;
 		qcom,phy-status-bit = <6>;
 		qcom,phy-power-down-offset = <0x240>;
@@ -467,8 +467,8 @@
 					0x18cc 0xf0 0x0
 					0x10d8 0x0f 0x0
 					0x18d8 0x0f 0x0
-					0x10dc 0x00 0x0
-					0x18dc 0x00 0x0
+					0x10dc 0x11 0x0
+					0x18dc 0x11 0x0
 					0x11a4 0x38 0x0
 					0x19a4 0x38 0x0
 					0x0e3c 0x1d 0x0
@@ -571,6 +571,7 @@
 		msi-parent = <&pcie2_msi>;
 
 		perst-gpio = <&tlmm 170 GPIO_ACTIVE_HIGH>;
+		card-presence-pin = <&tlmm 172 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default", "sleep";
 		pinctrl-0 = <&pcie2_perst_default>;
 		pinctrl-1 = <&pcie2_perst_default>;
@@ -637,9 +638,9 @@
 				"pcie_cfg_noc_pcie_anoc_ahb_clk", "pcie_pipe_clk_mux",
 				"pcie_phy_aux_clk_mux", "pcie_2_pipe_div2_clk",
 				"pcie_pipe_clk_ext_src", "pcie_phy_aux_clk_ext_src";
-		max-clock-frequency-hz = <0>, <0>, <19200000>, <0>, <0>, <0>,
-					<0>, <0>, <0>, <0>, <100000000>, <0>,
-					<0>, <0>, <0>, <0>, <0>, <0>, <0>, <0>;
+		max-clock-frequency-hz = <0>, <0>, <0>, <19200000>, <0>, <0>,
+					<0>, <0>, <0>, <0>, <0>, <100000000>,
+					<0>, <0>, <0>, <0>, <0>, <0>, <0>;
 
 		resets = <&gcc GCC_PCIE_2_BCR>,
 			<&gcc GCC_PCIE_2_PHY_BCR>;
@@ -652,6 +653,7 @@
 			<0x100 &apps_smmu 0x2c01 0x1>;
 
 		qcom,boot-option = <0x1>;
+		qcom,no-client-based-bw-voting;
 		qcom,apss-based-l1ss-sleep;
 		qcom,target-link-width = <0x1>;
 		qcom,drv-l1ss-timeout-us = <5000>;

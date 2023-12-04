@@ -9,6 +9,7 @@ WLAN PD restart notifications.
 Required properties:
   - compatible: "qcom,icnss" for ADRASTEA architecture
                 "qcom,wcn6750" for iWCN architecture
+		"qcom,wcn6450" for evros architecture
   - reg: Memory regions defined as starting address and size
   - reg-names: Names of the memory regions defined in reg entry
   - interrupts: Copy engine interrupt table

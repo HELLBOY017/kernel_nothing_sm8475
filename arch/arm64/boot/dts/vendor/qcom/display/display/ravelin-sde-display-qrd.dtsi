@@ -62,6 +62,27 @@
 	};
 };
 
+&dsi_ft8726_fhd_plus_90_video {
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_labibb>;
+	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_pwm";
+	pwms = <&pm6450_pwm_1 0 0>;
+	qcom,bl-pmic-pwm-period-usecs = <100>;
+	qcom,mdss-dsi-bl-min-level = <1>;
+	qcom,mdss-dsi-bl-max-level = <4095>;
+	qcom,platform-reset-gpio = <&tlmm 92 0>;
+	qcom,platform-bklight-en-gpio = <&pm6450_gpios 6 0>;
+};
+
+&dsi_ft8726_fhd_plus_60_video {
+	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_labibb>;
+	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_pwm";
+	pwms = <&pm6450_pwm_1 0 0>;
+	qcom,bl-pmic-pwm-period-usecs = <100>;
+	qcom,mdss-dsi-bl-min-level = <1>;
+	qcom,mdss-dsi-bl-max-level = <4095>;
+	qcom,platform-reset-gpio = <&tlmm 92 0>;
+	qcom,platform-bklight-en-gpio = <&pm6450_gpios 6 0>;
+};
 
 &dsi_ft8726_fhd_plus_120_video {
 	qcom,panel-supply-entries = <&dsi_panel_pwr_supply_labibb>;
@@ -110,6 +131,8 @@
 
 &qupv3_se1_i2c {
 	focaltech@38 {
-		panel = <&dsi_ft8726_fhd_plus_120_video>;
+		panel = <&dsi_ft8726_fhd_plus_120_video
+			&dsi_ft8726_fhd_plus_90_video
+			&dsi_ft8726_fhd_plus_60_video>;
 	};
 };

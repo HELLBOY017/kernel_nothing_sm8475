@@ -10,3 +10,9 @@
 	qcom,board-id = <0x10022 0x4>;
 };
 
+&reserved_memory {
+	wlan_msa_mem: wlan_msa_mem_region@82a00000 {
+		no-map;
+		reg = <0x0 0x82a00000 0x0 0x0>;
+	};
+};

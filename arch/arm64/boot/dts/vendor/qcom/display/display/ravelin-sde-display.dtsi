@@ -23,6 +23,11 @@
 		regulator-min-microvolt = <4600000>;
 		regulator-max-microvolt = <6000000>;
 	};
+
+	disp_rdump_memory: disp_rdump_region@e1000000 {
+		reg = <0xb8000000 0x00800000>;
+		label = "disp_rdump_region";
+	};
 };
 
 &sde_dsi {

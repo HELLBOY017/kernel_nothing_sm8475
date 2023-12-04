@@ -69,6 +69,11 @@
 		reg = <0x0 0x81ce0000 0x0 0x4000>;
 	};
 
+	uefi_log_mem: uefi_log_region@81ce4000 {
+		no-map;
+		reg = <0x0 0x81ce4000 0x0 0x10000>;
+	};
+
 	secdata_apss_mem: secdata_apss_region@81cff000 {
 		no-map;
 		reg = <0x0 0x81cff000 0x0 0x1000>;
@@ -84,29 +89,19 @@
 		reg = <0x0 0x82700000 0x0 0x100000>;
 	};
 
-	cdsp_secure_heap_mem: cdsp_secure_heap_region@82800000 {
+	video_mem: video_region@88d00000 {
 		no-map;
-		reg = <0x0 0x82800000 0x0 0x4600000>;
+		reg = <0x0 0x88d00000 0x0 0x700000>;
 	};
 
-	video_mem: video_region@87300000 {
+	adsp_mem: adsp_region@89400000 {
 		no-map;
-		reg = <0x0 0x87300000 0x0 0x700000>;
-	};
-
-	adsp_mem: adsp_region@87a00000 {
-		no-map;
-		reg = <0x0 0x87a00000 0x0 0x2100000>;
-	};
-
-	slpi_mem: slpi_region@89c00000 {
-		no-map;
-		reg = <0x0 0x89c00000 0x0 0x1900000>;
+		reg = <0x0 0x89400000 0x0 0x2100000>;
 	};
 
 	cdsp_mem: cdsp_region@8b500000 {
 		no-map;
-		reg = <0x0 0x8b500000 0x0 0x2000000>;
+		reg = <0x0 0x8b500000 0x0 0xf00000>;
 	};
 
 	ipa_fw_mem: ipa_fw_region@8d500000 {
@@ -166,30 +161,12 @@
 
 	ta_mem: ta_region@d8800000 {
 		no-map;
-		reg = <0x0 0xd8800000 0x0 0x8a00000>;
+		reg = <0x0 0xd8800000 0x0 0x3000000>;
 	};
 
-	tags_tz_mem: tags_tz_region@e1200000 {
+	tags_tz_mem: tags_tz_region@db800000 {
 		no-map;
-		reg = <0x0 0xe1200000 0x0 0x2710000>;
-	};
-
-	tui_vm_mem: tui_vm_region@f3c00000 {
-		no-map;
-		reg = <0x0 0xf3c00000 0x0 0x4400000>;
-	};
-
-	tags_hyp_ext_mem: tags_hyp_ext_region@fd000000 {
-		no-map;
-		reg = <0x0 0xfd000000 0x0 0x2800000>;
-	};
-
-	cnss_wlan_mem: cnss_wlan_region {
-		compatible = "shared-dma-pool";
-		alloc-ranges = <0x0 0x00000000 0x0 0xffffffff>;
-		reusable;
-		alignment = <0x0 0x400000>;
-		size = <0x0 0x2000000>;
+		reg = <0x0 0xdb800000 0x0 0xf00000>;
 	};
 
 };

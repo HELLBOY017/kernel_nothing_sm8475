@@ -131,7 +131,7 @@
 		qcom,sde-sspp-csc-off = <0x1a00>;
 		qcom,sde-csc-type = "csc-10bit";
 		qcom,sde-qseed-sw-lib-rev = "qseedv3lite";
-		qcom,sde-qseed-scalar-version = <0x3002>;
+		qcom,sde-qseed-scalar-version = <0x3001>;
 		qcom,sde-sspp-qseed-off = <0xa00>;
 		qcom,sde-mixer-linewidth = <2560>;
 		qcom,sde-sspp-linewidth = <5120>;
@@ -159,10 +159,11 @@
 		qcom,sde-max-bw-high-kbps = <0x7 18200000>;
 		qcom,sde-min-core-ib-kbps = <2500000>;
 		qcom,sde-min-llcc-ib-kbps = <0>;
-		qcom,sde-min-dram-ib-kbps = <200000>;
+		qcom,sde-min-dram-ib-kbps = <800000>;
 		qcom,sde-dram-channels = <1>;
 		qcom,sde-num-nrt-paths = <0>;
 		qcom,sde-num-ddr-channels = <1>;
+		qcom,sde-dram-efficiency = <0>;
 
 		qcom,sde-lm-noise-off = <0x320>;
 		qcom,sde-lm-noise-version = <0x00010000>;
@@ -199,7 +200,7 @@
 				0x00112233 0x44556666 0x00112233 0x66666666
 				0x00112233 0x44556666 0x00112233 0x66666666>;
 
-		qcom,sde-cdp-setting = <1 1>, <1 0>;
+		qcom,sde-cdp-setting = <0 0>, <0 0>;
 
 		qcom,sde-qos-cpu-mask = <0x3>;
 		qcom,sde-qos-cpu-mask-performance = <0xf>;

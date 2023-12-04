@@ -184,14 +184,24 @@
 				cooling-device = <&modem_nr_dsc 6 6>;
 			};
 
+			vbat_cpu_4 {
+				trip = <&b_bcl_lvl0>;
+				cooling-device = <&cpu4_pause 1 1>;
+			};
+
 			vbat_cpu_5 {
+				trip = <&b_bcl_lvl0>;
+				cooling-device = <&cpu5_pause 1 1>;
+			};
+
+			vbat_cpu_6 {
 				trip = <&b_bcl_lvl0>;
 				cooling-device = <&cpu6_pause 1 1>;
 			};
 
 			vbat_gpu0 {
 				trip = <&b_bcl_lvl0>;
-				cooling-device = <&msm_gpu 1 1>;
+				cooling-device = <&msm_gpu 2 2>;
 			};
 		};
 	};
@@ -213,14 +223,14 @@
 				cooling-device = <&modem_nr_dsc 255 255>;
 			};
 
-			vbat_cpu_6_7 {
+			vbat_cpu_7 {
 				trip = <&b_bcl_lvl1>;
 				cooling-device = <&cpu7_pause 1 1>;
 			};
 
 			vbat_gpu1 {
 				trip = <&b_bcl_lvl1>;
-				cooling-device = <&msm_gpu 2 2>;
+				cooling-device = <&msm_gpu 4 4>;
 			};
 		};
 	};

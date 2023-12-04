@@ -69,7 +69,7 @@
 			memory-region = <&demura_heap_memory>;
 		};
 
-		qcom,audio_ml {
+		audio_ml_cma: qcom,audio_ml {
 			qcom,dma-heap-name = "qcom,audio-ml";
 			qcom,dma-heap-type = <HEAP_TYPE_CMA>;
 			memory-region = <&audio_cma_mem>;

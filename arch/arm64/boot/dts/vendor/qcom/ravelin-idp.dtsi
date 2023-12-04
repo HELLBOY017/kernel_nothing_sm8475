@@ -64,7 +64,7 @@
 		focaltech,reset-gpio = <&tlmm 12 0x00>;
 		focaltech,irq-gpio = <&tlmm 13 0x2008>;
 		focaltech,display-coords = <0 0 1080 2408>;
-		focaltech,max-touch-number = <5>;
+		focaltech,max-touch-number = <10>;
 		focaltech,ic-type = <0x8726081C>;
 		focaltech,touch-type = "primary";
 
@@ -72,6 +72,15 @@
 		pinctrl-0 = <&ts_active>;
 		pinctrl-1 = <&ts_int_suspend &ts_reset_suspend>;
 		pinctrl-2 = <&ts_release>;
+
+		focaltech,trusted-touch-mode = "vm_mode";
+		focaltech,touch-environment = "pvm";
+		focaltech,trusted-touch-type = "primary";
+		focaltech,trusted-touch-spi-irq = <566>;
+		focaltech,trusted-touch-io-bases = <0x984000 0x910000>;
+		focaltech,trusted-touch-io-sizes = <0x1000 0x4000>;
+		focaltech,trusted-touch-vm-gpio-list = <&tlmm 10 0 &tlmm 11 0
+						&tlmm 12 0 &tlmm 13 0x2008>;
 	};
 };
 
@@ -96,9 +105,21 @@
 	qcom,vdd-voltage-level = <2960000 2960000>;
 	qcom,vdd-current-level = <0 800000>;
 
+	/*
+	 * min/max voltages are voted on L24B/L28B and L24B/L28B_PBS
+	 * regulators will only be voted for enabling/disabling conditions
+	 * to support FR84471 for chipsets where PMIC doesn't support
+	 * PBS ram sequence to turn OFF regulators automatically on
+	 * multicard tray removal and these new regulator resources are
+	 * exposed by PMIC team as part of this FR.
+	 */
+	vdd-en-dis-supply = <&L24B_PBS>;
+
 	vdd-io-supply = <&L28B>;
 	qcom,vdd-io-voltage-level = <1800000 2960000>;
 	qcom,vdd-io-current-level = <0 22000>;
+
+	vdd-io-en-dis-supply = <&L28B_PBS>;
 
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&sdc2_on>;
@@ -188,5 +209,6 @@
 };
 
 &battery_charger {
+	qcom,thermal-mitigation-step = <500000>;
 	qcom,wireless-charging-not-supported;
 };
