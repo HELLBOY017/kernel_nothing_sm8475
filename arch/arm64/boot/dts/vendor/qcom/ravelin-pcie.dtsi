@@ -84,6 +84,7 @@
 			<&gcc GCC_PCIE_0_PHY_RCHNG_CLK>,
 			<&gcc GCC_DDRSS_PCIE_SF_TBU_CLK>,
 			<&gcc GCC_AGGRE_NOC_PCIE_0_AXI_CLK>,
+			<&gcc GCC_CFG_NOC_PCIE_ANOC_AHB_CLK>,
 			<&gcc GCC_PCIE_0_PIPE_CLK_SRC>,
 			<&gcc GCC_PCIE_0_PIPE_DIV2_CLK>,
 			<&gcc GCC_QMIP_PCIE_AHB_CLK>,
@@ -94,11 +95,11 @@
 				"pcie_0_ldo", "pcie_0_slv_q2a_axi_clk",
 				"pcie_phy_refgen_clk",
 				"pcie_ddrss_sf_tbu_clk",
-				"pcie_aggre_noc_0_axi_clk",
+				"pcie_aggre_noc_0_axi_clk", "pcie_cfg_noc_pcie_anoc_ahb_clk",
 				"pcie_pipe_clk_mux", "pcie_0_pipe_div2_clk",
 				"pcie_qmip_pcie_ahb_clk", "pcie_pipe_clk_ext_src";
-		max-clock-frequency-hz = <0>, <0>, <19200000>, <0>, <0>, <0>,
-					<0>, <0>, <0>, <0>, <100000000>,
+		max-clock-frequency-hz = <0>, <0>, <0>, <19200000>, <0>, <0>,
+					<0>, <0>, <0>, <0>, <0>, <100000000>,
 					<0>, <0>, <0>, <0>;
 
 		resets = <&gcc GCC_PCIE_0_BCR>,

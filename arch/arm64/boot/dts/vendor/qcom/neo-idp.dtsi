@@ -104,15 +104,6 @@
 	};
 };
 
-&icnss2 {
-	pinctrl-names = "wlan_pon_en", "wlan_pon_dis", "wlan_poff_en", "wlan_poff_dis";
-	pinctrl-0 = <&wlan_pon_en>;
-	pinctrl-1 = <&wlan_pon_dis>;
-	pinctrl-2 = <&wlan_poff_en>;
-	pinctrl-3 = <&wlan_poff_dis>;
-};
-
-
 &bluetooth {
 	pinctrl-names = "default", "bt_pon_en", "bt_pon_dis", "bt_poff_en", "bt_poff_dis";
 	pinctrl-0 = <&bt_en_sleep>;

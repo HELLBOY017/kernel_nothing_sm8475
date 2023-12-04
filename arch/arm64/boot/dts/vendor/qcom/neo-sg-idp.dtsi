@@ -30,11 +30,3 @@
 		thermal-sensors = <&pm8150_adc_tm ADC5_AMUX_THM2_100K_PU>;
 	};
 };
-
-&audio_ml_cma {
-	status = "disabled";
-};
-
-&audio_cma_mem {
-	status = "disabled";
-};

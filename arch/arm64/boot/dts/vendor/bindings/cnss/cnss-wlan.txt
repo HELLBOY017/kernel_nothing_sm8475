@@ -131,6 +131,8 @@ Optional properties:
 	"{class: wlan_pdc, ss: <pdc_name>, res: pdc, enable: <value>}"
 	Reference:
 	This info can be identified from SOC Platform TCS context worksheet.
+  - qcom,on-chip-pmic-support: Board IDs which uses on chip PMIC and requires
+			       to disable wlan pdc support in AOP firmware.
 
 Examples:
 

@@ -16,7 +16,7 @@
 / {
 	model = "Qualcomm Technologies, Inc. Parrot";
 	compatible = "qcom,parrot";
-	qcom,msm-id = <537 0x10000>;
+	qcom,msm-id = <537 0x10000>, <613 0x10000>;
 	interrupt-parent = <&intc>;
 
 	#address-cells = <2>;
@@ -1460,6 +1460,9 @@
 		mmc-hs400-1_8v;
 		mmc-hs400-enhanced-strobe;
 
+		qcom,devfreq,freq-table = <50000000 200000000>;
+		qcom,scaling-lower-bus-speed-mode = "DDR52";
+
 		cap-mmc-hw-reset;
 
 		clocks = <&gcc GCC_SDCC1_AHB_CLK>,
@@ -1802,6 +1805,7 @@
 		qcom,hyplog-enabled;
 		hyplog-address-offset = <0x410>;
 		hyplog-size-offset = <0x414>;
+		tmecrashdump-address-offset = <0x808a0000>;
 		status = "ok";
 	};
 
@@ -2869,6 +2873,7 @@
 		qcom,tx-poll;
 		qcom,wan-use-skb-page;
 		qcom,rmnet-ctl-enable;
+		qcom,gfp-no-retry;
 		qcom,ipa-holb-monitor-poll-period = <5>;
 		qcom,ipa-holb-monitor-max-cnt-wlan = <10>;
 		qcom,ipa-holb-monitor-max-cnt-usb = <10>;

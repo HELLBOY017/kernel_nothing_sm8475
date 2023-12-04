@@ -33,6 +33,8 @@ Optional:
 				 if set to zero then the feature is disabled.
 - qcom,tx-napi: Enable usage of NAPI in the TX data path.
 - qcom,lan-rx-napi: Enable NAPI in the LAN RX data path.
+- qcom,gfp-no-retry: Enable this flag in case to not retry for
+                     the order-3 temp allocations except once.
 - qcom,ipa-uc-holb-monitor: Enable uC HOLB monitor feature.
 - qcom,ipa-holb-monitor-poll-period: Poll period for HOLB monitor feature.
 - qcom,holb-monitor-max-cnt-wlan: Max stuck count for HOLB on WLAN channel.

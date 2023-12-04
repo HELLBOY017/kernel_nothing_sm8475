@@ -151,81 +151,10 @@
 		};
 	};
 
-	sys-therm-1 {
-		cooling-maps {
-			fan_cdev_0 {
-				trip = <&fan_config0>;
-				cooling-device = <&fancontroller 3 3>;
-			};
-		};
-	};
-
-	nspss-1 {
+	cpu-0-0-0 {
 		trips {
-			fan_nspss1_config0: fan-nspss1-config0 {
-				temperature = <80000>;
-				hysteresis = <0>;
-				type = "passive";
-			};
-
-			fan_nspss1_config1: fan-nspss1-config1 {
-				temperature = <90000>;
-				hysteresis = <0>;
-				type = "passive";
-			};
-		};
-
-		cooling-maps {
-			fan_cdev_0 {
-				trip = <&fan_nspss1_config0>;
-				cooling-device = <&fancontroller 3 3>;
-			};
-
-			fan_cdev_1 {
-				trip = <&fan_nspss1_config1>;
-				cooling-device = <&fancontroller 4 4>;
-			};
-		};
-	};
-
-	gpuss-2 {
-		trips {
-			fan_gpuss2_config0: fan-gpuss0-config0 {
-				temperature = <70000>;
-				hysteresis = <0>;
-				type = "passive";
-			};
-
-			fan_gpuss2_config1: fan-gpuss0-config1 {
-				temperature = <90000>;
-				hysteresis = <0>;
-				type = "passive";
-			};
-		};
-
-		cooling-maps {
-			fan_cdev_0 {
-				trip = <&fan_gpuss2_config0>;
-				cooling-device = <&fancontroller 3 3>;
-			};
-
-			fan_cdev_1 {
-				trip = <&fan_gpuss2_config0>;
-				cooling-device = <&fancontroller 4 4>;
-			};
-		};
-	};
-
-	cpu-1-1-0 {
-		trips {
-			fan_cpu110_config0: fan-cpu110-config0 {
-				temperature = <70000>;
-				hysteresis = <1000>;
-				type = "passive";
-			};
-
-			fan_cpu110_config1: fan-cpu110-config1 {
-				temperature = <90000>;
+			fan_cpu000_config0: fan-cpu000-config0 {
+				temperature = <20000>;
 				hysteresis = <1000>;
 				type = "passive";
 			};
@@ -233,13 +162,8 @@
 
 		cooling-maps {
 			fan_cdev_0 {
-				trip = <&fan_cpu110_config0>;
-				cooling-device = <&fancontroller 3 3>;
-			};
-
-			fan_cdev_1 {
-				trip = <&fan_cpu110_config1>;
-				cooling-device = <&fancontroller 4 4>;
+				trip = <&fan_cpu000_config0>;
+				cooling-device = <&fancontroller 50 50>;
 			};
 		};
 	};

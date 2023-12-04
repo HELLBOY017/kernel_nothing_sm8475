@@ -93,6 +93,7 @@
 
 &pm8550b_haptics {
 	status = "okay";
+
 };
 
 &pmxr2230_flash {

@@ -21,8 +21,6 @@
 		qcom,mdss-dsi-mdp-trigger = "none";
 		qcom,mdss-dsi-reset-sequence = <1 10>, <0 10>, <1 20>;
 
-		qcom,mdss-dsi-wr-mem-start = <0x2c>;
-		qcom,mdss-dsi-wr-mem-continue = <0x3c>;
 		qcom,mdss-dsi-display-timings {
 			timing@0 {
 				cell-index = <0>;

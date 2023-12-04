@@ -384,6 +384,14 @@
 		size = <0x0 0xa400000>;
 		alignment = <0x0 0x400000>;
 	};
+
+	cnss_wlan_mem: cnss_wlan_region {
+		compatible = "shared-dma-pool";
+		alloc-ranges = <0x0 0x00000000 0x0 0xffffffff>;
+		reusable;
+		alignment = <0x0 0x400000>;
+		size = <0x0 0x2000000>;
+	};
 };
 
 &firmware {
@@ -1428,10 +1436,9 @@
 				qcom,cpufreq-memfreq-tbl =
 					<  960000  547000 >,
 					< 1228800  768000 >,
-					< 1651200 1555000 >,
-					< 1920000 1708000 >,
-					< 2208000 2092000 >,
-					< 2361600 3196000 >;
+					< 1651200 1708000 >,
+					< 1920000 2092000 >,
+					< 2054400 2736000 >;
 			};
 
 			prime {
@@ -1441,9 +1448,9 @@
 				qcom,cpufreq-memfreq-tbl =
 					<  960000  547000 >,
 					< 1228800  768000 >,
-					< 1651200 1555000 >,
-					< 1920000 1708000 >,
-					< 2208000 2092000 >,
+					< 1651200 1708000 >,
+					< 1920000 2092000 >,
+					< 2208000 2736000 >,
 					< 2361600 3196000 >;
 				};
 
@@ -1490,8 +1497,7 @@
 					<  960000  466500 >,
 					< 1228800  600000 >,
 					< 1651200  806000 >,
-					< 2208000  933000 >,
-					< 2361600 1066000 >;
+					< 2054400 1066000 >;
 				qcom,sampling-enabled;
 			};
 
@@ -1541,15 +1547,14 @@
 				qcom,cpufreq-memfreq-tbl =
 					<  307200  307200 >,
 					<  691200  422400 >,
-					<  960000  556800 >,
-					< 1094400  691200 >,
-					< 1228800  825600 >,
-					< 1382400  940800 >,
-					< 1516800 1075200 >,
-					< 1651200 1209600 >,
-					< 1920000 1305600 >,
-					< 2054400 1401600 >,
-					< 2361600 1516800 >;
+					<  960000  691200 >,
+					< 1094400  825600 >,
+					< 1228800  940800 >,
+					< 1382400 1075200 >,
+					< 1516800 1209600 >,
+					< 1651200 1401600 >,
+					< 1920000 1516800 >,
+					< 2054400 1708800 >;
 				qcom,sampling-enabled;
 			};
 
@@ -1559,15 +1564,15 @@
 				qcom,cpufreq-memfreq-tbl =
 					<  307200  307200 >,
 					<  691200  422400 >,
-					<  960000  556800 >,
-					< 1094400  691200 >,
-					< 1228800  825600 >,
-					< 1382400  940800 >,
-					< 1516800 1075200 >,
-					< 1651200 1209600 >,
-					< 1920000 1305600 >,
-					< 2054400 1401600 >,
-					< 2361600 1516800 >;
+					<  960000  691200 >,
+					< 1094400  825600 >,
+					< 1228800  940800 >,
+					< 1382400 1075200 >,
+					< 1516800 1209600 >,
+					< 1651200 1401600 >,
+					< 1920000 1516800 >,
+					< 2054400 1612800 >,
+					< 2208000 1708800 >;
 				qcom,sampling-enabled;
 			};
 
@@ -1639,6 +1644,37 @@
 		qcom,target-dev = <&qcom_ddr_dcvs_hw>;
 	};
 
+	bwprof: qcom,bwprof-ddr@19090000 {
+		compatible = "qcom,bwprof";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		qcom,bus-width = <16>;
+		ranges;
+		reg = <0x190BA050 0x10>;
+		reg-names = "mem-freq";
+
+		bwprof_0: qcom,bwprof0@19092000 {
+			compatible = "qcom,bwprof-mon";
+			reg = <0x19092000 0x1000>;
+			reg-names = "base";
+			client = "total";
+		};
+
+		bwprof_1: qcom,bwprof1@19093000 {
+			compatible = "qcom,bwprof-mon";
+			reg = <0x19093000 0x1000>;
+			reg-names = "base";
+			client = "cpu";
+		};
+
+		bwprof_2: qcom,bwprof2@19094000 {
+			compatible = "qcom,bwprof-mon";
+			reg = <0x19094000 0x1000>;
+			reg-names = "base";
+			client = "gpu";
+		};
+
+	};
 
 	rimps: qcom,rimps@17400000 {
 		#address-cells = <2>;
@@ -1660,6 +1696,11 @@
 
 		scmi_plh: protocol@81 {
 			reg = <0x81>;
+			#clock-cells = <1>;
+		};
+
+		scmi_cpufreqstat: protocol@84 {
+			reg = <0x84>;
 			#clock-cells = <1>;
 		};
 
@@ -1746,6 +1787,26 @@
 					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_TEST
 					IRQ_TYPE_EDGE_RISING>;
 			};
+
+			ipclite_signal_4 {
+				index = <4>;
+				mboxes = <&ipcc_compute_l0 IPCC_CLIENT_APSS
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_SSR>;
+				interrupt-parent = <&ipcc_compute_l0>;
+				interrupts = <IPCC_CLIENT_APSS
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_SSR
+					IRQ_TYPE_EDGE_RISING>;
+			};
+
+			ipclite_signal_5 {
+				index = <5>;
+				mboxes = <&ipcc_compute_l0 IPCC_CLIENT_APSS
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_DEBUG>;
+				interrupt-parent = <&ipcc_compute_l0>;
+				interrupts = <IPCC_CLIENT_APSS
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_DEBUG
+					IRQ_TYPE_EDGE_RISING>;
+			};
 		};
 
 		ipclite_cdsp: cdsp {
@@ -1790,6 +1851,26 @@
 				interrupt-parent = <&ipcc_compute_l0>;
 				interrupts = <IPCC_CLIENT_CDSP
 					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_TEST
+					IRQ_TYPE_EDGE_RISING>;
+			};
+
+			ipclite_signal_4 {
+				index = <4>;
+				mboxes = <&ipcc_compute_l0 IPCC_CLIENT_CDSP
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_SSR>;
+				interrupt-parent = <&ipcc_compute_l0>;
+				interrupts = <IPCC_CLIENT_CDSP
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_SSR
+					IRQ_TYPE_EDGE_RISING>;
+			};
+
+			ipclite_signal_5 {
+				index = <5>;
+				mboxes = <&ipcc_compute_l0 IPCC_CLIENT_CDSP
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_DEBUG>;
+				interrupt-parent = <&ipcc_compute_l0>;
+				interrupts = <IPCC_CLIENT_CDSP
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_DEBUG
 					IRQ_TYPE_EDGE_RISING>;
 			};
 		};
@@ -1838,6 +1919,26 @@
 					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_TEST
 					IRQ_TYPE_EDGE_RISING>;
 			};
+
+			ipclite_signal_4 {
+				index = <4>;
+				mboxes = <&ipcc_compute_l0 IPCC_CLIENT_CVP
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_SSR>;
+				interrupt-parent = <&ipcc_compute_l0>;
+				interrupts = <IPCC_CLIENT_CVP
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_SSR
+					IRQ_TYPE_EDGE_RISING>;
+			};
+
+			ipclite_signal_5 {
+				index = <5>;
+				mboxes = <&ipcc_compute_l0 IPCC_CLIENT_CVP
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_DEBUG>;
+				interrupt-parent = <&ipcc_compute_l0>;
+				interrupts = <IPCC_CLIENT_CVP
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_DEBUG
+					IRQ_TYPE_EDGE_RISING>;
+			};
 		};
 
 		ipclite_vpu: vpu {
@@ -1882,6 +1983,26 @@
 				interrupt-parent = <&ipcc_compute_l0>;
 				interrupts = <IPCC_CLIENT_VPU
 					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_TEST
+					IRQ_TYPE_EDGE_RISING>;
+			};
+
+			ipclite_signal_4 {
+				index = <4>;
+				mboxes = <&ipcc_compute_l0 IPCC_CLIENT_VPU
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_SSR>;
+				interrupt-parent = <&ipcc_compute_l0>;
+				interrupts = <IPCC_CLIENT_VPU
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_SSR
+					IRQ_TYPE_EDGE_RISING>;
+			};
+
+			ipclite_signal_5 {
+				index = <5>;
+				mboxes = <&ipcc_compute_l0 IPCC_CLIENT_VPU
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_DEBUG>;
+				interrupt-parent = <&ipcc_compute_l0>;
+				interrupts = <IPCC_CLIENT_VPU
+					IPCC_COMPUTE_L0_SIGNAL_IPCLITE_DEBUG
 					IRQ_TYPE_EDGE_RISING>;
 			};
 		};
@@ -2162,6 +2283,7 @@
 		qcom,rpc-latency-us = <235>;
 		qcom,fastrpc-gids = <2908>;
 		qcom,qos-cores = <2>; /* its a gold+ cluster */
+		qcom,single-core-latency-vote;
 
 		qcom,msm_fastrpc_compute_cb1 {
 			compatible = "qcom,msm-fastrpc-compute-cb";
@@ -2332,6 +2454,11 @@
 			qcom,iommu-faults = "stall-disable", "HUPCF";
 			dma-coherent;
 		};
+	};
+
+	qcom,hdcp {
+		compatible = "qcom,hdcp";
+		qcom,use-smcinvoke = <1>;
 	};
 
 	qcom,mem-buf-msgq {
@@ -2531,7 +2658,7 @@
 		phys = <&ufsphy_mem>;
 		phy-names = "ufsphy";
 		#reset-cells = <1>;
-
+		spm-level = <5>;
 		lanes-per-direction = <2>;
 		dev-ref-clk-freq = <0>; /* 19.2 MHz */
 		clock-names =
@@ -2629,6 +2756,9 @@
 		qcom,iommu-dma = "fastmap";
 		dma-coherent;
 
+		qcom,iommu-dma-addr-pool = <0x40000000 0x40000000>;
+		qcom,iommu-geometry = <0x40000000 0x40000000>;
+
 		reset-gpios = <&tlmm 224 GPIO_ACTIVE_LOW>;
 		resets = <&gcc GCC_UFS_PHY_BCR>;
 		reset-names = "rst";
@@ -2670,15 +2800,22 @@
 		feat_conf11: feat_conf11@12c {
 			reg = <0x12c 0x4>;
 		};
+
+		gpu_speed_bin: gpu_speed_bin@119 {
+			reg = <0x119 0x2>;
+			bits = <7 8>;
+		};
 	};
 
 	qfprom_sys: qfprom@0 {
 		compatible = "qcom,qfprom-sys";
 
 		nvmem-cells = <&feat_conf10>,
-				<&feat_conf11>;
+				<&feat_conf11>,
+				<&gpu_speed_bin>;
 		nvmem-cell-names = "feat_conf10",
-				"feat_conf11";
+				"feat_conf11",
+				"gpu_speed_bin";
 	};
 
 	eud: qcom,msm-eud@88e0000 {
@@ -2699,6 +2836,7 @@
 		qcom,hyplog-enabled;
 		hyplog-address-offset = <0x410>;
 		hyplog-size-offset = <0x414>;
+		tmecrashdump-address-offset = <0x81CA0000>;
 	};
 
 	qcom_qseecom: qseecom@c1700000 {
@@ -2940,6 +3078,118 @@
 		pinctrl-1 = <&pcie2_clkreq_sleep>;
 
 		status = "disabled";
+	};
+
+	pdm_pwm0: pdm_pwm0@9000000 {
+		compatible = "qcom,pdm-pwm-v2";
+		reg = <0x9000000 0x16000>;
+		clocks = <&gcc GCC_PDM_AHB_CLK>,
+			<&gcc GCC_PWM0_XO512_CLK>;
+		clock-names =  "pdm_ahb_clk", "pwm_core_clk";
+		assigned-clocks = <&gcc GCC_PWM0_XO512_CLK>;
+		assigned-clock-rates = <19200000>;
+		#pwm-cells = <3>;
+
+		pwm@0 {
+			frame-index = <0>;
+			frame-offset = <0x1000>;
+		};
+
+		pwm@1 {
+			frame-index = <1>;
+			frame-offset = <0x2000>;
+		};
+
+		pwm@2 {
+			frame-index = <2>;
+			frame-offset = <0x3000>;
+		};
+
+		pwm@3 {
+			frame-index = <3>;
+			frame-offset = <0x4000>;
+		};
+
+		pwm@4 {
+			frame-index = <4>;
+			frame-offset = <0x5000>;
+		};
+
+		pwm@5 {
+			frame-index = <5>;
+			frame-offset = <0x6000>;
+		};
+
+		pwm@6 {
+			frame-index = <6>;
+			frame-offset = <0x7000>;
+		};
+
+		pwm@7 {
+			frame-index = <7>;
+			frame-offset = <0x8000>;
+		};
+
+		pwm@8 {
+			frame-index = <8>;
+			frame-offset = <0x9000>;
+		};
+
+		pwm@9 {
+			frame-index = <9>;
+			frame-offset = <0xa000>;
+		};
+
+		pwm@10 {
+			frame-index = <10>;
+			frame-offset = <0xb000>;
+		};
+
+		pwm@11 {
+			frame-index = <11>;
+			frame-offset = <0xc000>;
+		};
+
+		pwm@12 {
+			frame-index = <12>;
+			frame-offset = <0xd000>;
+		};
+
+		pwm@13 {
+			frame-index = <13>;
+			frame-offset = <0xe000>;
+		};
+
+		pwm@14 {
+			frame-index = <14>;
+			frame-offset = <0xf000>;
+		};
+
+		pwm@15 {
+			frame-index = <15>;
+			frame-offset = <0x10000>;
+		};
+
+		pwm@16 {
+			frame-index = <16>;
+			frame-offset = <0x11000>;
+		};
+
+		pwm@17 {
+			frame-index = <17>;
+			frame-offset = <0x12000>;
+		};
+
+		pwm@18 {
+			frame-index = <18>;
+			frame-offset = <0x13000>;
+		};
+
+		pwm@19 {
+			frame-index = <19>;
+			frame-offset = <0x14000>;
+		};
+
 	};
 };
 

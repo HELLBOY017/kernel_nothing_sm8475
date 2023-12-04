@@ -1,6 +1,7 @@
 /dts-v1/;
 
 #include "ravelinp.dtsi"
+#include "ravelin-adrastea.dtsi"
 #include "ravelinp-idp.dtsi"
 
 / {
