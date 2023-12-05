@@ -60,7 +60,6 @@ static const __initconst char * const blacklist[] = {
 
 	// Renamed
 	"hdcp_qseecom",
-	"qti_battery_charger",
         "fsa4480_i2c",
         "qti_amoled_ecm",
 
@@ -74,8 +73,6 @@ static const __initconst char * const blacklist[] = {
  * Add them here.
  */
 static const __initconst char * const deferred_list[] = {
-        "qti_battery_charger_main",
-
 	NULL
 };
 
