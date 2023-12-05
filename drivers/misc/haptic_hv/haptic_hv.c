@@ -40,6 +40,7 @@ char aw_rtp_name[][AW_RTP_NAME_MAX] = {
 
 static char uefi_f0_calidata[MAX_CMDLINE_PARAM_LEN];
 static char uefi_f0[MAX_CMDLINE_PARAM_LEN];
+static bool nt_hold_wake = false;
 
 #ifdef AW_TIKTAP
 static struct aw_haptic *g_aw_haptic;
@@ -1349,6 +1350,11 @@ static void richtap_rtp_work(struct work_struct *work)
 	} else {
 		atomic_set(&aw_haptic->richtap_rtp_mode, false);
 	}
+	if (nt_hold_wake) {
+		pm_relax(aw_haptic->dev);
+		pm_wakeup_dev_event(aw_haptic->dev, 85, true);
+		nt_hold_wake = false;
+	}
 }
 #ifdef AW_DOUBLE
 static int haptic_left_flag(int unuse)
@@ -1435,6 +1441,10 @@ static long richtap_file_unlocked_ioctl(struct file *filp, unsigned int cmd, uns
 			aw_haptic->func->set_gain(aw_haptic, (uint8_t)arg);
 			break;
 		case RICHTAP_STREAM_MODE:
+			if (!nt_hold_wake) {
+				pm_stay_awake(aw_haptic->dev);
+				nt_hold_wake = true;
+			}
 			atomic_set(&aw_haptic->richtap_rtp_mode, false);
 			richtap_clean_buf(aw_haptic, MMAP_BUF_DATA_INVALID);
 			cancel_work_sync(&aw_haptic->richtap_rtp_work);
@@ -4004,6 +4014,7 @@ static int aw_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 	vibrator_init(aw_haptic);
 	haptic_init(aw_haptic);
 	aw_haptic->func->creat_node(aw_haptic);
+	device_init_wakeup(aw_haptic->dev,true);
 	ram_work_init(aw_haptic);
 	aw_info("probe completed successfully!");
 

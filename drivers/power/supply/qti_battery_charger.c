@@ -28,10 +28,12 @@
 #define NT_CHG
 #define NT_CHG_WIRE
 #ifdef NT_CHG
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 #include <linux/slab.h>
 #include <linux/ctype.h>
-#define BC_WLS_ST38_PATCH_PUSH		0x48
-#define BC_WLS_ST38_CFG_PUSH		0x49
+#define BC_WLS_PATCH_PUSH		0x48
+#define BC_WLS_CFG_PUSH		0x49
 #define PATCH_FILE_NAME			"stwlc-patch.memh"
 #define CFG_FILE_NAME			"stwlc-cfg.memh"
 #define WLS_FW_WAIT_TIME_MS		    2000
@@ -42,6 +44,7 @@
 #define WLS_FW_WAIT_TIME_MS		    500
 #define WLS_FW_BUF_SIZE			    128
 #endif
+
 
 #define MSG_OWNER_BC			32778
 #define MSG_TYPE_REQ_RESP		1
@@ -67,6 +70,7 @@
 #define BC_HBOOST_VMAX_CLAMP_NOTIFY	0x79
 #define BC_GENERIC_NOTIFY		0x80
 #ifdef NT_CHG
+#define BC_SET_DEBUG_PARAM_REQ		0x46
 #define OEM_GET_LOG_BUFFER                          0x0050
 #define OEM_GET_REGISTER_BUFFER                     0x0051
 #define OEM_CHARGE_ABNORMAL                         0x0052
@@ -94,6 +98,28 @@ enum nt_notify_count_times {
 };
 enum nt_chg_data_type {
         NT_CHG_USB_TEMP = 1,
+};
+
+ /**
+    @}
+  */
+
+ /**  for userspace to get/set debug params */
+ /**
+    @{
+  */
+enum battman_debug_param_type_e{
+  BC_DEBUG_PARAM_SET_ICL = 0,
+  BC_DEBUG_PARAM_SUSPEND_USB,
+  BC_DEBUG_PARAM_SMB_SETTING,
+  BC_DEBUG_PARAM_CHG_TEMP_OVR,
+  BC_DEBUG_PARAM_SET_MAIN_TEMP,
+  BC_DEBUG_PARAM_SET_SMB_TEMP,
+  BC_DEBUG_PARAM_WLS_TX_SOURCE,
+  BC_DEBUG_PARAM_EN_OPT_MTC_CHG,
+  BC_DEBUG_PARAM_USB_OTG_SOURCE,
+  BC_DEBUG_PARAM_AGING_TEST,
+  BC_DEBUG_PARAM_MAX
 };
 
 enum nt_charge_abnormal_type {
@@ -167,6 +193,11 @@ enum battery_property_id {
 	BATT_FG_RESET,
 	BATT_TERMINATE_VOLTAGE,
 	BATT_VOLTAGE_ADC,
+	BATT_FAKE_IBAT,
+	BATT_FAKE_VBAT,
+	BATT_FAKE_TBAT,
+	BATT_FAKE_TUSB,
+	BATT_FAKE_SOC,
 #endif
 	BATT_PROP_MAX,
 };
@@ -194,6 +225,7 @@ enum usb_property_id {
 	USB_EXIST_CHARGE_PUMP,
 	NT_CHG_PARAM,
 	USB_CHARGE_KEY_INFO,
+	NT_OTG_ENABLE,
 #endif
 	USB_SCOPE,
 	USB_CONNECTOR_TYPE,
@@ -216,11 +248,11 @@ enum wireless_property_id {
 #ifdef NT_CHG
 	WLS_VOLT_TX,
 	WLS_CURR_TX,
-	WLS_ST38_REG,
-	WLS_ST38_DATA,
+	WLS_REG,
+	WLS_DATA,
 	WLS_REVERSE_STATUS,
 	WLS_REVERSE_FOD,
-	WLS_ST38_EN,
+	WLS_EN,
 	WLS_CP_REG,
 	WLS_CP_DATA,
 	WLS_OP_MODE,
@@ -265,6 +297,18 @@ struct battman_abnormal_resp {
 	struct pmic_glink_hdr	hdr;
 	int value;
 };
+
+struct nt_proc {
+    char *name;
+    struct proc_ops	fops;
+};
+
+/** Resquest Message; for set debug buffer */
+struct battman_set_debug_param_req_msg {
+	struct pmic_glink_hdr	hdr;
+	u32 debug_param_property_id;
+	u32 data;
+};  /* Message */
 #endif
 struct battery_charger_req_msg {
 	struct pmic_glink_hdr	hdr;
@@ -392,7 +436,6 @@ struct battery_chg_dev {
 	/* To track the driver initialization status */
 	bool				initialized;
 	bool				notify_en;
-	bool				error_prop;
 
 	struct delayed_work 	nt_update_status_work;
 	struct wakeup_source *chg_wake;
@@ -403,6 +446,8 @@ struct battery_chg_dev {
 	bool				nt_usb_temp_abnormal;
 	bool				nt_charge_pump_abnormal;
 	bool				nt_charge_full_temp_abnormal;
+	u32				is_aging_test;
+	bool				error_prop;
 };
 
 static const int battery_prop_map[BATT_PROP_MAX] = {
@@ -483,10 +528,10 @@ EXPORT_SYMBOL(unregister_hboost_event_notifier);
 
 #ifdef NT_CHG
 static int battery_chg_fw_write(struct battery_chg_dev *bcdev, void *data, int len);
-static ssize_t wls_st38_patch_push_store(struct class *c,
+static ssize_t wls_patch_push_store(struct class *c,
 					struct class_attribute *attr,
 					const char *buf, size_t count);
-static ssize_t wls_st38_cfg_push_store(struct class *c,
+static ssize_t wls_cfg_push_store(struct class *c,
 					struct class_attribute *attr,
 					const char *buf, size_t count);
 
@@ -1075,6 +1120,10 @@ static void handle_message(struct battery_chg_dev *bcdev, void *data,
 		pr_err("nt_abnormal_status_val:%d",bcdev->nt_abnormal_status_val);
 		ack_set = true;
 		break;
+	case BC_SET_DEBUG_PARAM_REQ:
+		pr_err("set debug param req\n");
+		ack_set = true;
+		break;
 #endif
 	default:
 		pr_err("Unknown opcode: %u\n", resp_msg->hdr.opcode);
@@ -1421,6 +1470,504 @@ static void nt_update_event_work(struct work_struct *work)
 	return;
 }
 #endif
+#ifdef NT_CHG
+int force_set_usb_icl(struct battery_chg_dev *bcdev, int val)
+{
+	struct battman_set_debug_param_req_msg req_msg = { { 0 } };
+	int rc = 0;
+
+	req_msg.hdr.owner = MSG_OWNER_BC;
+	req_msg.hdr.type = MSG_TYPE_REQ_RESP;
+	req_msg.hdr.opcode = BC_SET_DEBUG_PARAM_REQ;
+	req_msg.debug_param_property_id = BC_DEBUG_PARAM_AGING_TEST;
+	if (val < 0)
+		req_msg.data = UINT_MAX;
+	else
+		req_msg.data = (u32)val/1000;
+
+	rc = battery_chg_write(bcdev, &req_msg, sizeof(req_msg));
+	if (rc < 0)
+		pr_err("Failed to set icl, rc=%d\n", rc);
+	else
+		pr_err("aging_test: set icl %d mA\n", req_msg.data);
+
+	return rc;
+}
+
+static int is_aging_test_show(struct seq_file *m, void *v)
+{
+	struct battery_chg_dev *bcdev = m->private;
+
+	seq_printf(m, "is_aging_test:%d\n", bcdev->is_aging_test);
+
+	return 0;
+}
+
+static int is_aging_test_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, is_aging_test_show, PDE_DATA(inode));
+}
+
+static int nt_otg_enable_show(struct seq_file *m, void *v)
+{
+	struct battery_chg_dev *bcdev = m->private;
+	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_USB];
+	int rc;
+	if((pst == NULL) || (bcdev == NULL))
+	{
+        return -EINVAL;
+	}
+	rc = read_property_id(bcdev, pst, NT_OTG_ENABLE);
+	if (rc < 0)
+		return rc;
+	seq_printf(m, "%d\n", pst->prop[NT_OTG_ENABLE]);
+	return 0;
+}
+
+static int nt_otg_enable_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nt_otg_enable_show, PDE_DATA(inode));
+}
+
+static ssize_t nt_otg_enable_write(struct file *file, const char __user *buff,
+               size_t count, loff_t *ppos)
+{
+	struct battery_chg_dev *bcdev = PDE_DATA(file_inode(file));
+	u8 *buf_tmp = NULL;
+	int buflen = count;
+	u32 val;
+	if(bcdev == NULL)
+	{
+		pr_err("bcdev is NULL\n");
+		return -EINVAL;
+	}
+	if (buflen < 0) {
+		pr_err("proc count fail:%d\n", buflen);
+		return -EINVAL;
+	} else {
+		buf_tmp = (u8 *)kzalloc(buflen * sizeof(u8), GFP_KERNEL);
+		if (buf_tmp == NULL) {
+			pr_err("proc write buf zalloc fail\n");
+			return -ENOMEM;
+		}
+	}
+
+	if (copy_from_user(buf_tmp, buff, buflen)) {
+		pr_err("proc nt_otg_enable fail\n");
+		goto exit;
+	}
+
+	if (kstrtou32(buf_tmp, 0, &val))
+	{
+		pr_err("kstrtou32 fail\n");
+		goto exit;
+	}
+	pr_err("val:%d\n",val);
+	write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB],
+				NT_OTG_ENABLE, val);
+exit:
+	kfree(buf_tmp);
+	buf_tmp = NULL;
+	return buflen;
+}
+
+
+//fake ibat
+static int nt_fake_ibat_show(struct seq_file *m, void *v)
+{
+	struct battery_chg_dev *bcdev = m->private;
+	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_BATTERY];
+	int rc;
+	if((pst == NULL) || (bcdev == NULL))
+	{
+        return -EINVAL;
+	}
+	rc = read_property_id(bcdev, pst, BATT_FAKE_IBAT);
+	if (rc < 0)
+		return rc;
+	seq_printf(m, "%d\n", pst->prop[BATT_FAKE_IBAT]);
+	return 0;
+}
+
+static int nt_fake_ibat_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nt_fake_ibat_show, PDE_DATA(inode));
+}
+
+static ssize_t nt_fake_ibat_write(struct file *file, const char __user *buff,
+               size_t count, loff_t *ppos)
+{
+	struct battery_chg_dev *bcdev = PDE_DATA(file_inode(file));
+	u8 *buf_tmp = NULL;
+	int buflen = count;
+	u32 val;
+	if(bcdev == NULL)
+	{
+        return -EINVAL;
+	}
+	if (buflen < 0) {
+		pr_err("proc count fail:%d\n", buflen);
+		return -EINVAL;
+	} else {
+		buf_tmp = (u8 *)kzalloc(buflen * sizeof(u8), GFP_KERNEL);
+		if (buf_tmp == NULL) {
+			pr_err("proc write buf zalloc fail\n");
+			return -ENOMEM;
+		}
+	}
+
+	if (copy_from_user(buf_tmp, buff, buflen)) {
+		pr_err("proc nt_otg_enable fail\n");
+		goto exit;
+	}
+
+	if (kstrtoint(buf_tmp, 0, &val))
+		goto exit;
+	write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_BATTERY],
+				BATT_FAKE_IBAT, val);
+exit:
+	kfree(buf_tmp);
+	buf_tmp = NULL;
+	return buflen;
+}
+
+
+//fake vbat
+static int nt_fake_vbat_show(struct seq_file *m, void *v)
+{
+	struct battery_chg_dev *bcdev = m->private;
+	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_BATTERY];
+	int rc;
+	if((pst == NULL) || (bcdev == NULL))
+	{
+        return -EINVAL;
+	}
+	rc = read_property_id(bcdev, pst, BATT_FAKE_VBAT);
+	if (rc < 0)
+		return rc;
+	seq_printf(m, "%d\n", pst->prop[BATT_FAKE_VBAT]);
+	return 0;
+}
+
+static int nt_fake_vbat_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nt_fake_vbat_show, PDE_DATA(inode));
+}
+
+static ssize_t nt_fake_vbat_write(struct file *file, const char __user *buff,
+               size_t count, loff_t *ppos)
+{
+	struct battery_chg_dev *bcdev = PDE_DATA(file_inode(file));
+	u8 *buf_tmp = NULL;
+	int buflen = count;
+	u32 val;
+	if(bcdev == NULL)
+	{
+        return -EINVAL;
+	}
+	if (buflen < 0) {
+		pr_err("proc count fail:%d\n", buflen);
+		return -EINVAL;
+	} else {
+		buf_tmp = (u8 *)kzalloc(buflen * sizeof(u8), GFP_KERNEL);
+		if (buf_tmp == NULL) {
+			pr_err("proc write buf zalloc fail\n");
+			return -ENOMEM;
+		}
+	}
+
+	if (copy_from_user(buf_tmp, buff, buflen)) {
+		pr_err("proc nt_otg_enable fail\n");
+		goto exit;
+	}
+
+	if (kstrtou32(buf_tmp, 0, &val))
+		goto exit;
+	write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_BATTERY],
+				BATT_FAKE_VBAT, val);
+exit:
+	kfree(buf_tmp);
+	buf_tmp = NULL;
+	return buflen;
+}
+
+
+//fake tbat
+static int nt_fake_tbat_show(struct seq_file *m, void *v)
+{
+	struct battery_chg_dev *bcdev = m->private;
+	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_BATTERY];
+	int rc;
+	if((pst == NULL) || (bcdev == NULL))
+	{
+        return -EINVAL;
+	}
+	rc = read_property_id(bcdev, pst, BATT_FAKE_TBAT);
+	if (rc < 0)
+		return rc;
+	seq_printf(m, "%d\n", pst->prop[BATT_FAKE_TBAT]);
+	return 0;
+}
+
+static int nt_fake_tbat_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nt_fake_tbat_show, PDE_DATA(inode));
+}
+
+static ssize_t nt_fake_tbat_write(struct file *file, const char __user *buff,
+               size_t count, loff_t *ppos)
+{
+	struct battery_chg_dev *bcdev = PDE_DATA(file_inode(file));
+	u8 *buf_tmp = NULL;
+	int buflen = count;
+	u32 val;
+	if(bcdev == NULL)
+	{
+        return -EINVAL;
+	}
+	if (buflen < 0) {
+		pr_err("proc count fail:%d\n", buflen);
+		return -EINVAL;
+	} else {
+		buf_tmp = (u8 *)kzalloc(buflen * sizeof(u8), GFP_KERNEL);
+		if (buf_tmp == NULL) {
+			pr_err("proc write buf zalloc fail\n");
+			return -ENOMEM;
+		}
+	}
+
+	if (copy_from_user(buf_tmp, buff, buflen)) {
+		pr_err("proc nt_otg_enable fail\n");
+		goto exit;
+	}
+
+	if (kstrtoint(buf_tmp, 0, &val))
+		goto exit;
+	write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_BATTERY],
+				BATT_FAKE_TBAT, val);
+exit:
+	kfree(buf_tmp);
+	buf_tmp = NULL;
+	return buflen;
+}
+
+//fake tusb
+static int nt_fake_tusb_show(struct seq_file *m, void *v)
+{
+	struct battery_chg_dev *bcdev = m->private;
+	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_BATTERY];
+	int rc;
+	if((pst == NULL) || (bcdev == NULL))
+	{
+        return -EINVAL;
+	}
+	rc = read_property_id(bcdev, pst, BATT_FAKE_TUSB);
+	if (rc < 0)
+		return rc;
+	seq_printf(m, "%d\n", pst->prop[BATT_FAKE_TUSB]);
+	return 0;
+}
+
+static int nt_fake_tusb_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nt_fake_tusb_show, PDE_DATA(inode));
+}
+
+static ssize_t nt_fake_tusb_write(struct file *file, const char __user *buff,
+               size_t count, loff_t *ppos)
+{
+	struct battery_chg_dev *bcdev = PDE_DATA(file_inode(file));
+	u8 *buf_tmp = NULL;
+	int buflen = count;
+	u32 val;
+	if(bcdev == NULL)
+	{
+        return -EINVAL;
+	}
+	if (buflen < 0) {
+		pr_err("proc count fail:%d\n", buflen);
+		return -EINVAL;
+	} else {
+		buf_tmp = (u8 *)kzalloc(buflen * sizeof(u8), GFP_KERNEL);
+		if (buf_tmp == NULL) {
+			pr_err("proc write buf zalloc fail\n");
+			return -ENOMEM;
+		}
+	}
+
+	if (copy_from_user(buf_tmp, buff, buflen)) {
+		pr_err("proc nt_otg_enable fail\n");
+		goto exit;
+	}
+
+	if (kstrtoint(buf_tmp, 0, &val))
+		goto exit;
+	write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_BATTERY],
+				BATT_FAKE_TUSB, val);
+exit:
+	kfree(buf_tmp);
+	buf_tmp = NULL;
+	return buflen;
+}
+
+//fake soc
+static int nt_fake_soc_show(struct seq_file *m, void *v)
+{
+	struct battery_chg_dev *bcdev = m->private;
+	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_BATTERY];
+	int rc;
+	if((pst == NULL) || (bcdev == NULL))
+	{
+        return -EINVAL;
+	}
+	rc = read_property_id(bcdev, pst, BATT_FAKE_SOC);
+	if (rc < 0)
+		return rc;
+	seq_printf(m, "%d\n", pst->prop[BATT_FAKE_SOC]);
+	return 0;
+}
+
+static int nt_fake_soc_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nt_fake_soc_show, PDE_DATA(inode));
+}
+
+static ssize_t nt_fake_soc_write(struct file *file, const char __user *buff,
+               size_t count, loff_t *ppos)
+{
+	struct battery_chg_dev *bcdev = PDE_DATA(file_inode(file));
+	u8 *buf_tmp = NULL;
+	int buflen = count;
+	u32 val;
+	if(bcdev == NULL)
+	{
+        return -EINVAL;
+	}
+	if (buflen < 0) {
+		pr_err("proc count fail:%d\n", buflen);
+		return -EINVAL;
+	} else {
+		buf_tmp = (u8 *)kzalloc(buflen * sizeof(u8), GFP_KERNEL);
+		if (buf_tmp == NULL) {
+			pr_err("proc write buf zalloc fail\n");
+			return -ENOMEM;
+		}
+	}
+
+	if (copy_from_user(buf_tmp, buff, buflen)) {
+		pr_err("proc nt_otg_enable fail\n");
+		goto exit;
+	}
+
+	if (kstrtou32(buf_tmp, 0, &val))
+		goto exit;
+	write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_BATTERY],
+				BATT_FAKE_SOC, val);
+exit:
+	kfree(buf_tmp);
+	buf_tmp = NULL;
+	return buflen;
+}
+
+
+static ssize_t is_aging_test_write(struct file *file, const char __user *buff,
+               size_t count, loff_t *ppos)
+{
+	struct battery_chg_dev *bcdev = PDE_DATA(file_inode(file));
+	u8 *buf_tmp = NULL;
+	int buflen = count;
+
+	if (buflen < 0) {
+		pr_err("proc count fail:%d\n", buflen);
+		return -EINVAL;
+	} else {
+		buf_tmp = (u8 *)kzalloc(buflen * sizeof(u8), GFP_KERNEL);
+		if (buf_tmp == NULL) {
+			pr_err("proc write buf zalloc fail\n");
+			return -ENOMEM;
+		}
+	}
+
+	if (copy_from_user(buf_tmp, buff, buflen)) {
+		pr_err("proc is_aging_test states fail\n");
+		goto exit;
+	}
+
+	if (kstrtou32(buf_tmp, 0, &bcdev->is_aging_test))
+		goto exit;
+	pr_info("write is_aging_test %d success\n", bcdev->is_aging_test);
+
+	if (!bcdev->is_aging_test)
+		force_set_usb_icl(bcdev, -1);
+
+exit:
+	kfree(buf_tmp);
+	buf_tmp = NULL;
+	return buflen;
+}
+
+static const struct proc_ops is_aging_test_proc_ops = {
+	.proc_open              = is_aging_test_open,
+	.proc_read              = seq_read,
+	.proc_lseek             = seq_lseek,
+	.proc_release           = single_release,
+	.proc_write             = is_aging_test_write,
+};
+
+const struct nt_proc entries[] = {
+	{"nt_otg_enable",{.proc_open = nt_otg_enable_open,
+	                  .proc_read = seq_read,
+	                  .proc_lseek = seq_lseek,
+	                  .proc_release = single_release,
+	                  .proc_write = nt_otg_enable_write,}
+	},
+	{"nt_fake_ibat",{.proc_open = nt_fake_ibat_open,
+	                  .proc_read = seq_read,
+	                  .proc_lseek = seq_lseek,
+	                  .proc_release = single_release,
+	                  .proc_write = nt_fake_ibat_write,}
+	},
+	{"nt_fake_vbat",{.proc_open = nt_fake_vbat_open,
+	                  .proc_read = seq_read,
+	                  .proc_lseek = seq_lseek,
+	                  .proc_release = single_release,
+	                  .proc_write = nt_fake_vbat_write,}
+	},
+	{"nt_fake_tbat",{.proc_open = nt_fake_tbat_open,
+	                  .proc_read = seq_read,
+	                  .proc_lseek = seq_lseek,
+	                  .proc_release = single_release,
+	                  .proc_write = nt_fake_tbat_write,}
+	},
+	{"nt_fake_tusb",{.proc_open = nt_fake_tusb_open,
+	                  .proc_read = seq_read,
+	                  .proc_lseek = seq_lseek,
+	                  .proc_release = single_release,
+	                  .proc_write = nt_fake_tusb_write,}
+	},
+	{"nt_fake_soc",{.proc_open = nt_fake_soc_open,
+	                  .proc_read = seq_read,
+	                  .proc_lseek = seq_lseek,
+	                  .proc_release = single_release,
+	                  .proc_write = nt_fake_soc_write,}
+	}
+};
+
+int create_aging_proc_file(struct battery_chg_dev *bcdev)
+{
+	struct proc_dir_entry *dir;
+
+	dir = NULL;
+	dir = proc_create_data("is_aging_test", 0666, NULL, &is_aging_test_proc_ops, bcdev);
+
+	if (!dir) {
+		pr_err("unable to create /proc/is_aging_test\n");
+		return -EPERM;
+	}
+
+	return 0;
+}
+#endif
 
 static void handle_notification(struct battery_chg_dev *bcdev, void *data,
 				size_t len)
@@ -1668,6 +2215,11 @@ static int usb_psy_set_prop(struct power_supply *psy,
 
 	switch (prop) {
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+#ifdef NT_CHG
+		if(bcdev->is_aging_test)
+			rc = force_set_usb_icl(bcdev, pval->intval);
+		else
+#endif
 		rc = usb_psy_set_icl(bcdev, prop_id, pval->intval);
 		break;
 	default:
@@ -2289,8 +2841,8 @@ static ssize_t wireless_fw_force_update_store(struct class *c,
 	msleep(1000); // wait for st38 prepared for fw update..
 #ifdef NT_CHG
 	if (val) {
-		wls_st38_patch_push_store(c, attr, buf, count);
-		wls_st38_cfg_push_store(c, attr, buf, count);
+		wls_patch_push_store(c, attr, buf, count);
+		wls_cfg_push_store(c, attr, buf, count);
 	}
 #endif
 	if (rc < 0)
@@ -2777,7 +3329,7 @@ static ssize_t nt_chg_data_store(struct class *c, struct class_attribute *attr,
 				NT_CHG_PARAM, param_temp[7]);
 		}
 	} else {
-		pr_err("usb_temp_parameter_store failed\n");
+		pr_err("nt_chg_data_store failed\n");
 	}
 	return count;
 }
@@ -2926,7 +3478,7 @@ static ssize_t wls_curr_tx_show(struct class *c, struct class_attribute *attr,
 }
 static CLASS_ATTR_RO(wls_curr_tx);
 
-static ssize_t wls_st38_reg_show(struct class *c, struct class_attribute *attr,
+static ssize_t wls_reg_show(struct class *c, struct class_attribute *attr,
 				char *buf)
 {
 	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
@@ -2934,14 +3486,14 @@ static ssize_t wls_st38_reg_show(struct class *c, struct class_attribute *attr,
 	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_WLS];
 	int rc;
 
-	rc = read_property_id(bcdev, pst, WLS_ST38_REG);
+	rc = read_property_id(bcdev, pst, WLS_REG);
 	if (rc < 0)
 		return rc;
 
-	return scnprintf(buf, PAGE_SIZE, "0x%04x\n", pst->prop[WLS_ST38_REG]);
+	return scnprintf(buf, PAGE_SIZE, "0x%04x\n", pst->prop[WLS_REG]);
 }
 
-static ssize_t wls_st38_reg_store(struct class *c,
+static ssize_t wls_reg_store(struct class *c,
 					struct class_attribute *attr,
 					const char *buf, size_t count)
 {
@@ -2956,15 +3508,15 @@ static ssize_t wls_st38_reg_store(struct class *c,
 	pr_info("%s,val:%d", __func__, val);
 
 	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_WLS],
-				WLS_ST38_REG, val);
+				WLS_REG, val);
 	if (rc < 0)
 		return rc;
 
 	return count;
 }
-static CLASS_ATTR_RW(wls_st38_reg);
+static CLASS_ATTR_RW(wls_reg);
 
-static ssize_t wls_st38_data_show(struct class *c, struct class_attribute *attr,
+static ssize_t wls_data_show(struct class *c, struct class_attribute *attr,
 				char *buf)
 {
 	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
@@ -2972,14 +3524,14 @@ static ssize_t wls_st38_data_show(struct class *c, struct class_attribute *attr,
 	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_WLS];
 	int rc;
 
-	rc = read_property_id(bcdev, pst, WLS_ST38_DATA);
+	rc = read_property_id(bcdev, pst, WLS_DATA);
 	if (rc < 0)
 		return rc;
 
-	return scnprintf(buf, PAGE_SIZE, "0x%04x; %d\n", pst->prop[WLS_ST38_DATA], pst->prop[WLS_ST38_DATA]);
+	return scnprintf(buf, PAGE_SIZE, "0x%04x; %d\n", pst->prop[WLS_DATA], pst->prop[WLS_DATA]);
 }
 
-static ssize_t wls_st38_data_store(struct class *c,
+static ssize_t wls_data_store(struct class *c,
 					struct class_attribute *attr,
 					const char *buf, size_t count)
 {
@@ -2994,13 +3546,13 @@ static ssize_t wls_st38_data_store(struct class *c,
 	pr_info("%s,val:%d", __func__, val);
 
 	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_WLS],
-				WLS_ST38_DATA, val);
+				WLS_DATA, val);
 	if (rc < 0)
 		return rc;
 
 	return count;
 }
-static CLASS_ATTR_RW(wls_st38_data);
+static CLASS_ATTR_RW(wls_data);
 
 static ssize_t wls_cp_reg_show(struct class *c, struct class_attribute *attr,
 				char *buf)
@@ -3108,7 +3660,7 @@ static ssize_t wls_reverse_fod_show(struct class *c, struct class_attribute *att
 }
 static CLASS_ATTR_RO(wls_reverse_fod);
 
-static ssize_t wls_st38_en_show(struct class *c, struct class_attribute *attr,
+static ssize_t wls_en_show(struct class *c, struct class_attribute *attr,
 				char *buf)
 {
 	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
@@ -3116,14 +3668,14 @@ static ssize_t wls_st38_en_show(struct class *c, struct class_attribute *attr,
 	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_WLS];
 	int rc;
 
-	rc = read_property_id(bcdev, pst, WLS_ST38_EN);
+	rc = read_property_id(bcdev, pst, WLS_EN);
 	if (rc < 0)
 		return rc;
 
-	return scnprintf(buf, PAGE_SIZE, "0x%x\n",  pst->prop[WLS_ST38_EN]);
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n",  pst->prop[WLS_EN]);
 }
 
-static ssize_t wls_st38_en_store(struct class *c,
+static ssize_t wls_en_store(struct class *c,
 					struct class_attribute *attr,
 					const char *buf, size_t count)
 {
@@ -3138,14 +3690,14 @@ static ssize_t wls_st38_en_store(struct class *c,
 	pr_info("%s,val:%d", __func__, val);
 
 	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_WLS],
-				WLS_ST38_EN, val);
+				WLS_EN, val);
 	if (rc < 0)
 		return rc;
 
 	return count;
 }
-static CLASS_ATTR_RW(wls_st38_en);
-static ssize_t wls_st38_patch_push_store(struct class *c,
+static CLASS_ATTR_RW(wls_en);
+static ssize_t wls_patch_push_store(struct class *c,
 					struct class_attribute *attr,
 					const char *buf, size_t count)
 {
@@ -3166,7 +3718,7 @@ static ssize_t wls_st38_patch_push_store(struct class *c,
 	}
 	pr_err("wls_chg:**patch_size:%d_10-20**\n", patch_size);
 
-	rc = wls_fw_send_st38(bcdev, patch, patch_size, BC_WLS_ST38_PATCH_PUSH);
+	rc = wls_fw_send_st38(bcdev, patch, patch_size, BC_WLS_PATCH_PUSH);
 	if (rc < 0) {
 		pr_err("wls_chg:Failed to send FW-patch chunk, rc=%d\n", rc);
 		return rc;
@@ -3174,9 +3726,9 @@ static ssize_t wls_st38_patch_push_store(struct class *c,
 
 	return count;
 }
-static CLASS_ATTR_WO(wls_st38_patch_push);
+static CLASS_ATTR_WO(wls_patch_push);
 
-static ssize_t wls_st38_cfg_push_store(struct class *c,
+static ssize_t wls_cfg_push_store(struct class *c,
 					struct class_attribute *attr,
 					const char *buf, size_t count)
 {
@@ -3196,7 +3748,7 @@ static ssize_t wls_st38_cfg_push_store(struct class *c,
 		return rc;
 	}
  	pr_err("wls_chg:**cfg_size:%d_10-20**\n", cfg_size);
-	rc = wls_fw_send_st38(bcdev, cfg, cfg_size, BC_WLS_ST38_CFG_PUSH);
+	rc = wls_fw_send_st38(bcdev, cfg, cfg_size, BC_WLS_CFG_PUSH);
 
 	if (rc < 0) {
 		pr_err("Failed to send FW-cfg chunk, rc=%d\n", rc);
@@ -3205,7 +3757,7 @@ static ssize_t wls_st38_cfg_push_store(struct class *c,
 
 	return count;
 }
-static CLASS_ATTR_WO(wls_st38_cfg_push);
+static CLASS_ATTR_WO(wls_cfg_push);
 #endif
 static struct attribute *battery_class_attrs[] = {
 	&class_attr_soh.attr,
@@ -3244,13 +3796,13 @@ static struct attribute *battery_class_attrs[] = {
 #ifdef NT_CHG
 	&class_attr_wls_volt_tx.attr,
 	&class_attr_wls_curr_tx.attr,
-	&class_attr_wls_st38_reg.attr,
-	&class_attr_wls_st38_data.attr,
+	&class_attr_wls_reg.attr,
+	&class_attr_wls_data.attr,
 	&class_attr_wls_reverse_status.attr,
 	&class_attr_wls_reverse_fod.attr,
-	&class_attr_wls_st38_en.attr,
-	&class_attr_wls_st38_patch_push.attr,
-	&class_attr_wls_st38_cfg_push.attr,
+	&class_attr_wls_en.attr,
+	&class_attr_wls_patch_push.attr,
+	&class_attr_wls_cfg_push.attr,
 	&class_attr_wls_cp_reg.attr,
 	&class_attr_wls_cp_data.attr,
 	&class_attr_wls_op_mode.attr,
@@ -3549,6 +4101,7 @@ static int battery_chg_probe(struct platform_device *pdev)
 #ifdef NT_CHG
 	struct psy_state *pst;
 	int adsp_init_try = 0;
+	struct proc_dir_entry *nt_chg_proc_dir = NULL;
 #endif
 
 	bcdev = devm_kzalloc(&pdev->dev, sizeof(*bcdev), GFP_KERNEL);
@@ -3675,6 +4228,20 @@ static int battery_chg_probe(struct platform_device *pdev)
 		goto error;
 	}
 
+#ifdef NT_CHG
+	create_aging_proc_file(bcdev);
+	nt_chg_proc_dir =  proc_mkdir("charger", NULL);
+	if(!nt_chg_proc_dir){
+		pr_err("proc dir creates failed !!\n");
+		return -ENOMEM;
+	}
+	for (i = 0; i < ARRAY_SIZE(entries); i++) {
+		if (!proc_create_data(entries[i].name, 0666, nt_chg_proc_dir, &(entries[i].fops), bcdev)){
+			pr_info("%s: create /proc/charger/%s failed\\n",__func__, entries[i].name);
+		}
+	}
+	bcdev->is_aging_test = 0;
+#endif
 	bcdev->wls_fw_update_time_ms = WLS_FW_UPDATE_TIME_MS;
 	battery_chg_add_debugfs(bcdev);
 	bcdev->notify_en = false;
