@@ -68,6 +68,9 @@ LINUXINCLUDE +=                                 \
 # Optional include directories
 ccflags-$(CONFIG_MSM_GLOBAL_SYNX) += -I$(KERNEL_ROOT)/drivers/media/platform/msm/synx
 
+# Always initialize stack to zero
+ccflags-m += -ftrivial-auto-var-init=zero
+
 # After creating lists, add content of 'ccflags-m' variable to 'ccflags-y' one.
 ccflags-y += ${ccflags-m}
 
