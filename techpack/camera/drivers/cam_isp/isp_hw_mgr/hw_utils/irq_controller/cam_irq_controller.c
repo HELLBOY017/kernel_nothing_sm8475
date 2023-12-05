@@ -806,7 +806,7 @@ void cam_irq_controller_disable_all(void *priv)
 
 	for (i = 0; i < controller->num_registers; i++) {
 		irq_register = &controller->irq_register_arr[i];
-		memset(irq_register->top_half_enable_mask, 0, CAM_IRQ_PRIORITY_MAX);
+		memset(irq_register->top_half_enable_mask, 0, sizeof(uint32_t) * CAM_IRQ_PRIORITY_MAX);
 		irq_register->aggr_mask = 0;
 		cam_io_w_mb(0x0, controller->mem_base + irq_register->mask_reg_offset);
 		cam_io_w_mb(controller->clear_all_bitmask, controller->mem_base +
