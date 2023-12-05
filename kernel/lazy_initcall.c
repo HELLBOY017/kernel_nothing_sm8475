@@ -62,6 +62,7 @@ static const __initconst char * const blacklist[] = {
 	"hdcp_qseecom",
 	"qti_battery_charger",
         "fsa4480_i2c",
+        "qti_amoled_ecm",
 
 	NULL
 };
