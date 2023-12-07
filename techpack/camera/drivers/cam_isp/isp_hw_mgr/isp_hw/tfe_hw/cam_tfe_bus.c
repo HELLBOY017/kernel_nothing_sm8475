@@ -76,6 +76,9 @@ struct cam_tfe_bus_common_data {
 	cam_hw_mgr_event_cb_func                    event_cb;
 	bool                        rup_irq_enable[CAM_TFE_BUS_RUP_GRP_MAX];
 	bool                                        pdaf_rdi2_mux_en;
+	uint32_t                                    max_bw_counter_limit;
+	uint32_t                                    counter_limit_shift;
+	uint32_t                                    counter_limit_mask;
 };
 
 struct cam_tfe_bus_wm_resource_data {
@@ -105,6 +108,7 @@ struct cam_tfe_bus_wm_resource_data {
 	uint32_t             acquired_width;
 	uint32_t             acquired_height;
 	uint32_t             acquired_stride;
+	bool                 limiter_blob_status;
 };
 
 struct cam_tfe_bus_comp_grp_data {
@@ -853,6 +857,7 @@ static int cam_tfe_bus_release_wm(void   *bus_priv,
 	rsrc_data->framedrop_pattern = 0;
 	rsrc_data->en_cfg = 0;
 	rsrc_data->is_dual = 0;
+	rsrc_data->limiter_blob_status = false;
 
 	wm_res->tasklet_info = NULL;
 	wm_res->res_state = CAM_ISP_RESOURCE_STATE_AVAILABLE;
@@ -870,7 +875,10 @@ static int cam_tfe_bus_start_wm(struct cam_isp_resource_node *wm_res)
 	struct cam_tfe_bus_common_data        *common_data =
 		rsrc_data->common_data;
 
-	cam_io_w(0xf, common_data->mem_base + rsrc_data->hw_regs->bw_limit);
+	/* Skip to overwrite if wm bandwidth limiter blob already sent */
+	if (!rsrc_data->limiter_blob_status)
+		cam_io_w(rsrc_data->common_data->counter_limit_mask,
+			common_data->mem_base + rsrc_data->hw_regs->bw_limit);
 
 	cam_io_w((rsrc_data->height << 16) | rsrc_data->width,
 		common_data->mem_base + rsrc_data->hw_regs->image_cfg_0);
@@ -2322,6 +2330,104 @@ end:
 	return 0;
 }
 
+static int cam_tfe_bus_update_bw_limiter(
+	void *priv, void *cmd_args, uint32_t arg_size)
+{
+	struct cam_tfe_bus_priv                  *bus_priv;
+	struct cam_isp_hw_get_cmd_update         *wm_config_update;
+	struct cam_tfe_bus_tfe_out_data          *tfe_out_data = NULL;
+	struct cam_cdm_utils_ops                 *cdm_util_ops;
+	struct cam_tfe_bus_wm_resource_data      *wm_data = NULL;
+	struct cam_isp_tfe_wm_bw_limiter_config  *wm_bw_limit_cfg = NULL;
+	uint32_t                                  counter_limit = 0, reg_val = 0;
+	uint32_t                                 *reg_val_pair, num_regval_pairs = 0;
+	uint32_t                                  i, j, size = 0;
+
+	bus_priv         = (struct cam_tfe_bus_priv  *) priv;
+	wm_config_update = (struct cam_isp_hw_get_cmd_update *) cmd_args;
+	wm_bw_limit_cfg  = (struct cam_isp_tfe_wm_bw_limiter_config  *) wm_config_update->data;
+
+	tfe_out_data = (struct cam_tfe_bus_tfe_out_data *) wm_config_update->res->res_priv;
+	if (!tfe_out_data || !tfe_out_data->cdm_util_ops) {
+		CAM_ERR(CAM_ISP, "Invalid data");
+		return -EINVAL;
+	}
+
+	cdm_util_ops = tfe_out_data->cdm_util_ops;
+	reg_val_pair = &tfe_out_data->common_data->io_buf_update[0];
+	for (i = 0, j = 0; i < tfe_out_data->num_wm; i++) {
+		if (j >= (MAX_REG_VAL_PAIR_SIZE - (MAX_BUF_UPDATE_REG_NUM * 2))) {
+			CAM_ERR(CAM_ISP,
+				"reg_val_pair %d exceeds the array limit %zu for WM idx %d",
+				j, MAX_REG_VAL_PAIR_SIZE, i);
+			return -ENOMEM;
+		}
+
+		/* Num WMs needs to match max planes */
+		if (i >= CAM_PACKET_MAX_PLANES) {
+			CAM_WARN(CAM_ISP, "Num of WMs: %d exceeded max planes", i);
+			goto add_reg_pair;
+		}
+
+		wm_data = (struct cam_tfe_bus_wm_resource_data *) tfe_out_data->wm_res[i]->res_priv;
+		if (!wm_data->hw_regs->bw_limit) {
+			CAM_ERR(CAM_ISP,
+				"WM: %d %s has no support for bw limiter",
+				wm_data->index, tfe_out_data->wm_res[i]->res_name);
+			return -EINVAL;
+		}
+
+		counter_limit = wm_bw_limit_cfg->counter_limit[i];
+
+		/* Validate max counter limit */
+		if (counter_limit > wm_data->common_data->max_bw_counter_limit) {
+			CAM_WARN(CAM_ISP, "Invalid counter limit: 0x%x capping to max: 0x%x",
+				wm_bw_limit_cfg->counter_limit[i],
+				wm_data->common_data->max_bw_counter_limit);
+			counter_limit = wm_data->common_data->max_bw_counter_limit;
+		}
+
+		if (wm_bw_limit_cfg->enable_limiter && counter_limit) {
+			reg_val = 1;
+			reg_val |= (counter_limit << wm_data->common_data->counter_limit_shift);
+		} else {
+			reg_val = 0;
+		}
+
+		wm_data->limiter_blob_status = true;
+
+		CAM_TFE_ADD_REG_VAL_PAIR(reg_val_pair, j, wm_data->hw_regs->bw_limit, reg_val);
+		CAM_DBG(CAM_ISP, "WM: %d for %s bw_limter: 0x%x",
+			wm_data->index, tfe_out_data->wm_res[i]->res_name, reg_val_pair[j-1]);
+	}
+
+add_reg_pair:
+
+	num_regval_pairs = j / 2;
+
+	if (num_regval_pairs) {
+		size = cdm_util_ops->cdm_required_size_reg_random(num_regval_pairs);
+
+		/* cdm util returns dwords, need to convert to bytes */
+		if ((size * 4) > wm_config_update->cmd.size) {
+			CAM_ERR(CAM_ISP, "Failed! Buf size:%d insufficient, expected size:%d",
+				wm_config_update->cmd.size, size);
+			return -ENOMEM;
+		}
+
+		cdm_util_ops->cdm_write_regrandom(
+			wm_config_update->cmd.cmd_buf_addr, num_regval_pairs, reg_val_pair);
+
+		/* cdm util returns dwords, need to convert to bytes */
+		wm_config_update->cmd.used_bytes = size * 4;
+	} else {
+		CAM_DBG(CAM_ISP, "No reg val pairs. num_wms: %u", tfe_out_data->num_wm);
+		wm_config_update->cmd.used_bytes = 0;
+	}
+
+	return 0;
+}
+
 static int cam_tfe_bus_dump_bus_info(
 	struct cam_tfe_bus_priv    *bus_priv,
 	void *cmd_args, uint32_t arg_size)
@@ -2497,6 +2603,9 @@ static int cam_tfe_bus_process_cmd(void *priv,
 		pdaf_rdi2_mux_en = (bool *)cmd_args;
 		*pdaf_rdi2_mux_en = bus_priv->common_data.pdaf_rdi2_mux_en;
 		break;
+	case CAM_ISP_HW_CMD_WM_BW_LIMIT_CONFIG:
+		rc = cam_tfe_bus_update_bw_limiter(priv, cmd_args, arg_size);
+		break;
 	default:
 		CAM_ERR_RATE_LIMIT(CAM_ISP, "Invalid camif process command:%d",
 			cmd_type);
@@ -2563,6 +2672,9 @@ int cam_tfe_bus_init(
 		hw_info->support_consumed_addr;
 	bus_priv->common_data.pdaf_rdi2_mux_en = hw_info->pdaf_rdi2_mux_en;
 	bus_priv->common_data.rdi_width = hw_info->rdi_width;
+	bus_priv->common_data.max_bw_counter_limit = hw_info->max_bw_counter_limit;
+	bus_priv->common_data.counter_limit_shift = hw_info->counter_limit_shift;
+	bus_priv->common_data.counter_limit_mask = hw_info->counter_limit_mask;
 
 	for (i = 0; i < CAM_TFE_BUS_IRQ_REGISTERS_MAX; i++)
 		bus_priv->bus_irq_error_mask[i] =

@@ -137,6 +137,53 @@ static void *cam_isp_ctx_user_dump_events(
 	return addr;
 }
 
+static int __cam_isp_ctx_print_event_record(struct cam_isp_context *ctx_isp)
+{
+	int                                  i, j, rc = 0;
+	int                                  index;
+	uint32_t                             oldest_entry, num_entries;
+	uint64_t                             state_head;
+	struct cam_isp_context_event_record *record;
+	uint32_t                             len;
+	uint8_t                              buf[CAM_ISP_CONTEXT_DBG_BUF_LEN];
+	struct timespec64                    ts;
+	struct cam_context                  *ctx = ctx_isp->base;
+
+	for (i = 0; i < CAM_ISP_CTX_EVENT_MAX; i++) {
+		state_head = atomic64_read(&ctx_isp->event_record_head[i]);
+
+		if (state_head == -1) {
+			return 0;
+		} else if (state_head < CAM_ISP_CTX_EVENT_RECORD_MAX_ENTRIES) {
+			num_entries = state_head + 1;
+			oldest_entry = 0;
+		} else {
+			num_entries = CAM_ISP_CTX_EVENT_RECORD_MAX_ENTRIES;
+			div_u64_rem(state_head + 1,
+				CAM_ISP_CTX_EVENT_RECORD_MAX_ENTRIES,
+				&oldest_entry);
+		}
+
+		index = oldest_entry;
+		len = 0;
+		memset(buf, 0, CAM_ISP_CONTEXT_DBG_BUF_LEN);
+		for (j = 0; j < num_entries; j++) {
+
+			record = &ctx_isp->event_record[i][index];
+			ts = ktime_to_timespec64(record->timestamp);
+			len += scnprintf(buf + len, CAM_ISP_CONTEXT_DBG_BUF_LEN - len,
+				"%llu[%lld:%06lld] ", record->req_id, ts.tv_sec,
+				ts.tv_nsec / NSEC_PER_USEC);
+			index = (index + 1) %
+				CAM_ISP_CTX_EVENT_RECORD_MAX_ENTRIES;
+		}
+		if (len)
+			CAM_INFO(CAM_ISP, "Ctx:%d %s: %s",
+		ctx->ctx_id, __cam_isp_evt_val_to_type(i), buf);
+	}
+	return rc;
+}
+
 static int __cam_isp_ctx_dump_event_record(
 	struct cam_isp_context *ctx_isp,
 	struct cam_common_hw_dump_args *dump_args)
@@ -816,6 +863,7 @@ static int cam_isp_ctx_dump_req(
 				CAM_ERR(CAM_ISP,
 					"Invalid offset exp %u actual %u",
 					req_isp->cfg[i].offset, (uint32_t)len);
+				cam_mem_put_cpu_buf(req_isp->cfg[i].handle);
 				return -EINVAL;
 			}
 			remain_len = len - req_isp->cfg[i].offset;
@@ -826,6 +874,7 @@ static int cam_isp_ctx_dump_req(
 					"Invalid len exp %u remain_len %u",
 					req_isp->cfg[i].len,
 					(uint32_t)remain_len);
+				cam_mem_put_cpu_buf(req_isp->cfg[i].handle);
 				return -EINVAL;
 			}
 
@@ -851,6 +900,7 @@ static int cam_isp_ctx_dump_req(
 					return rc;
 			} else
 				cam_cdm_util_dump_cmd_buf(buf_start, buf_end);
+			cam_mem_put_cpu_buf(req_isp->cfg[i].handle);
 		}
 	}
 	return rc;
@@ -1864,7 +1914,8 @@ static int __cam_isp_ctx_handle_buf_done_for_request_verify_addr(
 	bool defer_buf_done)
 {
 	int rc = 0;
-	int i, j;
+	int i, j, k, def_idx;
+	bool duplicate_defer_buf_done = false;
 	struct cam_isp_ctx_req *req_isp;
 	struct cam_context *ctx = ctx_isp->base;
 	const char *handle_type;
@@ -1974,6 +2025,32 @@ static int __cam_isp_ctx_handle_buf_done_for_request_verify_addr(
 
 		if (defer_buf_done) {
 			uint32_t deferred_indx = req_isp->num_deferred_acks;
+			duplicate_defer_buf_done = false;
+
+			for (k = 0; k < req_isp->num_deferred_acks; k++) {
+				def_idx = req_isp->deferred_fence_map_index[k];
+				if (def_idx == j) {
+					CAM_WARN(CAM_ISP,
+						"duplicate deferred ack for ctx[%u] link[0x%x] req %lld res 0x%x sync_id 0x%x",
+						ctx->ctx_id, ctx->link_hdl,
+						req->request_id,
+						req_isp->fence_map_out[j].resource_handle,
+						req_isp->fence_map_out[j].sync_id);
+					duplicate_defer_buf_done = true;
+					break;
+				}
+			}
+
+			if (duplicate_defer_buf_done)
+				continue;
+
+			if (req_isp->num_deferred_acks == req_isp->num_fence_map_out) {
+				CAM_WARN(CAM_ISP,
+					"WARNING: req_id %lld num_deferred_acks %d > map_out %d, ctx_idx:%u link[0x%x]",
+					req->request_id, req_isp->num_deferred_acks,
+					req_isp->num_fence_map_out, ctx->ctx_id, ctx->link_hdl);
+				continue;
+			}
 
 			if (deferred_indx >= CAM_ISP_CTX_RES_MAX) {
 				CAM_WARN(CAM_ISP, "ctx: %u req: %llu number of Deferred buf done %u is more than %u",
@@ -2733,7 +2810,6 @@ notify_only:
 
 		__cam_isp_ctx_send_sof_timestamp(ctx_isp, request_id,
 			CAM_REQ_MGR_SOF_EVENT_SUCCESS);
-
 		__cam_isp_ctx_update_state_monitor_array(ctx_isp,
 			CAM_ISP_STATE_CHANGE_TRIGGER_EPOCH,
 			request_id);
@@ -2802,8 +2878,8 @@ static int __cam_isp_ctx_sof_in_activated_state(
 	__cam_isp_ctx_update_state_monitor_array(ctx_isp,
 		CAM_ISP_STATE_CHANGE_TRIGGER_SOF, request_id);
 
-	CAM_DBG(CAM_ISP, "frame id: %lld time stamp:0x%llx, ctx %u",
-		ctx_isp->frame_id, ctx_isp->sof_timestamp_val, ctx->ctx_id);
+	CAM_DBG(CAM_ISP, "frame id: %lld time stamp:0x%llx, ctx %u request %llu",
+		ctx_isp->frame_id, ctx_isp->sof_timestamp_val, ctx->ctx_id, request_id);
 
 	return rc;
 }
@@ -4529,6 +4605,7 @@ hw_dump:
 		spin_unlock_bh(&ctx->lock);
 		CAM_WARN(CAM_ISP, "Dump buffer overshoot len %zu offset %zu",
 			buf_len, dump_info->offset);
+		cam_mem_put_cpu_buf(dump_info->buf_handle);
 		return -ENOSPC;
 	}
 
@@ -4540,6 +4617,7 @@ hw_dump:
 		spin_unlock_bh(&ctx->lock);
 		CAM_WARN(CAM_ISP, "Dump buffer exhaust remain %zu min %u",
 			remain_len, min_len);
+		cam_mem_put_cpu_buf(dump_info->buf_handle);
 		return -ENOSPC;
 	}
 
@@ -4549,6 +4627,7 @@ hw_dump:
 	diff = ktime_us_delta(
 		req_isp->event_timestamp[CAM_ISP_CTX_EVENT_APPLY],
 		cur_time);
+	__cam_isp_ctx_print_event_record(ctx_isp);
 	if (diff < CAM_ISP_CTX_RESPONSE_TIME_THRESHOLD) {
 		CAM_INFO(CAM_ISP, "req %lld found no error",
 			req->request_id);
@@ -4643,10 +4722,12 @@ hw_dump:
 			&ife_dump_args);
 		dump_info->offset = ife_dump_args.offset;
 	}
+	cam_mem_put_cpu_buf(dump_info->buf_handle);
 	return rc;
 
 end:
 	spin_unlock_bh(&ctx->lock);
+	cam_mem_put_cpu_buf(dump_info->buf_handle);
 	return rc;
 }
 

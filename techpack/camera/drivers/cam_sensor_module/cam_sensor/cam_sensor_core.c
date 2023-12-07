@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -103,6 +103,64 @@ static void cam_sensor_release_per_frame_resource(
 	}
 }
 
+static int cam_sensor_handle_res_info(struct cam_sensor_res_info *res_info,
+	struct cam_sensor_ctrl_t *s_ctrl)
+{
+	int rc = 0;
+
+	if (!s_ctrl || !res_info) {
+		CAM_ERR(CAM_SENSOR, "Invalid params: res_info: %s, s_ctrl: %s",
+			CAM_IS_NULL_TO_STR(res_info),
+			CAM_IS_NULL_TO_STR(s_ctrl));
+		rc = -EINVAL;
+	}
+
+	if (rc == 0) {
+		s_ctrl->batch_number = res_info->num_batched_frames;
+
+		CAM_DBG(CAM_SENSOR,
+			"Sensor[%s-%d] Received Res Info: num_batched_frames: %d ",
+			s_ctrl->sensor_name, s_ctrl->soc_info.index,
+			s_ctrl->batch_number);
+	}
+	return rc;
+}
+
+static int32_t cam_sensor_generic_blob_handler(void *user_data,
+	uint32_t blob_type, uint32_t blob_size, uint8_t *blob_data)
+{
+	int rc = 0;
+	struct cam_sensor_ctrl_t *s_ctrl =
+		(struct cam_sensor_ctrl_t *) user_data;
+
+	if (!blob_data || !blob_size) {
+		CAM_ERR(CAM_SENSOR, "Invalid blob info %pK %u", blob_data,
+			blob_size);
+		return -EINVAL;
+	}
+
+	switch (blob_type) {
+	case CAM_SENSOR_GENERIC_BLOB_RES_INFO: {
+		struct cam_sensor_res_info *res_info =
+			(struct cam_sensor_res_info *) blob_data;
+
+		if (blob_size < sizeof(struct cam_sensor_res_info)) {
+			CAM_ERR(CAM_SENSOR, "Invalid blob size expected: 0x%x actual: 0x%x",
+				sizeof(struct cam_sensor_res_info), blob_size);
+			return -EINVAL;
+		}
+
+		rc = cam_sensor_handle_res_info(res_info, s_ctrl);
+		break;
+	}
+	default:
+		CAM_WARN(CAM_SENSOR, "Invalid blob type %d", blob_type);
+		break;
+	}
+
+	return rc;
+}
+
 static int32_t cam_sensor_i2c_pkt_parse(struct cam_sensor_ctrl_t *s_ctrl,
 	void *arg)
 {
@@ -154,6 +212,10 @@ static int32_t cam_sensor_i2c_pkt_parse(struct cam_sensor_ctrl_t *s_ctrl,
 	remain_len -= (size_t)config.offset;
 	csl_packet = (struct cam_packet *)(generic_ptr +
 		(uint32_t)config.offset);
+
+	offset = (uint32_t *)&csl_packet->payload;
+	offset += csl_packet->cmd_buf_offset / 4;
+	cmd_desc = (struct cam_cmd_buf_desc *)(offset);
 
 	if (cam_packet_util_validate_packet(csl_packet,
 		remain_len)) {
@@ -281,6 +343,16 @@ static int32_t cam_sensor_i2c_pkt_parse(struct cam_sensor_ctrl_t *s_ctrl,
 			csl_packet->header.request_id);
 		break;
 	}
+	case CAM_SENSOR_PACKET_OPCODE_SENSOR_RESCONFIG: {
+		CAM_DBG(CAM_SENSOR, "Received Resolution Config Buffer Cmd");
+		rc = cam_packet_util_process_generic_cmd_buffer(cmd_desc,
+			cam_sensor_generic_blob_handler, s_ctrl);
+
+		if (rc)
+			CAM_ERR(CAM_SENSOR, "Processing Generic Blob Handler Failure");
+		goto end;
+
+	}
 	case CAM_SENSOR_PACKET_OPCODE_SENSOR_NOP: {
 		if ((s_ctrl->sensor_state == CAM_SENSOR_INIT) ||
 			(s_ctrl->sensor_state == CAM_SENSOR_ACQUIRE)) {
@@ -308,9 +380,6 @@ static int32_t cam_sensor_i2c_pkt_parse(struct cam_sensor_ctrl_t *s_ctrl,
 		goto end;
 	}
 
-	offset = (uint32_t *)&csl_packet->payload;
-	offset += csl_packet->cmd_buf_offset / 4;
-	cmd_desc = (struct cam_cmd_buf_desc *)(offset);
 	rc = cam_packet_util_validate_cmd_desc(cmd_desc);
 	if (rc) {
 		CAM_ERR(CAM_SENSOR, "Invalid cmd desc ret: %d", rc);
@@ -342,7 +411,11 @@ static int32_t cam_sensor_i2c_pkt_parse(struct cam_sensor_ctrl_t *s_ctrl,
 			csl_packet->header.request_id;
 	}
 
+	cam_mem_put_cpu_buf(config.packet_handle);
+	return rc;
+
 end:
+	cam_mem_put_cpu_buf(config.packet_handle);
 	return rc;
 }
 
@@ -665,9 +738,14 @@ int32_t cam_handle_mem_ptr(uint64_t handle, uint32_t cmd,
 				"Failed to parse the command Buffer Header");
 			goto end;
 		}
+		cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 	}
 
+	cam_mem_put_cpu_buf(handle);
+	return rc;
+
 end:
+	cam_mem_put_cpu_buf(handle);
 	return rc;
 }
 
@@ -1004,8 +1082,9 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 			goto release_mutex;
 		}
 
-		s_ctrl->sensor_state = CAM_SENSOR_ACQUIRE;
+		s_ctrl->sensor_state   = CAM_SENSOR_ACQUIRE;
 		s_ctrl->last_flush_req = 0;
+		s_ctrl->batch_number   = 0;
 		CAM_INFO(CAM_SENSOR,
 			"CAM_ACQUIRE_DEV Success for %s sensor_id:0x%x,sensor_slave_addr:0x%x",
 			s_ctrl->sensor_name,
@@ -1305,11 +1384,18 @@ int cam_sensor_publish_dev_info(struct cam_req_mgr_device_info *info)
 
 	info->dev_id = CAM_REQ_MGR_DEVICE_SENSOR;
 	strlcpy(info->name, CAM_SENSOR_NAME, sizeof(info->name));
-	if (s_ctrl->pipeline_delay >= 1 && s_ctrl->pipeline_delay <= 3)
+
+	if (s_ctrl->batch_number >= 2)
+		info->p_delay = 1;
+	else if (s_ctrl->pipeline_delay >= 1 && s_ctrl->pipeline_delay <= 3)
 		info->p_delay = s_ctrl->pipeline_delay;
 	else
 		info->p_delay = 2;
 	info->trigger = CAM_TRIGGER_POINT_SOF;
+
+	CAM_DBG(CAM_SENSOR, "Rcvd batch_number: %d, sensor_pipeline_delay set: %d",
+		s_ctrl->batch_number,
+		info->p_delay);
 
 	return rc;
 }

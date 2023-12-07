@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  */
 
 #include <linux/of.h>
 #include <linux/of_gpio.h>
 #include "cam_flash_soc.h"
 #include "cam_res_mgr_api.h"
+#include <dt-bindings/msm-camera.h>
 
 void cam_flash_put_source_node_data(struct cam_flash_ctrl *fctrl)
 {
@@ -74,6 +77,13 @@ static int32_t cam_get_source_node_info(
 
 	soc_private->is_wled_flash =
 		of_property_read_bool(of_node, "wled-flash-support");
+
+	rc = of_property_read_u32(of_node,
+			"flash-type", &soc_private->flash_type);
+	if (rc) {
+		CAM_ERR(CAM_FLASH, "flash-type read failed rc=%d", rc);
+		soc_private->flash_type = CAM_FLASH_TYPE_PMIC;
+	}
 
 	switch_src_node = of_parse_phandle(of_node, "switch-source", 0);
 	if (!switch_src_node) {

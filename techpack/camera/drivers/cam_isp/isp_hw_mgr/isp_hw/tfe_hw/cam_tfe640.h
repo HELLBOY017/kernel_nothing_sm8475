@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 
@@ -1172,6 +1172,9 @@ static struct cam_tfe_bus_hw_info  tfe640_bus_hw_info = {
 	.support_consumed_addr = true,
 	.pdaf_rdi2_mux_en = false,
 	.rdi_width = 128,
+	.max_bw_counter_limit  = 0xFF,
+	.counter_limit_shift   = 1,
+	.counter_limit_mask    = 0xF,
 };
 
 struct cam_tfe_hw_info cam_tfe640 = {

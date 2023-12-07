@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _CAM_CSIPHY_1_2_3_HWREG_H_
@@ -266,7 +266,7 @@ csiphy_reg_t csiphy_3ph_v1_2_3_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 		{0x0124, 0x7F, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x0128, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x012C, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
-		{0x0144, 0xA2, 0x00, CSIPHY_DEFAULT_PARAMS},
+		{0x0144, 0xB2, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x0160, 0x02, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x01CC, 0x41, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x0164, 0x33, 0x00, CSIPHY_DEFAULT_PARAMS},
@@ -299,7 +299,7 @@ csiphy_reg_t csiphy_3ph_v1_2_3_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 		{0x0324, 0x7F, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x0328, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x032C, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
-		{0x0344, 0xA2, 0x00, CSIPHY_DEFAULT_PARAMS},
+		{0x0344, 0xB2, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x0360, 0x02, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x03CC, 0x41, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x0364, 0x33, 0x00, CSIPHY_DEFAULT_PARAMS},
@@ -332,7 +332,7 @@ csiphy_reg_t csiphy_3ph_v1_2_3_reg[MAX_LANES][MAX_SETTINGS_PER_LANE] = {
 		{0x0524, 0x7F, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x0528, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x052C, 0x00, 0x00, CSIPHY_DEFAULT_PARAMS},
-		{0x0544, 0xA2, 0x00, CSIPHY_DEFAULT_PARAMS},
+		{0x0544, 0xB2, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x0560, 0x02, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x05CC, 0x41, 0x00, CSIPHY_DEFAULT_PARAMS},
 		{0x0564, 0x33, 0x00, CSIPHY_DEFAULT_PARAMS},
@@ -353,13 +353,11 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 		{
 			/* (1.9 * 10**3 * 2.28) rounded value*/
 			.bandwidth = 4332000000,
-			.data_rate_reg_array_size = 2,
+			.data_rate_reg_array_size = 1,
 			.per_lane_info = {
 				{
 					.lane_identifier = CPHY_LANE_0,
 					.csiphy_data_rate_regs = {
-						{0x144, 0x22, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0x9B4, 0x08, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -367,8 +365,6 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 				{
 					.lane_identifier = CPHY_LANE_1,
 					.csiphy_data_rate_regs = {
-						{0x344, 0x22, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0xAB4, 0x08, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -376,8 +372,6 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 				{
 					.lane_identifier = CPHY_LANE_2,
 					.csiphy_data_rate_regs = {
-						{0x544, 0x22, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0xBB4, 0x08, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -387,13 +381,11 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 		{
 			/* (2.5 * 10**3 * 2.28) rounded value*/
 			.bandwidth = 5700000000,
-			.data_rate_reg_array_size = 2,
+			.data_rate_reg_array_size = 1,
 			.per_lane_info = {
 				{
 					.lane_identifier = CPHY_LANE_0,
 					.csiphy_data_rate_regs = {
-						{0x144, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0x9B4, 0x08, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -401,8 +393,6 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 				{
 					.lane_identifier = CPHY_LANE_1,
 					.csiphy_data_rate_regs = {
-						{0x344, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0xAB4, 0x08, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -410,8 +400,6 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 				{
 					.lane_identifier = CPHY_LANE_2,
 					.csiphy_data_rate_regs = {
-						{0x544, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0xBB4, 0x08, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -421,13 +409,11 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 		{
 			/* (3 * 10**3 * 2.28) rounded value*/
 			.bandwidth = 6840000000,
-			.data_rate_reg_array_size = 2,
+			.data_rate_reg_array_size = 1,
 			.per_lane_info = {
 				{
 					.lane_identifier = CPHY_LANE_0,
 					.csiphy_data_rate_regs = {
-						{0x144, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0x9B4, 0x08, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -435,8 +421,6 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 				{
 					.lane_identifier = CPHY_LANE_1,
 					.csiphy_data_rate_regs = {
-						{0x344, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0xAB4, 0x08, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -444,8 +428,6 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 				{
 					.lane_identifier = CPHY_LANE_2,
 					.csiphy_data_rate_regs = {
-						{0x544, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0xBB4, 0x08, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -455,13 +437,11 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 		{
 			/* (3.5 * 10**3 * 2.28) rounded value */
 			.bandwidth = 7980000000,
-			.data_rate_reg_array_size = 2,
+			.data_rate_reg_array_size = 1,
 			.per_lane_info = {
 				{
 					.lane_identifier = CPHY_LANE_0,
 					.csiphy_data_rate_regs = {
-						{0x144, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0x9B4, 0x04, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -469,8 +449,6 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 				{
 					.lane_identifier = CPHY_LANE_1,
 					.csiphy_data_rate_regs = {
-						{0x344, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0xAB4, 0x04, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -478,8 +456,6 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 				{
 					.lane_identifier = CPHY_LANE_2,
 					.csiphy_data_rate_regs = {
-						{0x544, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0xBB4, 0x04, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -489,13 +465,11 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 		{
 			/* (4.5 * 10**3 * 2.28) rounded value */
 			.bandwidth = 10260000000,
-			.data_rate_reg_array_size = 2,
+			.data_rate_reg_array_size = 1,
 			.per_lane_info = {
 				{
 					.lane_identifier = CPHY_LANE_0,
 					.csiphy_data_rate_regs = {
-						{0x144, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0x9B4, 0x04, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -503,8 +477,6 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 				{
 					.lane_identifier = CPHY_LANE_1,
 					.csiphy_data_rate_regs = {
-						{0x344, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0xAB4, 0x04, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
@@ -512,8 +484,6 @@ struct data_rate_settings_t data_rate_delta_table_1_2_3 = {
 				{
 					.lane_identifier = CPHY_LANE_2,
 					.csiphy_data_rate_regs = {
-						{0x544, 0xA2, 0x00,
-							CSIPHY_DEFAULT_PARAMS},
 						{0xBB4, 0x04, 0x0A,
 							CSIPHY_DEFAULT_PARAMS},
 					},
