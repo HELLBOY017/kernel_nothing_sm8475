@@ -18,9 +18,9 @@ OBJCOPYFLAGS_Image :=-O binary -R .note -R .note.gnu.build-id -R .comment -S
 
 targets := Image Image.bz2 Image.gz Image.lz4 Image.lzma Image.lzo dtbo.img
 
-DTB_OBJS := $(shell find $(obj)/dts/ -name \*.dtb)
+DTB_OBJS := $(shell find $(obj)/dts/vendor/qcom/ -maxdepth 1 -name *.dtb)
 
-DTBO_OBJS := $(shell find $(obj)/dts/ -name \*.dtbo)
+DTBO_OBJS := $(shell find $(obj)/dts/vendor/qcom/ -maxdepth 1 -name *.dtbo)
 
 $(obj)/Image: vmlinux FORCE
 	$(call if_changed,objcopy)
@@ -40,7 +40,7 @@ $(obj)/Image.lzma: $(obj)/Image FORCE
 $(obj)/Image.lzo: $(obj)/Image FORCE
 	$(call if_changed,lzo)
 
-$(obj)/dtbo.img: $(DTBO_OBJS) FORCE
+$(obj)/dtbo.img: $(DTB_OBJS) $(DTBO_OBJS) FORCE
 	$(call if_changed,mkdtimg)
 
 install:
