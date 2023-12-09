@@ -412,7 +412,8 @@ cmd_mkdtimg = rm -rf $(objtree)/base_dtbs $(objtree)/merged_dtbs \
 	    && mv $(filter-out FORCE,$^) $(objtree)/base_dtbs \
 	    && PATH=$(srctree)/scripts/ufdt/libufdt:$(objtree)/scripts/dtc-aosp:$(objtree)/scripts/ufdt:$(PATH) \
             $(PYTHON) $(srctree)/scripts/merge_dtbs.py $(objtree)/base_dtbs $(objtree)/arch/$(SRCARCH)/boot/dts/vendor $(objtree)/merged_dtbs > /dev/null \
-            && $(PYTHON) $(srctree)/scripts/ufdt/libufdt/utils/src/mkdtboimg.py create $@ --page_size=4096 $(shell find $(objtree)/merged_dtbs -name *.dtbo)
+            && $(PYTHON) $(srctree)/scripts/ufdt/libufdt/utils/src/mkdtboimg.py create $@ --page_size=4096 $(shell find $(objtree)/merged_dtbs -name *.dtbo) \
+	    && (cat $(shell find $(objtree)/merged_dtbs -name *.dtb) > $(objtree)/arch/$(SRCARCH)/boot/dtb) || (rm -f $(objtree)/arch/$(SRCARCH)/boot/dtb; false)
 
 # Bzip2
 # ---------------------------------------------------------------------------
