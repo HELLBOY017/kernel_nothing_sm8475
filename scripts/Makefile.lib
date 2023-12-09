@@ -397,9 +397,14 @@ $(obj)/%.dt.yaml: $(src)/%.dts $(DTC) $(DT_TMP_SCHEMA) FORCE
 dtc-tmp = $(subst $(comma),_,$(dot-target).dts.tmp)
 
 # mkdtimg
-#----------------------------------------------------------------------------
-quiet_cmd_mkdtimg = DTBOIMG $@
-cmd_mkdtimg = mkdtimg create $@ --page_size=4096 $(filter-out FORCE,$^)
+# ---------------------------------------------------------------------------
+quite_cmd_mkdtimg = DTBOIMG $@
+cmd_mkdtimg = rm -rf $(objtree)/base_dtbs $(objtree)/merged_dtbs \
+            && mkdir -p $(objtree)/base_dtbs $(objtree)/merged_dtbs \
+	    && mv $(filter-out FORCE,$^) $(objtree)/base_dtbs \
+	    && PATH=$(srctree)/scripts/ufdt/libufdt:$(objtree)/scripts/dtc-aosp:$(objtree)/scripts/ufdt:$(PATH) \
+            $(PYTHON) $(srctree)/scripts/merge_dtbs.py $(objtree)/base_dtbs $(objtree)/arch/$(SRCARCH)/boot/dts/vendor $(objtree)/merged_dtbs > /dev/null 2>&1 \
+            && $(PYTHON) $(srctree)/scripts/ufdt/libufdt/utils/src/mkdtboimg.py create $@ --page_size=4096 $(objtree)/merged_dtbs/*.dtbo
 
 # Bzip2
 # ---------------------------------------------------------------------------
