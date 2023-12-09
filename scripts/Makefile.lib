@@ -337,8 +337,7 @@ else
 dtc-option = $1
 endif
 
-DTC ?= $(objtree)/scripts/dtc/dtc
-DTC_FLAGS += $(call dtc-option,-Wno-interrupt_provider)
+DTC ?= $(objtree)/scripts/dtc-aosp/dtc-aosp
 
 # Disable noisy checks by default
 ifeq ($(findstring 1,$(KBUILD_EXTRA_WARN)),)
@@ -374,7 +373,7 @@ $(obj)/%.dtb.S: $(obj)/%.dtb FORCE
 ifneq ($(DTC_EXT),)
 DTC = $(DTC_EXT)
 else
-DTC = $(objtree)/scripts/dtc/dtc
+DTC = $(objtree)/scripts/dtc-aosp/dtc-aosp
 endif
 
 quiet_cmd_dtc = DTC     $@
