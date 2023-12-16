@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 
@@ -196,6 +196,9 @@ struct cam_tfe_bus_tfe_out_hw_info {
  * @rdi_width:             RDI WM width
  * @support_consumed_addr: Indicate if bus support consumed address
  * @pdaf_rdi2_mux_en:      Indicate is PDAF is muxed with RDI2
+ * @max_bw_counter_limit:  Max BW counter limit
+ * @counter_limit_shift:   Mask shift for BW counter limit
+ * @counter_limit_mask:    Default Mask of BW limit counter
  */
 struct cam_tfe_bus_hw_info {
 	struct cam_tfe_bus_reg_offset_common common_reg;
@@ -215,6 +218,9 @@ struct cam_tfe_bus_hw_info {
 	uint32_t rdi_width;
 	bool support_consumed_addr;
 	bool pdaf_rdi2_mux_en;
+	uint32_t max_bw_counter_limit;
+	uint32_t counter_limit_shift;
+	uint32_t counter_limit_mask;
 };
 
 /*

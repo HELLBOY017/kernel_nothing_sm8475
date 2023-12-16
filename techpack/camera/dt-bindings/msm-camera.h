@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2018-2022, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef __MSM_CAMERA_H
@@ -106,6 +106,10 @@
 #define CCI_MASTER_0         0
 #define CCI_MASTER_1         1
 #define CCI_MASTER_MAX       2
+
+#define CAM_FLASH_TYPE_PMIC 0
+#define CAM_FLASH_TYPE_I2C  1
+#define CAM_FLASH_TYPE_GPIO 2
 
 /* Group name for common clock source*/
 #define CAM_COMMON_TFE_SRC_CLK       1

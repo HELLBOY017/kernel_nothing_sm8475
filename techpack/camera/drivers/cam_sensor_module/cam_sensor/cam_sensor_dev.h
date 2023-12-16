@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _CAM_SENSOR_DEV_H_
@@ -63,11 +63,27 @@ struct sensor_intf_params {
 };
 
 /**
+ * struct cam_sensor_dev_res_info
+ *
+ * @res_index        : The resolution index that gets updated
+ *                     during a mode switch
+ * @feature_mask     : Feature mask
+ * request_id        : Request Id
+ */
+struct cam_sensor_dev_res_info {
+	uint16_t   res_index;
+	uint32_t   num_batched_frames;
+	uint16_t   feature_mask;
+	int64_t    request_id;
+};
+
+/**
  * struct cam_sensor_ctrl_t: Camera control structure
  * @device_name: Sensor device name
  * @pdev: Platform device
  * @cam_sensor_mutex: Sensor mutex
  * @sensordata: Sensor board Information
+ * @sensor_res: Sensor resolution information
  * @cci_i2c_master: I2C structure
  * @io_master_info: Information about the communication master
  * @sensor_state: Sensor states
@@ -86,6 +102,7 @@ struct sensor_intf_params {
  * @bob_pwm_switch: Boolean flag to switch into PWM mode for BoB regulator
  * @last_flush_req: Last request to flush
  * @pipeline_delay: Sensor pipeline delay
+ * @batch_number: Number of batched frames
  * @sensor_name: Sensor name
  * @is_aon_user: To determine whether sensor is AON user or not
  * @hw_no_ops: To determine whether HW operations need to be disabled
@@ -97,6 +114,7 @@ struct cam_sensor_ctrl_t {
 	struct cam_hw_soc_info         soc_info;
 	struct mutex                   cam_sensor_mutex;
 	struct cam_sensor_board_info  *sensordata;
+	struct cam_sensor_dev_res_info sensor_res;
 	enum cci_i2c_master_t          cci_i2c_master;
 	enum cci_device_num            cci_num;
 	struct camera_io_master        io_master_info;
@@ -116,6 +134,7 @@ struct cam_sensor_ctrl_t {
 	bool                           bob_pwm_switch;
 	uint32_t                       last_flush_req;
 	uint16_t                       pipeline_delay;
+	uint32_t                       batch_number;
 	char                           sensor_name[
 		CAM_SENSOR_NAME_MAX_SIZE];
 	bool                           is_aon_user;

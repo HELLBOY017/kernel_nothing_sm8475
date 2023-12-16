@@ -59,6 +59,9 @@
 /* AEB error count threshold */
 #define CAM_ISP_CONTEXT_AEB_ERROR_CNT_MAX 3
 
+/* Debug Buffer length*/
+#define CAM_ISP_CONTEXT_DBG_BUF_LEN 300
+
 /* forward declaration */
 struct cam_isp_context;
 

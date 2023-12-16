@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -2969,6 +2969,7 @@ int cam_tfe_process_cmd(void *hw_priv, uint32_t cmd_type,
 	case CAM_ISP_HW_CMD_GET_RES_FOR_MID:
 	case CAM_ISP_HW_CMD_DUMP_BUS_INFO:
 	case CAM_ISP_HW_CMD_IS_PDAF_RDI2_MUX_EN:
+	case CAM_ISP_HW_CMD_WM_BW_LIMIT_CONFIG:
 		rc = core_info->tfe_bus->hw_ops.process_cmd(
 			core_info->tfe_bus->bus_priv, cmd_type, cmd_args,
 			arg_size);

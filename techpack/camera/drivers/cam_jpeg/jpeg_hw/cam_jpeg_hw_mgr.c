@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/uaccess.h>
@@ -180,6 +180,7 @@ static int cam_jpeg_add_command_buffers(struct cam_packet *packet,
 			if ((cmd_desc[i].offset / sizeof(uint32_t)) >= len) {
 				CAM_ERR(CAM_JPEG, "Invalid offset: %u cmd buf len: %zu",
 					cmd_desc[i].offset, len);
+				cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 				return -EINVAL;
 			}
 
@@ -189,6 +190,7 @@ static int cam_jpeg_add_command_buffers(struct cam_packet *packet,
 			jpeg_request_data->encode_size_buffer_ptr = &inout_params->output_size;
 			CAM_DBG(CAM_JPEG, "encode_size_buf_ptr: 0x%p",
 				jpeg_request_data->encode_size_buffer_ptr);
+			cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 			break;
 		case CAM_JPEG_PACKET_GENERIC_BLOB:
 			rc = cam_packet_util_process_generic_cmd_buffer(&cmd_desc[i],
@@ -648,6 +650,8 @@ static int cam_jpeg_insert_cdm_change_base(
 		CAM_ERR(CAM_JPEG, "Not enough buf offset %d len %d",
 			config_args->hw_update_entries[CAM_JPEG_CHBASE_CMD_BUFF_IDX].offset,
 			ch_base_len);
+		cam_mem_put_cpu_buf(
+			config_args->hw_update_entries[CAM_JPEG_CHBASE_CMD_BUFF_IDX].handle);
 		return -EINVAL;
 	}
 
@@ -682,6 +686,9 @@ static int cam_jpeg_insert_cdm_change_base(
 	*ch_base_iova_addr = 0;
 	ch_base_iova_addr += size;
 	*ch_base_iova_addr = 0;
+
+	cam_mem_put_cpu_buf(
+		config_args->hw_update_entries[CAM_JPEG_CHBASE_CMD_BUFF_IDX].handle);
 
 	return rc;
 }
@@ -1850,6 +1857,7 @@ hw_dump:
 		CAM_WARN(CAM_JPEG, "dump offset overshoot len %zu offset %zu",
 			jpeg_dump_args.buf_len, dump_args->offset);
 		mutex_unlock(&hw_mgr->hw_mgr_mutex);
+		cam_mem_put_cpu_buf(dump_args->buf_handle);
 		return -ENOSPC;
 	}
 
@@ -1860,6 +1868,7 @@ hw_dump:
 		CAM_WARN(CAM_JPEG, "dump buffer exhaust remain %zu min %u",
 			remain_len, min_len);
 		mutex_unlock(&hw_mgr->hw_mgr_mutex);
+		cam_mem_put_cpu_buf(dump_args->buf_handle);
 		return -ENOSPC;
 	}
 
@@ -1892,6 +1901,7 @@ hw_dump:
 	CAM_DBG(CAM_JPEG, "Offset before %u after %u",
 		dump_args->offset, jpeg_dump_args.offset);
 	dump_args->offset = jpeg_dump_args.offset;
+	cam_mem_put_cpu_buf(dump_args->buf_handle);
 	return rc;
 }
 
