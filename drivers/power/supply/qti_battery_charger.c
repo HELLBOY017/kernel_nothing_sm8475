@@ -2369,10 +2369,14 @@ static struct power_supply_desc usb_psy_desc = {
 
 static s32 fcc_user_limit_ma = BATTERY_MAX_CURRENT / 1000;
 static s32 fcc_system_limit_ma = BATTERY_MAX_CURRENT / 1000;
+static s32 fcc_last_limit_ma = BATTERY_MAX_CURRENT / 1000;
 static int __set_scenario_fcc(struct battery_chg_dev *bcdev)
 {
+	static DEFINE_MUTEX(fcc_mutex);
 	int rc;
 	u32 val;
+
+	mutex_lock(&fcc_mutex);
 
 	smp_mb();
 
@@ -2386,13 +2390,24 @@ static int __set_scenario_fcc(struct battery_chg_dev *bcdev)
 	if (fcc_user_limit_ma == -1)
 		fcc_user_limit_ma = BATTERY_MAX_CURRENT / 1000;
 
-	pr_info("fcc_user_limit_ma=%d, fcc_system_limit_ma=%d\n", fcc_user_limit_ma, fcc_system_limit_ma);
+	pr_info("fcc_user_limit_ma=%d, fcc_system_limit_ma=%d, fcc_last_limit_ma=%d\n",
+			fcc_user_limit_ma, fcc_system_limit_ma, fcc_last_limit_ma);
 	if (fcc_user_limit_ma < fcc_system_limit_ma) {
 		pr_info("Using user limit\n");
 		val = fcc_user_limit_ma;
 	} else {
 		pr_info("Using system limit\n");
 		val = fcc_system_limit_ma;
+	}
+
+	/*
+	 * There is a firmware bug where the new value is not honored on a PPS charger.
+	 * Force an ADSP reset by writing 0 first, followed by a 100ms sleep.
+	 */
+	if (fcc_last_limit_ma != val) {
+		write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB], USB_SCENARIO_FCC, 0);
+		msleep(100);
+		fcc_last_limit_ma = val;
 	}
 
 	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB],
@@ -2405,6 +2420,8 @@ static int __set_scenario_fcc(struct battery_chg_dev *bcdev)
 	}
 
 	smp_mb();
+
+	mutex_unlock(&fcc_mutex);
 
 	return rc;
 }
