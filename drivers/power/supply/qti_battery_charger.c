@@ -3523,15 +3523,24 @@ static ssize_t scenario_fcc_store(struct class *c, struct class_attribute *attr,
 {
 	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
 						battery_class);
+	pid_t pid, ppid;
 	int rc;
 	s32 val;
 
 	if (kstrtos32(buf, 0, &val))
 		return -EINVAL;
 
-	pr_info("%s,val:%d", __func__, val);
+	pid = task_pid_nr(current);
+	ppid = task_ppid_nr(current);
 
-	fcc_system_limit_ma = val;
+	pr_info("%s: %s(pid: %u, ppid: %u) val:%d", __func__, current->comm, pid, ppid, val);
+
+	if (unlikely(ppid >= 10000)) {
+		// Requested manually from the user
+		fcc_user_limit_ma = val;
+	} else {
+		fcc_system_limit_ma = val;
+	}
 
 	rc = __set_scenario_fcc(bcdev);
 	if (rc < 0)
@@ -3543,16 +3552,19 @@ static ssize_t scenario_fcc_store(struct class *c, struct class_attribute *attr,
 static ssize_t scenario_fcc_show(struct class *c, struct class_attribute *attr,
 				char *buf)
 {
-	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
-						battery_class);
-	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_USB];
-	int rc;
+	pid_t ppid;
+	s32 val;
 
-	rc = read_property_id(bcdev, pst, USB_SCENARIO_FCC);
-	if (rc < 0)
-		return rc;
+	ppid = task_ppid_nr(current);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", pst->prop[USB_SCENARIO_FCC]);
+	if (unlikely(ppid >= 10000)) {
+		// Requested manually from the user
+		val = fcc_user_limit_ma;
+	} else {
+		val = fcc_system_limit_ma;
+	}
+
+	return scnprintf(buf, PAGE_SIZE, "%d\n", val);
 }
 static CLASS_ATTR_RW(scenario_fcc);
 #endif
