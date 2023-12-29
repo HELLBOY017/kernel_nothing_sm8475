@@ -84,7 +84,7 @@ static long long inode_get_filesize(struct dentry *n_dentry){
 	return (((loff_t)n_dentry->d_inode->i_blocks) << 9) + n_dentry->d_inode->i_bytes;
 }
 
-void insert_key_value(const char *key, unsigned long long value, unsigned int path_str_len) {
+static void insert_key_value(const char *key, unsigned long long value, unsigned int path_str_len) {
 	struct path_table_struct *entry;
 	unsigned int hash;
 
@@ -102,7 +102,7 @@ void insert_key_value(const char *key, unsigned long long value, unsigned int pa
 	hash_add(path_hash_table, &entry->nodex, hash);
 }
 
-int increment_value(const char *key, unsigned long long value) {
+static int increment_value(const char *key, unsigned long long value) {
 	struct path_table_struct *entry;
 	unsigned int hash = jhash(key, strlen(key), 0);
 

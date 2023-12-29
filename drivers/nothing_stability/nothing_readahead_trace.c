@@ -84,7 +84,7 @@ static unsigned long long inode_get_filesize(struct dentry *n_dentry){
 	return (((loff_t)n_dentry->d_inode->i_blocks) << 9) + n_dentry->d_inode->i_bytes;
 }
 
-int increment_value(unsigned int nt_ino) {
+static int increment_value(unsigned int nt_ino) {
 	struct path_table_struct *entry;
 
 	hash_for_each_possible(path_hash_table, entry, nodex, nt_ino) {
@@ -97,7 +97,7 @@ int increment_value(unsigned int nt_ino) {
 	return 0;
 }
 
-void insert_key_value(unsigned int nt_ino, struct dentry *nt_path_dentry, unsigned long long nt_file_size) {
+static void insert_key_value(unsigned int nt_ino, struct dentry *nt_path_dentry, unsigned long long nt_file_size) {
 	struct path_table_struct *entry;
 	unsigned int path_str_len = 0;
 	char *nt_full_path = NULL;
