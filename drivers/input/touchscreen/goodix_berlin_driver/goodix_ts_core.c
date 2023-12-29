@@ -2689,6 +2689,7 @@ static const struct proc_ops TP_charger_proc_ops = {
 	.proc_open		= TP_charger_open,
 	.proc_read		= seq_read,
 	.proc_write		= TP_charger_write,
+	.proc_release		= single_release,
 };
 
 static int create_TP_node_proc_file(struct goodix_ts_core *cd)

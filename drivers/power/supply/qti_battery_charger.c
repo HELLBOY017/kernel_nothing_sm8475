@@ -88,6 +88,7 @@
 #define NT_NOTIFY_NORMAL            0
 #define NT_GET_CHARGE_KEY_INFO      1
 #define KEY_INFO_COUNT			5
+#define PROJECT_DATA_ID		1
 enum nt_notify_finish_type {
         NT_NOTIFY_NOT_FINISH = 0,
         NT_NOTIFY_FINISH = 1,
@@ -1508,6 +1509,59 @@ static int is_aging_test_open(struct inode *inode, struct file *file)
 	return single_open(file, is_aging_test_show, PDE_DATA(inode));
 }
 
+static int chg_data_id_show(struct seq_file *m, void *v)
+{
+        seq_printf(m, "%d\n", PROJECT_DATA_ID);
+
+        return 0;
+}
+
+static int chg_data_id_open(struct inode *inode, struct file *file)
+{
+        return single_open(file, chg_data_id_show, PDE_DATA(inode));
+}
+
+static ssize_t chg_data_id_write(struct file *file, const char __user *buff,
+               size_t count, loff_t *ppos)
+{
+        struct battery_chg_dev *bcdev = PDE_DATA(file_inode(file));
+        u8 *buf_tmp = NULL;
+        int buflen = count;
+        u32 val;
+        if(bcdev == NULL)
+        {
+                pr_err("bcdev is NULL\n");
+                return -EINVAL;
+        }
+        if (buflen < 0) {
+                pr_err("proc count fail:%d\n", buflen);
+                return -EINVAL;
+        } else {
+                buf_tmp = (u8 *)kzalloc(buflen * sizeof(u8), GFP_KERNEL);
+                if (buf_tmp == NULL) {
+                        pr_err("proc write buf zalloc fail\n");
+                        return -ENOMEM;
+                }
+        }
+
+        if (copy_from_user(buf_tmp, buff, buflen)) {
+                pr_err("proc chg_data_id_write fail\n");
+                goto exit;
+        }
+
+        if (kstrtou32(buf_tmp, 0, &val))
+        {
+                pr_err("kstrtou32 fail\n");
+                goto exit;
+        }
+        pr_err("val:%d\n",val);
+
+exit:
+        kfree(buf_tmp);
+        buf_tmp = NULL;
+        return buflen;
+}
+
 static int nt_otg_enable_show(struct seq_file *m, void *v)
 {
 	struct battery_chg_dev *bcdev = m->private;
@@ -1915,6 +1969,12 @@ static const struct proc_ops is_aging_test_proc_ops = {
 };
 
 const struct nt_proc entries[] = {
+	{"chg_data_id",{.proc_open = chg_data_id_open,
+                          .proc_read = seq_read,
+                          .proc_lseek = seq_lseek,
+                          .proc_release = single_release,
+                          .proc_write = chg_data_id_write,}
+	},
 	{"nt_otg_enable",{.proc_open = nt_otg_enable_open,
 	                  .proc_read = seq_read,
 	                  .proc_lseek = seq_lseek,
@@ -1953,12 +2013,12 @@ const struct nt_proc entries[] = {
 	}
 };
 
-int create_aging_proc_file(struct battery_chg_dev *bcdev)
+int create_aging_proc_file(struct battery_chg_dev *bcdev, struct proc_dir_entry *nt_chg_proc_dir)
 {
 	struct proc_dir_entry *dir;
 
 	dir = NULL;
-	dir = proc_create_data("is_aging_test", 0666, NULL, &is_aging_test_proc_ops, bcdev);
+	dir = proc_create_data("is_aging_test", 0666, nt_chg_proc_dir, &is_aging_test_proc_ops, bcdev);
 
 	if (!dir) {
 		pr_err("unable to create /proc/is_aging_test\n");
@@ -2147,6 +2207,7 @@ static int usb_psy_set_icl(struct battery_chg_dev *bcdev, u32 prop_id, int val)
 
 #ifndef NT_CHG
 	case POWER_SUPPLY_USB_TYPE_CDP:
+	case POWER_SUPPLY_USB_TYPE_C:
 #endif
 
 		break;
@@ -4229,12 +4290,12 @@ static int battery_chg_probe(struct platform_device *pdev)
 	}
 
 #ifdef NT_CHG
-	create_aging_proc_file(bcdev);
 	nt_chg_proc_dir =  proc_mkdir("charger", NULL);
 	if(!nt_chg_proc_dir){
 		pr_err("proc dir creates failed !!\n");
 		return -ENOMEM;
 	}
+	create_aging_proc_file(bcdev, nt_chg_proc_dir);
 	for (i = 0; i < ARRAY_SIZE(entries); i++) {
 		if (!proc_create_data(entries[i].name, 0666, nt_chg_proc_dir, &(entries[i].fops), bcdev)){
 			pr_info("%s: create /proc/charger/%s failed\\n",__func__, entries[i].name);
