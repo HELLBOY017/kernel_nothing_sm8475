@@ -163,6 +163,3 @@ out/
 
 # Ignore build script
 build.sh
-
-# Ignore AnyKernel3 directory
-anykernel/
