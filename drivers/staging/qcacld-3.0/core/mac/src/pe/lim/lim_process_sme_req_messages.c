@@ -68,6 +68,7 @@
 #include <lim_mlo.h>
 #include <wlan_vdev_mgr_utils_api.h>
 #include "wma_he.h"
+#include "cfg_ucfg_api.h"
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
@@ -1918,6 +1919,48 @@ lim_get_bss_dot11_mode(struct bss_description *bss_desc,
 }
 
 static QDF_STATUS
+lim_handle_11abg_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
+			    enum mlme_dot11_mode *intersected_mode,
+			    struct bss_description *bss_desc)
+{
+	if (!WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq) &&
+	    !WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq)) {
+		pe_err("self Dot11mode is 11ABG, BSS freq %d not 2.4 or 5 GHz",
+		       bss_desc->chan_freq);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (bss_dot11_mode) {
+	case MLME_DOT11_MODE_11B:
+		*intersected_mode = MLME_DOT11_MODE_11B;
+		break;
+	case MLME_DOT11_MODE_11A:
+		*intersected_mode = MLME_DOT11_MODE_11A;
+		break;
+	case MLME_DOT11_MODE_11G:
+		*intersected_mode = MLME_DOT11_MODE_11G;
+		break;
+	case MLME_DOT11_MODE_11N:
+		fallthrough;
+	case MLME_DOT11_MODE_11AC:
+		fallthrough;
+	case MLME_DOT11_MODE_11AX:
+		fallthrough;
+	case MLME_DOT11_MODE_11BE:
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq))
+			*intersected_mode = MLME_DOT11_MODE_11G;
+		else
+			*intersected_mode = MLME_DOT11_MODE_11A;
+		break;
+	default:
+		pe_err("Invalid bss dot11mode %d passed", bss_dot11_mode);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
 lim_handle_11a_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 			  enum mlme_dot11_mode *intersected_mode,
 			  struct bss_description *bss_desc)
@@ -2449,6 +2492,9 @@ lim_get_intersected_dot11_mode_sta_ap(struct mac_context *mac_ctx,
 	case MLME_DOT11_MODE_11BE_ONLY:
 		return lim_handle_11be_only_dot11_mode(bss_dot11_mode,
 						       intersected_mode);
+	case MLME_DOT11_MODE_ABG:
+		return lim_handle_11abg_dot11_mode(bss_dot11_mode,
+						   intersected_mode, bss_desc);
 	default:
 		pe_err("Invalid self dot11mode %d not supported",
 		       self_dot11_mode);
@@ -2946,10 +2992,14 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	/*
 	 * Join timeout: if we find a BeaconInterval in the BssDescription,
 	 * then set the Join Timeout to be 10 x the BeaconInterval.
+	 *
+	 * 10 * BeaconInterval should be greater than the minimum join
+	 * timeout and lesser than the configured timeout.
 	 */
 	timeout = mac_ctx->mlme_cfg->timeouts.join_failure_timeout_ori;
 	if (bss_desc->beaconInterval)
-		timeout = QDF_MAX(10 * bss_desc->beaconInterval, timeout);
+		timeout = QDF_MAX(10 * bss_desc->beaconInterval,
+				  cfg_min(CFG_JOIN_FAILURE_TIMEOUT));
 
 	mac_ctx->mlme_cfg->timeouts.join_failure_timeout =
 		QDF_MIN(timeout,
@@ -5167,7 +5217,7 @@ void lim_calculate_tpc(struct mac_context *mac,
 	qdf_freq_t oper_freq, start_freq = 0;
 	struct ch_params ch_params;
 	struct vdev_mlme_obj *mlme_obj;
-	uint8_t tpe_power;
+	int8_t tpe_power;
 	bool skip_tpe = false;
 	bool rf_test_mode = false;
 	bool safe_mode_enable = false;
@@ -5310,7 +5360,14 @@ void lim_calculate_tpc(struct mac_context *mac,
 				tpe_power =  mlme_obj->reg_tpc_obj.eirp_power;
 			else
 				tpe_power = mlme_obj->reg_tpc_obj.tpe[i];
-			max_tx_power = QDF_MIN(max_tx_power, (int8_t)tpe_power);
+			/**
+			 * AP advertises TPE IE tx power as 8-bit unsigned int.
+			 * STA needs to convert it into an 8-bit 2s complement
+			 * signed integer in the range –64 dBm to 63 dBm with a
+			 * 0.5 dB step
+			 */
+			tpe_power /= 2;
+			max_tx_power = QDF_MIN(max_tx_power, tpe_power);
 			pe_debug("TPE: %d", tpe_power);
 		}
 

@@ -1427,6 +1427,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	bool extracted_flag = false;
 	uint8_t retry_int;
 	uint16_t max_retries;
+	struct element_info ie;
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
@@ -1766,6 +1767,11 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
+
+	ie.ptr = frame + sizeof(tSirMacMgmtHdr) + WLAN_ASSOC_RSP_IES_OFFSET;
+	ie.len = payload - WLAN_ASSOC_RSP_IES_OFFSET;
+
+	mlme_set_peer_assoc_rsp_ie(mac_ctx->psoc, peer_addr, &ie);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
@@ -5693,9 +5699,12 @@ returnAfterError:
 #endif
 
 QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
-		tSirMacAddr peer_mac, uint16_t tid,
-		struct pe_session *session, uint8_t addba_extn_present,
-		uint8_t amsdu_support, uint8_t is_wep, uint16_t calc_buff_size)
+					 tSirMacAddr peer_mac, uint16_t tid,
+					 struct pe_session *session,
+					 uint8_t addba_extn_present,
+					 uint8_t amsdu_support, uint8_t is_wep,
+					 uint16_t calc_buff_size,
+					 tSirMacAddr bssid)
 {
 
 	tDot11faddba_rsp frm;
@@ -5869,7 +5878,8 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 
 	/* Update A3 with the BSSID */
 	mgmt_hdr = (tpSirMacMgmtHdr) frame_ptr;
-	sir_copy_mac_addr(mgmt_hdr->bssId, session->bssId);
+
+	sir_copy_mac_addr(mgmt_hdr->bssId, bssid);
 
 	/* ADDBA Response is a robust mgmt action frame,
 	 * set the "protect" (aka WEP) bit in the FC

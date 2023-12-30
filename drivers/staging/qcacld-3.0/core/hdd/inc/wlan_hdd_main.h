@@ -1290,6 +1290,7 @@ enum qdisc_filter_status {
  * @is_virtual_iface: Indicates that netdev is called from virtual interface
  * @mon_adapter: hdd_adapter of monitor mode.
  * @set_mac_addr_req_ctx: Set MAC address command request context
+ * @delta_qtime: delta between host qtime and monotonic time
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1551,7 +1552,7 @@ struct hdd_adapter {
 	uint32_t pkt_type_bitmap;
 	uint32_t track_arp_ip;
 	uint8_t dns_payload[256];
-	uint32_t track_dns_domain_len;
+	uint8_t track_dns_domain_len;
 	uint32_t track_src_port;
 	uint32_t track_dest_port;
 	uint32_t track_dest_ipv4;
@@ -1628,6 +1629,7 @@ struct hdd_adapter {
 #ifdef WLAN_FEATURE_DYNAMIC_MAC_ADDR_UPDATE
 	void *set_mac_addr_req_ctx;
 #endif
+	int64_t delta_qtime;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
