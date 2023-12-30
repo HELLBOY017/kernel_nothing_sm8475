@@ -742,38 +742,10 @@ static void
 util_scan_update_rnr_mld(struct rnr_bss_info *rnr,
 			 struct neighbor_ap_info_field *ap_info, uint8_t *data)
 {
-	uint8_t tbtt_info_length;
 	bool mld_info_present = false;
 
-	tbtt_info_length = ap_info->tbtt_header.tbtt_info_length;
-	if (tbtt_info_length >=
-		TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM)
-		tbtt_info_length =
-		   TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM;
-
-	switch (tbtt_info_length) {
-	case TBTT_NEIGHBOR_AP_MLD_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->mld_info, &data[1],
-			     sizeof(struct rnr_mld_info));
-		mld_info_present = true;
-		break;
-	case TBTT_NEIGHBOR_AP_BSSID_MLD_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&rnr->mld_info, &data[1 + QDF_MAC_ADDR_SIZE],
-			     sizeof(struct rnr_mld_info));
-		mld_info_present = true;
-		break;
+	switch (ap_info->tbtt_header.tbtt_info_length) {
 	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
-		rnr->bss_params = data[11];
-		rnr->psd_20mhz = data[12];
 		qdf_mem_copy(&rnr->mld_info, &data[13],
 			     sizeof(struct rnr_mld_info));
 		mld_info_present = true;
@@ -785,7 +757,6 @@ static void
 util_scan_update_rnr_mld(struct rnr_bss_info *rnr,
 			 struct neighbor_ap_info_field *ap_info, uint8_t *data)
 {
-	scm_debug("Wrong fieldtype");
 }
 #endif
 
@@ -807,40 +778,36 @@ util_scan_update_rnr(struct rnr_bss_info *rnr,
 		/* Dont store it skip*/
 		break;
 
+	case TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM:
+		rnr->bss_params = data[5];
+		fallthrough;
 	case TBTT_NEIGHBOR_AP_SHORTSSID:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
 		qdf_mem_copy(&rnr->short_ssid, &data[1], SHORT_SSID_LEN);
 		break;
 
-	case TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->short_ssid, &data[1], SHORT_SSID_LEN);
-		rnr->bss_params = data[5];
-		break;
-
+	case TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM_20MHZ_PSD:
+		rnr->psd_20mhz = data[8];
+		fallthrough;
+	case TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM:
+		rnr->bss_params = data[7];
+		fallthrough;
 	case TBTT_NEIGHBOR_AP_BSSID:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
 		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
 		break;
 
-	case TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		rnr->bss_params = data[7];
-		break;
-
-	case TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM_20MHZ_PSD:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		rnr->bss_params = data[7];
-		rnr->psd_20mhz = data[8];
-		break;
-
+	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM:
+		util_scan_update_rnr_mld(rnr, ap_info, data);
+		fallthrough;
+	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD:
+		rnr->psd_20mhz = data[12];
+		fallthrough;
+	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM:
+		rnr->bss_params = data[11];
+		fallthrough;
 	case TBTT_NEIGHBOR_AP_BSSSID_S_SSID:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
@@ -848,25 +815,8 @@ util_scan_update_rnr(struct rnr_bss_info *rnr,
 		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
 		break;
 
-	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
-		rnr->bss_params = data[11];
-		break;
-
-	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD:
-		rnr->channel_number = ap_info->channel_number;
-		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
-		rnr->bss_params = data[11];
-		rnr->psd_20mhz = data[12];
-		break;
-
 	default:
-		util_scan_update_rnr_mld(rnr, ap_info, data);
+		scm_debug("Wrong fieldtype");
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -950,6 +900,9 @@ util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 		scan_params->ie_list.srp   = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_HECAP:
+		if ((extn_ie->ie_len < WLAN_MIN_HECAP_IE_LEN) ||
+		    (extn_ie->ie_len > WLAN_MAX_HECAP_IE_LEN))
+			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.hecap = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_HEOP:
@@ -1517,28 +1470,36 @@ static int util_scan_scm_calc_nss_supported_by_ap(
 {
 	struct htcap_cmn_ie *htcap;
 	struct wlan_ie_vhtcaps *vhtcaps;
-	struct wlan_ie_hecaps *hecaps;
+	uint8_t *he_cap;
+	uint8_t *end_ptr = NULL;
 	uint16_t rx_mcs_map = 0;
+	uint8_t *mcs_map_offset;
 
 	htcap = (struct htcap_cmn_ie *)
 		util_scan_entry_htcap(scan_params);
 	vhtcaps = (struct wlan_ie_vhtcaps *)
 		util_scan_entry_vhtcap(scan_params);
-	hecaps = (struct wlan_ie_hecaps *)
-		util_scan_entry_hecap(scan_params);
+	he_cap = util_scan_entry_hecap(scan_params);
 
-	if (hecaps) {
+	if (he_cap) {
 		/* Using rx mcs map related to 80MHz or lower as in some
 		 * cases higher mcs may suuport lesser NSS than that
 		 * of lowe mcs. Thus giving max NSS capability.
 		 */
-		rx_mcs_map =
-			qdf_cpu_to_le16(hecaps->mcs_bw_map[0].rx_mcs_map);
+		end_ptr = he_cap + he_cap[1] + sizeof(struct ie_header);
+		mcs_map_offset = (he_cap + sizeof(struct extn_ie_header) +
+				  WLAN_HE_MACCAP_LEN + WLAN_HE_PHYCAP_LEN);
+		if ((mcs_map_offset + WLAN_HE_MCS_MAP_LEN) <= end_ptr) {
+			rx_mcs_map = *(uint16_t *)mcs_map_offset;
+		} else {
+			rx_mcs_map = WLAN_INVALID_RX_MCS_MAP;
+			scm_debug("mcs_map_offset exceeds he cap len");
+		}
 	} else if (vhtcaps) {
 		rx_mcs_map = vhtcaps->rx_mcs_map;
 	}
 
-	if (hecaps || vhtcaps) {
+	if (he_cap || vhtcaps) {
 		if ((rx_mcs_map & 0xC000) != 0xC000)
 			return 8;
 
@@ -1837,22 +1798,26 @@ static void util_scan_update_ml_info(struct scan_cache_entry *scan_entry)
 	uint8_t *ml_ie = scan_entry->ie_list.multi_link;
 	uint16_t multi_link_ctrl;
 	uint8_t offset;
+	uint8_t *end_ptr = NULL;
 
 	if (!scan_entry->ie_list.multi_link) {
 		return;
 	}
 
+	end_ptr = ml_ie + ml_ie[TAG_LEN_POS] + sizeof(struct ie_header);
+
 	multi_link_ctrl = *(uint16_t *)(ml_ie + ML_CONTROL_OFFSET);
 
 	/* TODO: update ml_info based on ML IE */
 
-	multi_link_ctrl = *(uint16_t *)(ml_ie + ML_CONTROL_OFFSET);
 	offset = ML_CMN_INFO_OFFSET;
 	/* TODO: Add proper parsing based on presense bitmap */
 	if (multi_link_ctrl & CMN_INFO_MLD_ADDR_PRESENT_BIT) {
-		qdf_mem_copy(&scan_entry->ml_info.mld_mac_addr,
-			     ml_ie + offset, 6);
-		offset += 6;
+		if ((ml_ie + offset + QDF_MAC_ADDR_SIZE) <= end_ptr) {
+			qdf_mem_copy(&scan_entry->ml_info.mld_mac_addr,
+				     ml_ie + offset, QDF_MAC_ADDR_SIZE);
+			offset += QDF_MAC_ADDR_SIZE;
+		}
 	}
 
 	/* TODO: Decode it from ML IE */
@@ -1862,8 +1827,10 @@ static void util_scan_update_ml_info(struct scan_cache_entry *scan_entry)
 	 * Copy Link ID & MAC address of the scan cache entry as first entry
 	 * in the partner info list
 	 */
-	if (multi_link_ctrl & CMN_INFO_LINK_ID_PRESENT_BIT)
-		scan_entry->ml_info.self_link_id = ml_ie[offset] & 0x0F;
+	if (multi_link_ctrl & CMN_INFO_LINK_ID_PRESENT_BIT) {
+		if (&ml_ie[offset] < end_ptr)
+			scan_entry->ml_info.self_link_id = ml_ie[offset] & 0x0F;
+	}
 
 	util_get_partner_link_info(scan_entry);
 }
@@ -3126,9 +3093,9 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 		mbssid_ie = util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID,
 					      (uint8_t *)&bcn->ie, ie_len);
 		if (mbssid_ie) {
-			if (mbssid_ie[1] <= 0) {
+			if (mbssid_ie[TAG_LEN_POS] < VALID_ELEM_LEAST_LEN) {
 				scm_debug("MBSSID IE length is wrong %d",
-					  mbssid_ie[1]);
+					  mbssid_ie[TAG_LEN_POS]);
 				return status;
 			}
 			qdf_mem_copy(&mbssid_info.trans_bssid,
