@@ -229,6 +229,7 @@ struct mlme_edca_ac_vo {
  * MLME_DOT11_MODE_11AX_ONLY: vdev just supports 11AX mode
  * MLME_DOT11_MODE_11BE: vdev supports 11BE mode, and modes above it
  * MLME_DOT11_MODE_11BE_ONLY: vdev just supports 11BE mode
+ * MLME_DOT11_MODE_ABG: vdev supports just 11A, 11B and 11G modes
  */
 enum mlme_dot11_mode {
 	MLME_DOT11_MODE_ALL,
@@ -243,7 +244,8 @@ enum mlme_dot11_mode {
 	MLME_DOT11_MODE_11AX,
 	MLME_DOT11_MODE_11AX_ONLY,
 	MLME_DOT11_MODE_11BE,
-	MLME_DOT11_MODE_11BE_ONLY
+	MLME_DOT11_MODE_11BE_ONLY,
+	MLME_DOT11_MODE_ABG
 };
 
 /**
@@ -1738,6 +1740,8 @@ struct fw_scan_channels {
  * vsie in Re(assoc) frame
  * @roam_trigger_bitmap:            Bitmap of roaming triggers.
  * @sta_roam_disable                STA roaming disabled by interfaces
+ * @roam_high_rssi_delta: Delta change in high RSSI at which roam scan is
+ * triggered in 2.4/5 GHz.
  * @early_stop_scan_enable:         Set early stop scan
  * @enable_5g_band_pref:            Enable preference for 5G from INI
  * @ese_enabled:                    Enable ESE feature
@@ -1861,6 +1865,7 @@ struct wlan_mlme_lfr_cfg {
 	bool enable_roam_reason_vsie;
 	uint32_t roam_trigger_bitmap;
 	uint32_t sta_roam_disable;
+	uint8_t roam_high_rssi_delta;
 #endif
 	bool early_stop_scan_enable;
 	bool enable_5g_band_pref;

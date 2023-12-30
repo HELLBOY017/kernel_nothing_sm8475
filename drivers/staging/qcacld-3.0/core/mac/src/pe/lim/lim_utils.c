@@ -3774,11 +3774,17 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 						   struct pe_session *pe_session)
 {
 	qdf_freq_t chan_freq;
+	uint32_t self_cb_mode = mac->roam.configParam.channelBondingMode5GHz;
+
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(pe_session->curr_op_freq))
+		self_cb_mode = mac->roam.configParam.channelBondingMode24GHz;
 
 	/* If self capability is set to '20Mhz only', then do not change the CB mode. */
-	if (!lim_get_ht_capability
-		    (mac, eHT_SUPPORTED_CHANNEL_WIDTH_SET, pe_session))
+	if (self_cb_mode == WNI_CFG_CHANNEL_BONDING_MODE_DISABLE) {
+		pe_debug("self_cb_mode 0 for freq %d",
+			 pe_session->curr_op_freq);
 		return;
+	}
 
 	if (wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) &&
 	    pe_session->force_24ghz_in_ht20) {
@@ -6350,7 +6356,7 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst,
 
 	pe_debug("source extended capabilities length:%d", src->num_bytes);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			   src, src->num_bytes);
+			   src->bytes, src->num_bytes);
 
 	/* Return if strip the capabilities from @dst which not present */
 	if (!dst->present && !add)
@@ -6373,7 +6379,7 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst,
 		pe_debug("destination extended capabilities length: %d",
 			 dst->num_bytes);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-				   dst, dst->num_bytes);
+				   dst->bytes, dst->num_bytes);
 	}
 }
 
