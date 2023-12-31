@@ -160,6 +160,3 @@ sphinx_*/
 
 # Ignore out directory
 out/
-
-# Ignore build script
-build.sh
