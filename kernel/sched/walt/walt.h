@@ -173,7 +173,9 @@ extern void walt_init_tg(struct task_group *tg);
 extern void walt_init_topapp_tg(struct task_group *tg);
 extern void walt_init_foreground_tg(struct task_group *tg);
 extern int register_walt_callback(void);
+#ifdef CONFIG_WALT_INPUT_BOOST
 extern int input_boost_init(void);
+#endif
 extern int core_ctl_init(void);
 
 extern atomic64_t walt_irq_work_lastq_ws;
@@ -202,9 +204,11 @@ extern unsigned int sysctl_sched_capacity_margin_up[MAX_MARGIN_LEVELS];
 extern unsigned int sysctl_sched_capacity_margin_down[MAX_MARGIN_LEVELS];
 extern unsigned int sched_boost_type; /* currently activated sched boost */
 extern enum sched_boost_policy boost_policy;
+#ifdef CONFIG_WALT_INPUT_BOOST
 extern unsigned int sysctl_input_boost_ms;
 extern unsigned int sysctl_input_boost_freq[8];
 extern unsigned int sysctl_sched_boost_on_input;
+#endif
 extern unsigned int sysctl_sched_user_hint;
 extern unsigned int sysctl_sched_conservative_pl;
 extern unsigned int sysctl_sched_hyst_min_coloc_ns;

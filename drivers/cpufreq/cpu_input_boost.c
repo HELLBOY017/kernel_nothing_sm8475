@@ -143,20 +143,57 @@ static unsigned int get_idle_freq(struct cpufreq_policy *policy)
 	return max(freq, policy->cpuinfo.min_freq);
 }
 
+static void boost_adjust_notify(struct cpufreq_policy *policy)
+{
+	struct boost_drv *b = &boost_drv_g;
+
+	/* Unboost when the screen is off */
+	if (test_bit(SCREEN_OFF, &b->state)) {
+		policy->min = get_idle_freq(policy);
+		return;
+	}
+
+	/* Boost CPU to max frequency for max boost */
+	if (test_bit(MAX_BOOST, &b->state)) {
+		policy->min = get_max_boost_freq(policy);
+		return;
+	}
+
+	/*
+	 * Boost to policy->max if the boost frequency is higher. When
+	 * unboosting, set policy->min to the absolute min freq for the CPU.
+	 */
+	if (test_bit(INPUT_BOOST, &b->state))
+		policy->min = get_input_boost_freq(policy);
+	else
+		policy->min = get_min_freq(policy);
+
+	return;
+}
 
 static void update_online_cpu_policy(void)
 {
 	unsigned int cpu;
+        struct cpufreq_policy *policy;
 
 	get_online_cpus();
 	for_each_possible_cpu(cpu) {
 		if (cpu_online(cpu)) {
-			if (cpumask_intersects(cpumask_of(cpu), cpu_lp_mask))
+			if (cpumask_intersects(cpumask_of(cpu), cpu_lp_mask)) {
 				cpufreq_update_policy(cpu);
-			if (cpumask_intersects(cpumask_of(cpu), cpu_perf_mask))
+                                policy = cpufreq_cpu_get(cpu);
+                                boost_adjust_notify(policy);
+                        }
+			if (cpumask_intersects(cpumask_of(cpu), cpu_perf_mask)) {
 				cpufreq_update_policy(cpu);
-			if (cpumask_intersects(cpumask_of(cpu), cpu_prime_mask))
+                                policy = cpufreq_cpu_get(cpu);
+                                boost_adjust_notify(policy);
+			}
+                        if (cpumask_intersects(cpumask_of(cpu), cpu_prime_mask)) {
 				cpufreq_update_policy(cpu);
+                                policy = cpufreq_cpu_get(cpu);
+                                boost_adjust_notify(policy);
+                        }
 		}
 	}
 	put_online_cpus();
@@ -258,39 +295,6 @@ static int cpu_boost_thread(void *data)
 	return 0;
 }
 
-static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
-			   void *data)
-{
-	struct boost_drv *b = container_of(nb, typeof(*b), cpu_notif);
-	struct cpufreq_policy *policy = data;
-
-	if (action != CPUFREQ_ADJUST)
-		return NOTIFY_OK;
-
-	/* Unboost when the screen is off */
-	if (test_bit(SCREEN_OFF, &b->state)) {
-		policy->min = get_idle_freq(policy);
-		return NOTIFY_OK;
-	}
-
-	/* Boost CPU to max frequency for max boost */
-	if (test_bit(MAX_BOOST, &b->state)) {
-		policy->min = get_max_boost_freq(policy);
-		return NOTIFY_OK;
-	}
-
-	/*
-	 * Boost to policy->max if the boost frequency is higher. When
-	 * unboosting, set policy->min to the absolute min freq for the CPU.
-	 */
-	if (test_bit(INPUT_BOOST, &b->state))
-		policy->min = get_input_boost_freq(policy);
-	else
-		policy->min = get_min_freq(policy);
-
-	return NOTIFY_OK;
-}
-
 static int fb_notifier_cb(struct notifier_block *nb,
 			       unsigned long action, void *data)
 {
@@ -298,8 +302,7 @@ static int fb_notifier_cb(struct notifier_block *nb,
 	struct fb_event *evdata = data;
 	int *blank = evdata->data;
 
-	/* Parse framebuffer blank events as soon as they occur */
-	if (action != FB_EARLY_EVENT_BLANK)
+	if (action != FB_EVENT_BLANK)
 		return NOTIFY_OK;
 
 	/* Boost when the screen turns on and unboost when it turns off */
@@ -402,18 +405,10 @@ static int __init cpu_input_boost_init(void)
 	struct task_struct *thread;
 	int ret;
 
-	b->cpu_notif.notifier_call = cpu_notifier_cb;
-	ret = cpufreq_register_notifier(&b->cpu_notif, CPUFREQ_POLICY_NOTIFIER);
-	if (ret) {
-		pr_err("Failed to register cpufreq notifier, err: %d\n", ret);
-		return ret;
-	}
-
 	cpu_input_boost_input_handler.private = b;
 	ret = input_register_handler(&cpu_input_boost_input_handler);
 	if (ret) {
 		pr_err("Failed to register input handler, err: %d\n", ret);
-		goto unregister_cpu_notif;
 	}
 
 	b->fb_notif.notifier_call = fb_notifier_cb;
@@ -437,8 +432,6 @@ unregister_fb_notif:
 	fb_unregister_client(&b->fb_notif);
 unregister_handler:
 	input_unregister_handler(&cpu_input_boost_input_handler);
-unregister_cpu_notif:
-	cpufreq_unregister_notifier(&b->cpu_notif, CPUFREQ_POLICY_NOTIFIER);
 	return ret;
 }
 late_initcall(cpu_input_boost_init);

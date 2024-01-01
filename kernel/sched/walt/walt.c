@@ -4302,7 +4302,9 @@ static void walt_init(struct work_struct *work)
 	hdr = register_sysctl_table(walt_base_table);
 	kmemleak_not_leak(hdr);
 
+#ifdef CONFIG_WALT_INPUT_BOOST
 	input_boost_init();
+#endif
 	core_ctl_init();
 	walt_boost_init();
 	waltgov_register();

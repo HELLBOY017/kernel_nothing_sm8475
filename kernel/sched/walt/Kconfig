@@ -38,4 +38,9 @@ config SCHED_CONSERVATIVE_BOOST_LPM_BIAS
 	  modes on a cpu if conservative boost is active. The cpu
 	  will not enter low power mode for a hysteresis time period,
 	  which can be configured from userspace.
+
+config WALT_INPUT_BOOST
+	bool "Enable WALT's INPUT_BOOST feature"
+	depends on SCHED_WALT && !CPU_INPUT_BOOST
+        default y
 endmenu
