@@ -2395,20 +2395,19 @@ static int __set_scenario_fcc(struct battery_chg_dev *bcdev)
 	if (fcc_user_limit_ma < fcc_system_limit_ma) {
 		pr_info("Using user limit\n");
 		val = fcc_user_limit_ma;
+		/*
+		 * There is a firmware bug where the new value is not honored on a PPS charger.
+		 * Force an ADSP reset by writing 0 first, followed by a 100ms sleep.
+		 */
+		if (fcc_last_limit_ma != val) {
+			write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB], USB_SCENARIO_FCC, 0);
+			msleep(100);
+		}
 	} else {
 		pr_info("Using system limit\n");
 		val = fcc_system_limit_ma;
 	}
-
-	/*
-	 * There is a firmware bug where the new value is not honored on a PPS charger.
-	 * Force an ADSP reset by writing 0 first, followed by a 100ms sleep.
-	 */
-	if (fcc_last_limit_ma != val) {
-		write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB], USB_SCENARIO_FCC, 0);
-		msleep(100);
-		fcc_last_limit_ma = val;
-	}
+	fcc_last_limit_ma = val;
 
 	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB],
 				USB_SCENARIO_FCC, val);
