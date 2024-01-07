@@ -2428,14 +2428,23 @@ static int __set_scenario_fcc(struct battery_chg_dev *bcdev)
 static int __battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
 					u32 fcc_ua)
 {
+	int rc;
+
 	if (bcdev->restrict_chg_en) {
 		fcc_ua = min_t(u32, fcc_ua, bcdev->restrict_fcc_ua);
 		fcc_ua = min_t(u32, fcc_ua, bcdev->thermal_fcc_ua);
 	}
 
-	fcc_user_limit_ma = fcc_ua / 1000;
+	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_BATTERY],
+				BATT_CHG_CTRL_LIM, fcc_ua);
+	if (rc < 0) {
+		pr_err("Failed to set FCC %u, rc=%d\n", fcc_ua, rc);
+	} else {
+		pr_info("Charge current limited to %umA (last: %umA)\n", fcc_ua / 1000, bcdev->last_fcc_ua / 1000);
+		bcdev->last_fcc_ua = fcc_ua;
+	}
 
-	return __set_scenario_fcc(bcdev);
+	return rc;
 }
 
 static int battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
