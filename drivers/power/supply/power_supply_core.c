@@ -401,13 +401,9 @@ static int __power_supply_get_supplier_property(struct device *dev, void *_data)
 	struct power_supply *epsy = dev_get_drvdata(dev);
 	struct psy_get_supplier_prop_data *data = _data;
 
-	if (__power_supply_is_supplied_by(epsy, data->psy)) {
-		if (!epsy->desc->get_property(epsy, data->psp, data->val)) {
-			if (data->psp == POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT)
-				data->val->intval &= 0xffff;
+	if (__power_supply_is_supplied_by(epsy, data->psy))
+		if (!epsy->desc->get_property(epsy, data->psp, data->val))
 			return 1; /* Success */
-		}
-	}
 
 	return 0; /* Continue iterating */
 }
@@ -963,7 +959,7 @@ int power_supply_batinfo_ocv2cap(struct power_supply_battery_info *info,
 }
 EXPORT_SYMBOL_GPL(power_supply_batinfo_ocv2cap);
 
-static int __power_supply_get_property(struct power_supply *psy,
+int power_supply_get_property(struct power_supply *psy,
 			    enum power_supply_property psp,
 			    union power_supply_propval *val)
 {
@@ -974,17 +970,6 @@ static int __power_supply_get_property(struct power_supply *psy,
 	}
 
 	return psy->desc->get_property(psy, psp, val);
-}
-
-int power_supply_get_property(struct power_supply *psy,
-			    enum power_supply_property psp,
-			    union power_supply_propval *val)
-{
-	int ret = __power_supply_get_property(psy, psp, val);
-	if (ret == 0 && psp == POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT)
-		val->intval &= 0xffff;
-
-	return ret;
 }
 EXPORT_SYMBOL_GPL(power_supply_get_property);
 
@@ -1126,12 +1111,12 @@ static int ps_get_cur_charge_cntl_limit(struct thermal_cooling_device *tcd,
 	int ret;
 
 	psy = tcd->devdata;
-	ret = __power_supply_get_property(psy,
+	ret = power_supply_get_property(psy,
 			POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT, &val);
 	if (ret)
 		return ret;
 
-	*state = (val.intval >> 16) & ~0x4000;
+	*state = val.intval;
 
 	return ret;
 }
@@ -1144,7 +1129,7 @@ static int ps_set_cur_charge_cntl_limit(struct thermal_cooling_device *tcd,
 	int ret;
 
 	psy = tcd->devdata;
-	val.intval = (state | 0x4000) << 16;
+	val.intval = state;
 	ret = psy->desc->set_property(psy,
 		POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT, &val);
 
