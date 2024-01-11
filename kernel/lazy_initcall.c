@@ -270,6 +270,7 @@ static noinline void __init load_modname(const char * const modname, const char 
 			if (*args)
 				parse_args(modname, args, NULL, 0, 0, 0, NULL,
 					   integrated_module_param_cb);
+			kfree(args);
 		}
 	}
 
