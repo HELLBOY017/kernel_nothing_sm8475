@@ -87,11 +87,7 @@
 
 #define MAX_SE	20
 
-#define I2C_LOG_DBG(log_ctx, print, dev, x...) do { \
-GENI_SE_DBG(log_ctx, print, dev, x); \
-if (dev) \
-	i2c_trace_log(dev, x); \
-} while (0)
+#define I2C_LOG_DBG(log_ctx, print, dev, x...) ((void)0)
 
 #define I2C_LOG_ERR(log_ctx, print, dev, x...) do { \
 GENI_SE_ERR(log_ctx, print, dev, x); \
@@ -2208,9 +2204,6 @@ static int geni_i2c_remove(struct platform_device *pdev)
 
 static int geni_i2c_resume_early(struct device *device)
 {
-	struct geni_i2c_dev *gi2c = dev_get_drvdata(device);
-
-	I2C_LOG_DBG(gi2c->ipcl, false, gi2c->dev, "%s\n", __func__);
 	return 0;
 }
 
