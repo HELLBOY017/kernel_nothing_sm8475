@@ -21,7 +21,7 @@ static inline u32 ipa_hw_stats_get_ep_bit_n_idx(enum ipa_client_type client,
 	int ep = ipa3_get_ep_mapping(client);
 
 	if (ep == IPA_EP_NOT_ALLOCATED)
-		return 0;
+		return *reg_idx = 0;
 
 	*reg_idx = ipahal_get_ep_reg_idx(ep);
 	return ipahal_get_ep_bit(ep);

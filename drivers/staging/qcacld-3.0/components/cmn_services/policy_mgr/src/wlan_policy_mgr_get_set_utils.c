@@ -3037,7 +3037,10 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 	default:
 		break;
 	}
-	policy_mgr_get_chan_by_session_id(psoc, session_id, &cur_freq);
+
+	qdf_status = policy_mgr_get_chan_by_session_id(psoc, session_id, &cur_freq);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		return qdf_status;
 
 	policy_mgr_decr_connection_count(psoc, session_id);
 	session_count = pm_ctx->no_of_active_sessions[mode];

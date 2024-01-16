@@ -637,7 +637,7 @@ static int mhi_dev_flush_transfer_completion_events(struct mhi_dev *mhi,
 {
 	int rc = 0;
 	unsigned long flags;
-	struct event_req *flush_ereq;
+	struct event_req *flush_ereq = NULL;
 	struct event_req *itr, *tmp;
 
 	do {
@@ -682,7 +682,7 @@ static int mhi_dev_flush_transfer_completion_events(struct mhi_dev *mhi,
 					break;
 			}
 
-			if (flush_ereq->snd_cmpl != snd_cmpl_num) {
+			if (flush_ereq && flush_ereq->snd_cmpl != snd_cmpl_num) {
 				spin_unlock_irqrestore(&mhi->lock, flags);
 				break;
 			}
@@ -4009,13 +4009,16 @@ static void mhi_update_state_info(enum mhi_ctrl_info info)
 
 int mhi_ctrl_state_info(uint32_t idx, uint32_t *info)
 {
-	if (idx == MHI_DEV_UEVENT_CTRL)
+	if (idx == MHI_DEV_UEVENT_CTRL) {
 		*info = mhi_ctx->ctrl_info;
-	else
-		if (idx < MHI_MAX_SOFTWARE_CHANNELS)
+	} else {
+		if (idx < MHI_MAX_SOFTWARE_CHANNELS) {
 			*info = channel_state_info[idx].ctrl_info;
-		else
+		} else {
+			*info = 0;
 			return -EINVAL;
+		}
+	}
 
 	mhi_log(MHI_MSG_VERBOSE, "idx:%d, ctrl:%d", idx, *info);
 

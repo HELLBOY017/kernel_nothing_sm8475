@@ -410,7 +410,7 @@ static int geni_i2c_bus_recovery(struct geni_i2c_dev *gi2c)
 	if (gi2c->bus_recovery_enable &&
 		geni_i2c_is_bus_recovery_required(gi2c)) {
 		GENI_SE_ERR(gi2c->ipcl, false, gi2c->dev,
-			"SDA Line stuck\n", gi2c->err);
+			"SDA Line stuck: %d\n", gi2c->err);
 	} else {
 		GENI_SE_DBG(gi2c->ipcl, false, gi2c->dev,
 			"Bus Recovery not required/enabled\n");
@@ -1388,7 +1388,7 @@ geni_i2c_err_prep_sg:
 			ret = dmaengine_terminate_all(gi2c->tx_c);
 			if (ret)
 				I2C_LOG_ERR(gi2c->ipcl, false, gi2c->dev,
-					    "%s: gpi terminate failed\n", __func__, ret);
+					    "%s: gpi terminate failed: %d\n", __func__, ret);
 			gi2c->cfg_sent = 0;
 			if (gi2c->is_le_vm)
 				gi2c->le_gpi_reset_done = true;

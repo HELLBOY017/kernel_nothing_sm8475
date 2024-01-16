@@ -2453,7 +2453,7 @@ static void _sde_crtc_frame_data_notify(struct drm_crtc *crtc,
 	sde_crtc_event_notify(crtc, DRM_EVENT_FRAME_DATA, &buf,
 			sizeof(struct sde_drm_frame_data_buf));
 
-	sde_crtc->frame_data.idx = ++sde_crtc->frame_data.idx % sde_crtc->frame_data.cnt;
+	sde_crtc->frame_data.idx = (sde_crtc->frame_data.idx + 1) % sde_crtc->frame_data.cnt;
 }
 
 void sde_crtc_get_frame_data(struct drm_crtc *crtc)

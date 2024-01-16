@@ -218,23 +218,6 @@ static int _copy_sysprop_to_user(struct eva_kmd_arg *kp,
 
 }
 
-static void print_hfi_short(struct eva_kmd_arg __user *up)
-{
-	struct eva_kmd_hfi_packet *pkt;
-	unsigned int words[5];
-
-	pkt = &up->data.hfi_pkt;
-	if (get_user(words[0], &up->type) ||
-			get_user(words[1], &up->buf_offset) ||
-			get_user(words[2], &up->buf_num) ||
-			get_user(words[3], &pkt->pkt_data[0]) ||
-			get_user(words[4], &pkt->pkt_data[1]))
-		dprintk(CVP_ERR, "Failed to print ioctl cmd\n");
-
-	dprintk(CVP_HFI, "IOCTL cmd type %#x, offset %d, num %d, pkt %d %#x\n",
-			words[0], words[1], words[2], words[3], words[4]);
-}
-
 static int _copy_session_ctrl_to_user(
 	struct eva_kmd_session_control *k,
 	struct eva_kmd_session_control *u)
@@ -293,8 +276,6 @@ static int convert_from_user(struct eva_kmd_arg *kp,
 		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
-	print_hfi_short(up);
 
 	if (get_user(kp->type, &up->type))
 		return -EFAULT;

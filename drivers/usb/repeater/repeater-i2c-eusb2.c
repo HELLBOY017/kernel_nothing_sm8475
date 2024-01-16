@@ -105,6 +105,7 @@ static int eusb2_i2c_read_reg(struct eusb2_repeater *er, u8 reg, u8 *val)
 	ret = regmap_read(er->regmap, reg, &reg_val);
 	if (ret < 0) {
 		dev_err(er->dev, "Failed to read reg:0x%02x ret=%d\n", reg, ret);
+		*val = 0;
 		return ret;
 	}
 
