@@ -1583,7 +1583,7 @@ int msm_vidc_update_property_cap(struct msm_vidc_inst *inst, u32 hfi_id,
 		break;
 	case HFI_PROP_DPB_LIST:
 		if (!allow)
-			memset(inst->dpb_list_payload, 0, MAX_DPB_LIST_ARRAY_SIZE);
+			memset(inst->dpb_list_payload, 0, sizeof(inst->dpb_list_payload));
 		msm_vidc_update_cap_value(inst, DPB_LIST, allow, __func__);
 		break;
 	default:

@@ -1346,7 +1346,7 @@ static int handle_dpb_list_property(struct msm_vidc_inst *inst,
 	payload_size = pkt->size - sizeof(struct hfi_packet);
 	num_words_in_payload = payload_size / 4;
 	payload_start = (u8 *)((u8 *)pkt + sizeof(struct hfi_packet));
-	memset(inst->dpb_list_payload, 0, MAX_DPB_LIST_ARRAY_SIZE);
+	memset(inst->dpb_list_payload, 0, sizeof(inst->dpb_list_payload));
 
 	if (payload_size > MAX_DPB_LIST_PAYLOAD_SIZE) {
 		i_vpr_e(inst,
