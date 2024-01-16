@@ -907,7 +907,7 @@ static int llcc_spad_init(struct llcc_slice_desc *desc)
 {
 	int ret;
 	u32 lpi_reg, llcc_reg;
-	u32 lpi_val, llcc_val;
+	u32 lpi_val, llcc_val = 0;
 
 	/* FF clock will be on as during initialization the
 	 * following CSR will be 1
@@ -928,7 +928,6 @@ static int llcc_spad_init(struct llcc_slice_desc *desc)
 	} else if (desc->slice_size == SZ_6MB) {
 		lpi_val = REGION_SZ_6MB;
 		/* Shared LB assigned to LLCC */
-		llcc_val = 0;
 	} else {
 		WARN(1, "Unsupported slice_size");
 	}

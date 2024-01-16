@@ -1485,7 +1485,7 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 				req.source_pipe_bitmask_ext_valid = 1;
 				req.source_pipe_bitmask_ext[source_pipe_reg_idx] =
 					source_pipe_bitmask;
-				if (ipa_ep_idx_rx1 >= 0 && IPA_CLIENT_IS_PROD(ep1->client)) {
+				if (ipa_ep_idx_rx1 >= 0 && ep1 && IPA_CLIENT_IS_PROD(ep1->client)) {
 					source_pipe_bitmask1 = ipahal_get_ep_bit(ipa_ep_idx_rx1);
 					source_pipe_reg_idx1 = ipahal_get_ep_reg_idx(ipa_ep_idx_rx1);
 					req.source_pipe_bitmask_ext[source_pipe_reg_idx1] |= source_pipe_bitmask1;

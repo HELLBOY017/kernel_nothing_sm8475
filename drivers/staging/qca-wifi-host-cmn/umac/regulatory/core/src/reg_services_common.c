@@ -6155,7 +6155,7 @@ QDF_STATUS reg_get_client_power_for_connecting_ap(struct wlan_objmgr_pdev *pdev,
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 	enum reg_6g_client_type client_type;
 	struct regulatory_channel *master_chan_list;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 	if (!pdev_priv_obj) {
@@ -6163,7 +6163,9 @@ QDF_STATUS reg_get_client_power_for_connecting_ap(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	reg_get_cur_6g_client_type(pdev, &client_type);
+	status = reg_get_cur_6g_client_type(pdev, &client_type);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		return status;
 
 	master_chan_list =
 		pdev_priv_obj->mas_chan_list_6g_client[ap_type][client_type];
