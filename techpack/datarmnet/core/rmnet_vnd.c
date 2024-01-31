@@ -15,6 +15,7 @@
  *
  */
 
+#include <linux/ethtool.h>
 #include <linux/etherdevice.h>
 #include <linux/if_arp.h>
 #include <linux/ip.h>
