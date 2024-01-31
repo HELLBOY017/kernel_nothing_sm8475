@@ -3517,24 +3517,26 @@ static ssize_t charge_exist_pump_show(struct class *c, struct class_attribute *a
 	return scnprintf(buf, PAGE_SIZE, "%d\n", pst->prop[USB_EXIST_CHARGE_PUMP]);
 }
 static CLASS_ATTR_RO(charge_exist_pump);
+/*
+ * The user would be running on root to change this sysfs node.
+ * Additionally check for vendor HAL name so that it can't be confused
+ * when it also happens to run with root.
+ */
+#define IS_NON_SYSTEM_PROCESS() (current_uid().val == 0 && !strstr(current->comm, "vendor.noth"))
 static ssize_t scenario_fcc_store(struct class *c, struct class_attribute *attr,
 				const char *buf, size_t count)
 {
 	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
 						battery_class);
-	pid_t pid, ppid;
 	int rc;
 	s32 val;
 
 	if (kstrtos32(buf, 0, &val))
 		return -EINVAL;
 
-	pid = task_pid_nr(current);
-	ppid = task_ppid_nr(current);
+	pr_info("%s: %s val:%d", __func__, current->comm, val);
 
-	pr_info("%s: %s(pid: %u, ppid: %u) val:%d", __func__, current->comm, pid, ppid, val);
-
-	if (unlikely(ppid >= 10000)) {
+	if (IS_NON_SYSTEM_PROCESS()) {
 		// Requested manually from the user
 		fcc_user_limit_ma = val;
 	} else {
@@ -3551,12 +3553,9 @@ static ssize_t scenario_fcc_store(struct class *c, struct class_attribute *attr,
 static ssize_t scenario_fcc_show(struct class *c, struct class_attribute *attr,
 				char *buf)
 {
-	pid_t ppid;
 	s32 val;
 
-	ppid = task_ppid_nr(current);
-
-	if (unlikely(ppid >= 10000)) {
+	if (IS_NON_SYSTEM_PROCESS()) {
 		// Requested manually from the user
 		val = fcc_user_limit_ma;
 	} else {
