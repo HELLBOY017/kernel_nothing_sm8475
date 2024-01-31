@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024, Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/atomic.h>
@@ -1014,7 +1014,7 @@ int synx_merge(struct synx_session *session,
 
 	if (params->flags & SYNX_MERGE_GLOBAL_FENCE) {
 		h_child_list = kzalloc(count*4, GFP_KERNEL);
-		if (IS_ERR_OR_NULL(synx_obj)) {
+		if (IS_ERR_OR_NULL(h_child_list)) {
 			rc = -SYNX_NOMEM;
 			goto clear;
 		}
@@ -1031,8 +1031,10 @@ int synx_merge(struct synx_session *session,
 			synx_util_global_idx(*params->h_merged_obj));
 		if (rc != SYNX_SUCCESS) {
 			dprintk(SYNX_ERR, "global merge failed\n");
+			kfree(h_child_list);
 			goto clear;
 		}
+		kfree(h_child_list);
 	}
 
 	dprintk(SYNX_MEM,
@@ -1459,6 +1461,8 @@ static int synx_native_import_handle(struct synx_client *client,
 		old_entry = map_entry;
 		map_entry = synx_handle_conversion(client, &h_synx,
 						old_entry);
+		if (IS_ERR_OR_NULL(map_entry))
+			return -SYNX_INVALID;
 	}
 
 	if (rc != SYNX_SUCCESS)
