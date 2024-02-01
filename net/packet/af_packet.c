@@ -46,7 +46,6 @@
  *					Copyright (C) 2011, <lokec@ccs.neu.edu>
  */
 
-#include <linux/ethtool.h>
 #include <linux/types.h>
 #include <linux/mm.h>
 #include <linux/capability.h>
@@ -250,7 +249,8 @@ static struct net_device *packet_cached_dev_get(struct packet_sock *po)
 
 	rcu_read_lock();
 	dev = rcu_dereference(po->cached_dev);
-	dev_hold(dev);
+	if (likely(dev))
+		dev_hold(dev);
 	rcu_read_unlock();
 
 	return dev;
@@ -3048,7 +3048,8 @@ static int packet_snd(struct socket *sock, struct msghdr *msg, size_t len)
 out_free:
 	kfree_skb(skb);
 out_unlock:
-	dev_put(dev);
+	if (dev)
+		dev_put(dev);
 out:
 	return err;
 }
@@ -3184,7 +3185,8 @@ static int packet_do_bind(struct sock *sk, const char *name, int ifindex,
 		}
 	}
 
-	dev_hold(dev);
+	if (dev)
+		dev_hold(dev);
 
 	proto_curr = po->prot_hook.type;
 	dev_curr = po->prot_hook.dev;
@@ -3221,7 +3223,8 @@ static int packet_do_bind(struct sock *sk, const char *name, int ifindex,
 			packet_cached_dev_assign(po, dev);
 		}
 	}
-	dev_put(dev_curr);
+	if (dev_curr)
+		dev_put(dev_curr);
 
 	if (proto == 0 || !need_rehook)
 		goto out_unlock;
@@ -4139,7 +4142,8 @@ static int packet_notifier(struct notifier_block *this,
 				if (msg == NETDEV_UNREGISTER) {
 					packet_cached_dev_reset(po);
 					WRITE_ONCE(po->ifindex, -1);
-					dev_put(po->prot_hook.dev);
+					if (po->prot_hook.dev)
+						dev_put(po->prot_hook.dev);
 					po->prot_hook.dev = NULL;
 				}
 				spin_unlock(&po->bind_lock);

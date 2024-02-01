@@ -49,7 +49,8 @@ void dst_init(struct dst_entry *dst, struct dst_ops *ops,
 	      unsigned short flags)
 {
 	dst->dev = dev;
-	dev_hold(dev);
+	if (dev)
+		dev_hold(dev);
 	dst->ops = ops;
 	dst_init_metrics(dst, dst_default_metrics.metrics, true);
 	dst->expires = 0UL;
@@ -117,7 +118,8 @@ struct dst_entry *dst_destroy(struct dst_entry * dst)
 
 	if (dst->ops->destroy)
 		dst->ops->destroy(dst);
-	dev_put(dst->dev);
+	if (dst->dev)
+		dev_put(dst->dev);
 
 	lwtstate_put(dst->lwtstate);
 

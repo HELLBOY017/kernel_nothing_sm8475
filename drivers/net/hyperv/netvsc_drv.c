@@ -10,7 +10,6 @@
 
 #include <linux/init.h>
 #include <linux/atomic.h>
-#include <linux/ethtool.h>
 #include <linux/module.h>
 #include <linux/highmem.h>
 #include <linux/device.h>

@@ -275,7 +275,8 @@ int pn_skb_send(struct sock *sk, struct sk_buff *skb,
 
 drop:
 	kfree_skb(skb);
-	dev_put(dev);
+	if (dev)
+		dev_put(dev);
 	return err;
 }
 EXPORT_SYMBOL(pn_skb_send);

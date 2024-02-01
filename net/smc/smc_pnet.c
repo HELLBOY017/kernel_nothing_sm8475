@@ -395,7 +395,8 @@ static int smc_pnet_add_eth(struct smc_pnettable *pnettable, struct net *net,
 	return 0;
 
 out_put:
-	dev_put(ndev);
+	if (ndev)
+		dev_put(ndev);
 	return rc;
 }
 

@@ -6,7 +6,6 @@
  *   Haiyang Zhang <haiyangz@microsoft.com>
  *   Hank Janssen  <hjanssen@microsoft.com>
  */
-#include <linux/ethtool.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/wait.h>

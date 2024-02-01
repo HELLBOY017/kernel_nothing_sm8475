@@ -8,7 +8,6 @@
 #define HINIC_PORT_H
 
 #include <linux/types.h>
-#include <linux/ethtool.h>
 #include <linux/etherdevice.h>
 #include <linux/bitops.h>
 

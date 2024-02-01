@@ -6,7 +6,6 @@
  *
  */
 
-#include <linux/ethtool.h>
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>

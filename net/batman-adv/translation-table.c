@@ -815,7 +815,8 @@ check_roaming:
 out:
 	if (in_hardif)
 		batadv_hardif_put(in_hardif);
-	dev_put(in_dev);
+	if (in_dev)
+		dev_put(in_dev);
 	if (tt_local)
 		batadv_tt_local_entry_put(tt_local);
 	if (tt_global)
@@ -1289,7 +1290,8 @@ int batadv_tt_local_dump(struct sk_buff *msg, struct netlink_callback *cb)
  out:
 	if (primary_if)
 		batadv_hardif_put(primary_if);
-	dev_put(soft_iface);
+	if (soft_iface)
+		dev_put(soft_iface);
 
 	cb->args[0] = bucket;
 	cb->args[1] = idx;
@@ -2209,7 +2211,8 @@ int batadv_tt_global_dump(struct sk_buff *msg, struct netlink_callback *cb)
  out:
 	if (primary_if)
 		batadv_hardif_put(primary_if);
-	dev_put(soft_iface);
+	if (soft_iface)
+		dev_put(soft_iface);
 
 	cb->args[0] = bucket;
 	cb->args[1] = idx;
