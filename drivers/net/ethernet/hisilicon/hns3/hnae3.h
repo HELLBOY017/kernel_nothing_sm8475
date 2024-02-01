@@ -25,7 +25,6 @@
 #include <linux/dcbnl.h>
 #include <linux/delay.h>
 #include <linux/device.h>
-#include <linux/ethtool.h>
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/pci.h>

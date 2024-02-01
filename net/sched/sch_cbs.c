@@ -50,7 +50,6 @@
  *	locredit = max_frame_size * (sendslope / port_transmit_rate)
  */
 
-#include <linux/ethtool.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

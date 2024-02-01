@@ -592,7 +592,9 @@ static int raw_setsockopt(struct socket *sock, int level, int optname,
 		ro->count  = count;
 
  out_fil:
-		dev_put(dev);
+		if (dev)
+			dev_put(dev);
+
 		release_sock(sk);
 		rtnl_unlock();
 
@@ -636,7 +638,9 @@ static int raw_setsockopt(struct socket *sock, int level, int optname,
 		ro->err_mask = err_mask;
 
  out_err:
-		dev_put(dev);
+		if (dev)
+			dev_put(dev);
+
 		release_sock(sk);
 		rtnl_unlock();
 

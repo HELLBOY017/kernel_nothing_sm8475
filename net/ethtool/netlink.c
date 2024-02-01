@@ -356,7 +356,8 @@ static int ethnl_default_doit(struct sk_buff *skb, struct genl_info *info)
 		ops->cleanup_data(reply_data);
 
 	genlmsg_end(rskb, reply_payload);
-	dev_put(req_info->dev);
+	if (req_info->dev)
+		dev_put(req_info->dev);
 	kfree(reply_data);
 	kfree(req_info);
 	return genlmsg_reply(rskb, info);
@@ -368,7 +369,8 @@ err_cleanup:
 	if (ops->cleanup_data)
 		ops->cleanup_data(reply_data);
 err_dev:
-	dev_put(req_info->dev);
+	if (req_info->dev)
+		dev_put(req_info->dev);
 	kfree(reply_data);
 	kfree(req_info);
 	return ret;

@@ -695,7 +695,8 @@ static int inet6_netconf_get_devconf(struct sk_buff *in_skb,
 errout:
 	if (in6_dev)
 		in6_dev_put(in6_dev);
-	dev_put(dev);
+	if (dev)
+		dev_put(dev);
 	return err;
 }
 
@@ -5474,7 +5475,8 @@ static int inet6_rtm_getaddr(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 errout_ifa:
 	in6_ifa_put(ifa);
 errout:
-	dev_put(dev);
+	if (dev)
+		dev_put(dev);
 	if (fillargs.netnsid >= 0)
 		put_net(tgt_net);
 

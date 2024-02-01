@@ -33,7 +33,6 @@
  * SOFTWARE.
  */
 
-#include <linux/ethtool.h>
 #include <linux/pci.h>
 
 #include "t4vf_common.h"

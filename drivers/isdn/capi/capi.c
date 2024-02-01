@@ -11,7 +11,6 @@
 
 #include <linux/compiler.h>
 #include <linux/module.h>
-#include <linux/ethtool.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>
 #include <linux/major.h>

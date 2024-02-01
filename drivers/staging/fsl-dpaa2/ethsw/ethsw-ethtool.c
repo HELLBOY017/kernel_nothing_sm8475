@@ -7,8 +7,6 @@
  *
  */
 
-#include <linux/ethtool.h>
-
 #include "ethsw.h"
 
 static struct {

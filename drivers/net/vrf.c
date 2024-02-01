@@ -9,7 +9,6 @@
  * Based on dummy, team and ipvlan drivers
  */
 
-#include <linux/ethtool.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/netdevice.h>
