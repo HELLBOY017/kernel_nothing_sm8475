@@ -2340,64 +2340,6 @@ static struct power_supply_desc usb_psy_desc = {
 	.property_is_writeable	= usb_psy_prop_is_writeable,
 };
 
-static s32 fcc_user_limit_ma = BATTERY_MAX_CURRENT / 1000;
-static s32 fcc_system_limit_ma = BATTERY_MAX_CURRENT / 1000;
-static s32 fcc_last_limit_ma = BATTERY_MAX_CURRENT / 1000;
-static int __set_scenario_fcc(struct battery_chg_dev *bcdev)
-{
-	static DEFINE_MUTEX(fcc_mutex);
-	int rc;
-	u32 val;
-
-	mutex_lock(&fcc_mutex);
-
-	smp_mb();
-
-	/*
-	 * The ADSP uses the value of 1 to indicate power passthrough
-	 * while 0 removes input power altogether.
-	 */
-	if (fcc_user_limit_ma == 0)
-		fcc_user_limit_ma = 1;
-	// Reset to default if -1 is written
-	if (fcc_user_limit_ma == -1)
-		fcc_user_limit_ma = BATTERY_MAX_CURRENT / 1000;
-
-	pr_info("fcc_user_limit_ma=%d, fcc_system_limit_ma=%d, fcc_last_limit_ma=%d\n",
-			fcc_user_limit_ma, fcc_system_limit_ma, fcc_last_limit_ma);
-	if (fcc_user_limit_ma < fcc_system_limit_ma) {
-		pr_info("Using user limit\n");
-		val = fcc_user_limit_ma;
-		/*
-		 * There is a firmware bug where the new value is not honored on a PPS charger.
-		 * Force an ADSP reset by writing 0 first, followed by a 100ms sleep.
-		 */
-		if (fcc_last_limit_ma != val) {
-			write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB], USB_SCENARIO_FCC, 0);
-			msleep(100);
-		}
-	} else {
-		pr_info("Using system limit\n");
-		val = fcc_system_limit_ma;
-	}
-	fcc_last_limit_ma = val;
-
-	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB],
-				USB_SCENARIO_FCC, val);
-	if (rc < 0) {
-		pr_err("Failed to set FCC %u, rc=%d\n", val, rc);
-	} else {
-		pr_info("Charge current limited to %umA (last: %umA)\n", val, bcdev->last_fcc_ua / 1000);
-		bcdev->last_fcc_ua = val * 1000;
-	}
-
-	smp_mb();
-
-	mutex_unlock(&fcc_mutex);
-
-	return rc;
-}
-
 static int __battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
 					u32 fcc_ua)
 {
@@ -2413,7 +2355,7 @@ static int __battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
 	if (rc < 0) {
 		pr_err("Failed to set FCC %u, rc=%d\n", fcc_ua, rc);
 	} else {
-		pr_info("Charge current limited to %umA (last: %umA)\n", fcc_ua / 1000, bcdev->last_fcc_ua / 1000);
+		pr_debug("Set FCC to %u uA\n", fcc_ua);
 		bcdev->last_fcc_ua = fcc_ua;
 	}
 
@@ -2434,11 +2376,8 @@ static int battery_psy_set_charge_current(struct battery_chg_dev *bcdev,
 		return -EINVAL;
 	}
 
-	if (val < 0 || val > bcdev->num_thermal_levels) {
-		pr_err("charging current index out of range: 0 <= %d <= %d\n",
-			val, bcdev->num_thermal_levels);
+	if (val < 0 || val > bcdev->num_thermal_levels)
 		return -EINVAL;
-	}
 
 	if (bcdev->thermal_fcc_step == 0)
 		fcc_ua = bcdev->thermal_levels[val];
@@ -3490,33 +3429,21 @@ static ssize_t charge_exist_pump_show(struct class *c, struct class_attribute *a
 	return scnprintf(buf, PAGE_SIZE, "%d\n", pst->prop[USB_EXIST_CHARGE_PUMP]);
 }
 static CLASS_ATTR_RO(charge_exist_pump);
-/*
- * The user would be running on root to change this sysfs node.
- * Additionally check for vendor HAL name so that it can't be confused
- * when it also happens to run with root.
- */
-#define IS_NON_SYSTEM_PROCESS() (current_uid().val == 0 && !strstr(current->comm, "vendor.noth"))
 static ssize_t scenario_fcc_store(struct class *c, struct class_attribute *attr,
 				const char *buf, size_t count)
 {
 	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
 						battery_class);
 	int rc;
-	s32 val;
+	u32 val;
 
-	if (kstrtos32(buf, 0, &val))
+	if (kstrtou32(buf, 0, &val))
 		return -EINVAL;
 
-	pr_info("%s: %s val:%d", __func__, current->comm, val);
+	pr_info("%s,val:%d", __func__, val);
 
-	if (IS_NON_SYSTEM_PROCESS()) {
-		// Requested manually from the user
-		fcc_user_limit_ma = val;
-	} else {
-		fcc_system_limit_ma = val;
-	}
-
-	rc = __set_scenario_fcc(bcdev);
+	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB],
+				USB_SCENARIO_FCC, val);
 	if (rc < 0)
 		return rc;
 
@@ -3526,16 +3453,16 @@ static ssize_t scenario_fcc_store(struct class *c, struct class_attribute *attr,
 static ssize_t scenario_fcc_show(struct class *c, struct class_attribute *attr,
 				char *buf)
 {
-	s32 val;
+	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
+						battery_class);
+	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_USB];
+	int rc;
 
-	if (IS_NON_SYSTEM_PROCESS()) {
-		// Requested manually from the user
-		val = fcc_user_limit_ma;
-	} else {
-		val = fcc_system_limit_ma;
-	}
+	rc = read_property_id(bcdev, pst, USB_SCENARIO_FCC);
+	if (rc < 0)
+		return rc;
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", val);
+	return scnprintf(buf, PAGE_SIZE, "%d\n", pst->prop[USB_SCENARIO_FCC]);
 }
 static CLASS_ATTR_RW(scenario_fcc);
 #endif
