@@ -26,6 +26,7 @@
 #include <linux/delay.h>
 #include <linux/atomic.h>
 #include <linux/input/mt.h>
+#include <linux/namei.h>
 #include "goodix_ts_core.h"
 
 
@@ -139,48 +140,6 @@ static ssize_t gsx_single_type_store(struct goodix_ext_module *module,
 	return count;
 }
 
-static ssize_t aosp_gesture_show(struct goodix_ext_module *module,
-		char *buf)
-{
-        struct gesture_module *gsx = module->priv_data;
-
-	if (!gsx)
-		return -EIO;
-
-	if (atomic_read(&gsx->registered) == 0) {
-		ts_err("gesture module is not registered");
-		return 0;
-	}
-
-	return sprintf(buf, "%s\n",
-			aosp_gesture_enable ? "enable" : "disable");
-}
-
-static ssize_t aosp_gesture_store(struct goodix_ext_module *module,
-		const char *buf, size_t count)
-{
-        struct gesture_module *gsx = module->priv_data;
-
-	if (!gsx)
-		return -EIO;
-
-	if (atomic_read(&gsx->registered) == 0) {
-		ts_err("gesture module is not registered");
-		return 0;
-	}
-
-	if (buf[0] == '1') {
-                ts_info("enable aosp gesture support");
-		aosp_gesture_enable = 1;
-	} else if (buf[0] == '0') {
-                ts_info("disable aosp gesture support");
-		aosp_gesture_enable = 0;
-	} else
-		ts_err("invalid cmd[%d]", buf[0]);
-
-	return count;
-}
-
 static ssize_t gsx_fod_type_show(struct goodix_ext_module *module,
 		char *buf)
 {
@@ -246,8 +205,6 @@ const struct goodix_ext_attribute gesture_attrs[] = {
 			gsx_double_type_show, gsx_double_type_store),
 	__EXTMOD_ATTR(single_en, 0664,
 			gsx_single_type_show, gsx_single_type_store),
-        __EXTMOD_ATTR(aosp_gesture_en, 0664,
-			aosp_gesture_show, aosp_gesture_store),
 	__EXTMOD_ATTR(fod_en, 0664,
 			gsx_fod_type_show, gsx_fod_type_store),
 	__EXTMOD_ATTR(touch_data, 0444,
@@ -457,10 +414,13 @@ static struct goodix_ext_module_funcs gsx_gesture_funcs = {
 
 int gesture_module_init(void)
 {
+        const char *nt_framework = "/system/framework/nt-framework.jar";
 	int ret;
 	int i;
+	int is_aosp;
 	struct kobject *def_kobj = goodix_get_default_kobj();
 	struct kobj_type *def_kobj_type = goodix_get_default_ktype();
+	struct path path;
 
 	gsx_gesture = kzalloc(sizeof(struct gesture_module), GFP_KERNEL);
 	if (!gsx_gesture)
@@ -472,6 +432,13 @@ int gesture_module_init(void)
 	gsx_gesture->module.priv_data = gsx_gesture;
 
 	atomic_set(&gsx_gesture->registered, 0);
+	
+	/* If nothing framework is not present then consider that the device is running a custom OS */
+	is_aosp = kern_path(nt_framework, LOOKUP_FOLLOW, &path);
+	if (is_aosp) {
+	        ts_info("enable aosp gesture support");
+		aosp_gesture_enable = 1;
+	}
 
 	/* gesture sysfs init */
 	ret = kobject_init_and_add(&gsx_gesture->module.kobj,
