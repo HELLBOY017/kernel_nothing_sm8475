@@ -148,6 +148,8 @@ struct sde_plane_state {
 	bool cont_splash_populated;
 
 	struct sde_drm_ubwc_stats_roi ubwc_stats_roi;
+
+	u8 fod_dim_alpha;
 };
 
 /**
@@ -370,5 +372,7 @@ bool sde_plane_property_is_dirty(struct drm_plane_state *plane_state,
 		uint32_t property_idx);
 
 int sde_plane_is_fod_layer(const struct drm_plane_state *drm_state);
+
+void sde_plane_set_fod_dim_alpha(struct sde_plane_state *pstatem, u8 alpha);
 
 #endif /* _SDE_PLANE_H_ */
