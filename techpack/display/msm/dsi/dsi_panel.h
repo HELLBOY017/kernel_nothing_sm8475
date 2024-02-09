@@ -333,7 +333,6 @@ struct dsi_panel {
 	struct brightness_alpha_pair *fod_dim_lut;
 	unsigned int fod_dim_lut_len;
 	u8 fod_dim_alpha;
-	bool fod_hbm_enabled;
 	bool fod_ui;
 	bool force_fod_ui;
 	bool force_fod_dim_alpha;
