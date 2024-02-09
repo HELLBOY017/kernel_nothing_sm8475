@@ -1704,9 +1704,6 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 			for (i = 0; i < cstate->num_dim_layers; i++)
 				_sde_crtc_setup_dim_layer_cfg(crtc, sde_crtc,
 						mixer, &cstate->dim_layer[i]);
-			if (cstate->fod_dim_layer)
-				_sde_crtc_setup_dim_layer_cfg(crtc, sde_crtc,
-						mixer, cstate->fod_dim_layer);
 			clear_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
 		}
 	}
@@ -5282,71 +5279,22 @@ static int _sde_crtc_check_zpos(struct drm_crtc_state *state,
 	return rc;
 }
 
-static struct sde_hw_dim_layer *
-sde_crtc_setup_fod_dim_layer(struct sde_crtc_state *cstate, uint32_t stage)
+bool sde_crtc_is_fod_enabled(struct drm_crtc_state *state)
 {
-	struct drm_crtc_state *crtc_state = &cstate->base;
-	struct drm_display_mode *mode = &crtc_state->adjusted_mode;
-	struct sde_hw_dim_layer *dim_layer = NULL;
-	struct dsi_display *display;
-	struct sde_kms *kms;
-	uint32_t alpha;
-	uint32_t layer_stage;
+	struct sde_crtc_state *cstate = to_sde_crtc_state(state);
 
-	kms = _sde_crtc_get_kms(crtc_state->crtc);
-	if (!kms || !kms->catalog) {
-		SDE_ERROR("Invalid kms\n");
-		goto error;
-	}
-
-	layer_stage = SDE_STAGE_0 + stage;
-	if (layer_stage >= kms->catalog->mixer[0].sblk->maxblendstages) {
-		SDE_ERROR("Stage too large %u vs max %u\n", layer_stage,
-			  kms->catalog->mixer[0].sblk->maxblendstages);
-		goto error;
-	}
-
-	if (cstate->num_dim_layers == SDE_MAX_DIM_LAYERS) {
-		SDE_ERROR("Max dim layers reached\n");
-		goto error;
-	}
-
-	display = get_main_display();
-	if (!display || !display->panel) {
-		SDE_ERROR("Invalid primary display\n");
-		goto error;
-	}
-
-	mutex_lock(&display->panel->panel_lock);
-	alpha = display->panel->fod_dim_alpha;
-	mutex_unlock(&display->panel->panel_lock);
-
-	dim_layer = &cstate->dim_layer[cstate->num_dim_layers];
-	dim_layer->flags = SDE_DRM_DIM_LAYER_INCLUSIVE;
-	dim_layer->stage = layer_stage;
-	dim_layer->rect.x = 0;
-	dim_layer->rect.y = 0;
-	dim_layer->rect.w = mode->hdisplay;
-	dim_layer->rect.h = mode->vdisplay;
-	dim_layer->color_fill.color_0 = 0;
-	dim_layer->color_fill.color_1 = 0;
-	dim_layer->color_fill.color_2 = 0;
-	dim_layer->color_fill.color_3 = alpha;
-
-error:
-	return dim_layer;
+	return cstate->fod_dim_alpha != 0;
 }
 
 static void
 sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 			  struct plane_state *pstates, int cnt)
 {
-	struct sde_hw_dim_layer *fod_dim_layer;
+	unsigned int fod_plane_idx, plane_idx;
+	u8 alpha = 0;
 	struct dsi_display *display;
 	struct dsi_panel *panel;
-	uint32_t dim_layer_stage;
 	bool force_fod_ui;
-	int plane_idx;
 
 	display = get_main_display();
 	if (!display || !display->panel) {
@@ -5362,28 +5310,22 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 		if (sde_plane_is_fod_layer(pstates[plane_idx].drm_pstate))
 			break;
 
-	if (plane_idx == cnt && !force_fod_ui) {
-		fod_dim_layer = NULL;
-	} else {
-		if (force_fod_ui)
-			dim_layer_stage = pstates[cnt - 1].stage + 1;
-		else
-			dim_layer_stage = pstates[plane_idx].stage;
-		fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate,
-							     dim_layer_stage);
+	fod_plane_idx = plane_idx;
+
+	if (fod_plane_idx != cnt || force_fod_ui) {
+		struct dsi_display *display = get_main_display();
+		alpha = dsi_panel_get_fod_dim_alpha(display->panel);
 	}
 
-	if (fod_dim_layer == cstate->fod_dim_layer)
-		return;
+	cstate->fod_dim_alpha = alpha;
 
-	cstate->fod_dim_layer = fod_dim_layer;
+	for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
+		if (plane_idx == fod_plane_idx)
+			continue;
 
-	if (!fod_dim_layer)
-		return;
-
-	for (plane_idx = 0; plane_idx < cnt; plane_idx++)
-		if (pstates[plane_idx].stage >= dim_layer_stage)
-			pstates[plane_idx].stage++;
+		sde_plane_set_fod_dim_alpha(pstates[plane_idx].sde_pstate,
+					    alpha);
+	}
 }
 
 static int _sde_crtc_atomic_check_pstates(struct drm_crtc *crtc,
