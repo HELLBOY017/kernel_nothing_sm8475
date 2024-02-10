@@ -27,8 +27,6 @@
 #include <drm/drm_probe_helper.h>
 #include <drm/drm_flip_work.h>
 
-#include <linux/cpu_input_boost.h>
-
 #include "sde_kms.h"
 #include "sde_hw_lm.h"
 #include "sde_hw_ctl.h"
@@ -5316,8 +5314,6 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 	for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
 		if (plane_idx == fod_plane_idx)
 			continue;
-
-		cpu_input_boost_kick_max(500);
 
 		sde_plane_set_fod_dim_alpha(pstates[plane_idx].sde_pstate,
 					    alpha);

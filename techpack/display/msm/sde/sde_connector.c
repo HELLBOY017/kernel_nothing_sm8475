@@ -1062,6 +1062,9 @@ static int _sde_connector_update_finger_hbm_status(
 		return 0;
 	}
 
+	if (!!status)
+                cpu_input_boost_kick_max(500);
+
 	SDE_ATRACE_BEGIN("_sde_connector_update_finger_hbm_statuss");
         if (!c_conn->fingerlayer_dirty)
                 finger_hbm_flag = status;
