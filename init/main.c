@@ -1358,7 +1358,7 @@ __setup("rodata=", set_debug_rodata);
 #endif
 
 #ifdef CONFIG_STRICT_KERNEL_RWX
-void mark_readonly(void)
+static void mark_readonly(void)
 {
 	if (rodata_enabled) {
 		/*
@@ -1374,12 +1374,12 @@ void mark_readonly(void)
 		pr_info("Kernel memory protection disabled.\n");
 }
 #elif defined(CONFIG_ARCH_HAS_STRICT_KERNEL_RWX)
-void mark_readonly(void)
+static inline void mark_readonly(void)
 {
 	pr_warn("Kernel memory protection not selected by kernel config.\n");
 }
 #else
-void mark_readonly(void)
+static inline void mark_readonly(void)
 {
 	pr_warn("This architecture does not have kernel memory protection.\n");
 }
@@ -1400,10 +1400,8 @@ static int __ref kernel_init(void *unused)
 	kprobe_free_init_mem();
 	ftrace_free_init_mem();
 	kgdb_free_init_mem();
-#ifndef CONFIG_LAZY_INITCALL
 	free_initmem();
 	mark_readonly();
-#endif
 
 	/*
 	 * Kernel mappings are now finalized - update the userspace page-table

@@ -16,15 +16,11 @@
 #include <linux/pm_runtime.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/irqdesc.h>
 #include <linux/list.h>
 #include <linux/dma-mapping.h>
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
-
-#include <linux/usb/dwc3-msm.h>
 
 #include "debug.h"
 #include "core.h"
@@ -303,11 +299,6 @@ int dwc3_send_gadget_ep_cmd(struct dwc3_ep *dep, unsigned int cmd,
 
 	int			cmd_status = 0;
 	int			ret = -EINVAL;
-
-	if (cmd == DWC3_DEPCMD_ENDTRANSFER)
-		dwc3_msm_notify_event(dwc,
-				DWC3_CONTROLLER_NOTIFY_DISABLE_UPDXFER,
-				dep->number);
 
 	/*
 	 * When operating in USB 2.0 speeds (HS/FS), if GUSB2PHYCFG.ENBLSLPM or
@@ -2501,34 +2492,6 @@ static int dwc3_gadget_run_stop(struct dwc3 *dwc, int is_on, int suspend)
 	if (pm_runtime_suspended(dwc->dev))
 		return 0;
 
-	if (is_on) {
-		/*
-		 * DWC3 gadget IRQ uses a threaded handler which normally runs
-		 * at SCHED_FIFO priority.  If it gets busy processing a high
-		 * volume of events (usually EP events due to heavy traffic) it
-		 * can potentially starve non-RT taks from running and trigger
-		 * RT throttling in the scheduler; on some build configs this
-		 * will panic.  So lower the thread's priority to run as non-RT
-		 * (with a nice value equivalent to a high-priority workqueue).
-		 * It has been found to not have noticeable performance impact.
-		 */
-		struct irq_desc *irq_desc = irq_to_desc(dwc->irq_gadget);
-		struct irqaction *action = irq_desc ? irq_desc->action : NULL;
-
-		for ( ; action != NULL; action = action->next) {
-			if (action->thread) {
-				dev_info(dwc->dev, "Set IRQ thread:%s pid:%d to SCHED_NORMAL prio\n",
-					action->thread->comm, action->thread->pid);
-				sched_set_normal(action->thread, MIN_NICE);
-				break;
-			}
-		}
-	} else {
-		dwc3_core_stop_hw_active_transfers(dwc);
-		dwc3_msm_notify_event(dwc, DWC3_GSI_EVT_BUF_CLEAR, 0);
-		dwc3_msm_notify_event(dwc, DWC3_CONTROLLER_NOTIFY_CLEAR_DB, 0);
-	}
-
 	reg = dwc3_readl(dwc->regs, DWC3_DCTL);
 	if (is_on) {
 		if (DWC3_VER_IS_WITHIN(DWC3, ANY, 187A)) {
@@ -2647,8 +2610,6 @@ static int dwc3_gadget_pullup(struct usb_gadget *g, int is_on)
 
 	is_on = !!is_on;
 
-	dwc3_msm_notify_event(dwc, DWC3_CONTROLLER_PULLUP_ENTER, is_on);
-
 	vdwc->softconnect = is_on;
 
 	/*
@@ -2658,10 +2619,8 @@ static int dwc3_gadget_pullup(struct usb_gadget *g, int is_on)
 	 */
 	if (!is_on) {
 		pm_runtime_barrier(dwc->dev);
-		if (pm_runtime_suspended(dwc->dev)) {
-			ret = 0;
-			goto out;
-		}
+		if (pm_runtime_suspended(dwc->dev))
+			return 0;
 	}
 
 	/*
@@ -2674,13 +2633,12 @@ static int dwc3_gadget_pullup(struct usb_gadget *g, int is_on)
 		pm_runtime_put(dwc->dev);
 		if (ret < 0)
 			pm_runtime_set_suspended(dwc->dev);
-		goto out;
+		return ret;
 	}
 
 	if (dwc->pullups_connected == is_on) {
 		pm_runtime_put(dwc->dev);
-		ret = 0;
-		goto out;
+		return 0;
 	}
 
 	synchronize_irq(dwc->irq_gadget);
@@ -2694,8 +2652,6 @@ static int dwc3_gadget_pullup(struct usb_gadget *g, int is_on)
 
 	pm_runtime_put(dwc->dev);
 
-out:
-	dwc3_msm_notify_event(dwc, DWC3_CONTROLLER_PULLUP_EXIT, is_on);
 	return ret;
 }
 
@@ -2777,12 +2733,6 @@ static int __dwc3_gadget_start(struct dwc3 *dwc)
 	struct dwc3_ep		*dep;
 	int			ret = 0;
 	u32			reg;
-
-	/*
-	 * Setup USB GSI event buffer as controller soft reset has cleared
-	 * configured event buffer.
-	 */
-	dwc3_msm_notify_event(dwc, DWC3_GSI_EVT_BUF_SETUP, 0);
 
 	/*
 	 * Use IMOD if enabled via dwc->imod_interval. Otherwise, if
@@ -3173,8 +3123,6 @@ static int dwc3_gadget_init_out_endpoint(struct dwc3_ep *dep)
 	else
 		size /= 3;
 
-	if (dep->number >= 2)
-		size = min_t(int, size, 1024);
 	usb_ep_set_maxpacket_limit(&dep->endpoint, size);
 	dep->endpoint.max_streams = 16;
 	dep->endpoint.ops = &dwc3_gadget_ep_ops;
@@ -3916,8 +3864,6 @@ static void dwc3_gadget_reset_interrupt(struct dwc3 *dwc)
 {
 	u32			reg;
 
-	dwc3_msm_notify_event(dwc, DWC3_CONTROLLER_NOTIFY_CLEAR_DB, 0);
-
 	/*
 	 * Ideally, dwc3_reset_gadget() would trigger the function
 	 * drivers to stop any active transfers through ep disable.
@@ -3999,8 +3945,6 @@ static void dwc3_gadget_conndone_interrupt(struct dwc3 *dwc)
 
 	if (!vdwc->softconnect)
 		return;
-
-	dwc3_msm_notify_event(dwc, DWC3_CONTROLLER_CONNDONE_EVENT, 0);
 
 	reg = dwc3_readl(dwc->regs, DWC3_DSTS);
 	speed = reg & DWC3_DSTS_CONNECTSPD;

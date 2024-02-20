@@ -2508,7 +2508,6 @@ static inline spinlock_t *pud_lock(struct mm_struct *mm, pud_t *pud)
 extern void __init pagecache_init(void);
 extern void __init free_area_init_memoryless_node(int nid);
 extern void free_initmem(void);
-extern void mark_readonly(void);
 
 /*
  * Free reserved pages within range [PAGE_ALIGN(start), end & PAGE_MASK)

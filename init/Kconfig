@@ -2208,27 +2208,9 @@ config MODULE_SIG_FORMAT
 	def_bool n
 	select SYSTEM_DATA_VERIFICATION
 
-menuconfig LAZY_INITCALL
-	bool "Lazy built-in modules initialization"
-	select KALLSYMS
-	option modules
-	help
-	  Android now heavily relies on loadable kernel modules, especially
-	  with GKI. Now with vendors essentially not testing !CONFIG_MODULES,
-	  problems arise when one tries to have everything built-in for a
-	  monolithic kernel.
-
-	  Lazy initcall will defer initializations for specific kernel drivers
-	  until userspace tries to load a kernel module with the same module
-	  name, so that drivers are loaded when Android intended it to.
-
-	  You must know what you're doing here and do the homework of adding
-	  module names to kernel/lazy_initcall.c.
-	  Read the comments at kernel/lazy_initcall.c for instructions.
-
 menuconfig MODULES
 	bool "Enable loadable module support"
-	depends on !LAZY_INITCALL
+	option modules
 	help
 	  Kernel modules are small pieces of compiled code which can
 	  be inserted in the running kernel, rather than being

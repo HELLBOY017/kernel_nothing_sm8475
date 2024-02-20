@@ -63,12 +63,8 @@
  * This is similar to IS_ENABLED(), but returns false when invoked from
  * built-in code when CONFIG_FOO is set to 'm'.
  */
-#ifdef CONFIG_LAZY_INITCALL
-#define IS_REACHABLE(option) IS_ENABLED(option)
-#else
 #define IS_REACHABLE(option) __or(IS_BUILTIN(option), \
 				__and(IS_MODULE(option), __is_defined(MODULE)))
-#endif
 
 /*
  * IS_ENABLED(CONFIG_FOO) evaluates to 1 if CONFIG_FOO is set to 'y' or 'm',

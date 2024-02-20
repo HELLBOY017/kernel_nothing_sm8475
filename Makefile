@@ -664,10 +664,6 @@ ifdef need-config
 include include/config/auto.conf
 endif
 
-ifdef CONFIG_LAZY_INITCALL
-KBUILD_CFLAGS_MODULE += -include $(srctree)/include/linux/lazy_initcall.h
-endif
-
 ifeq ($(KBUILD_EXTMOD),)
 # Objects we will link into vmlinux / subdirs we need to visit
 core-y		:= init/ usr/

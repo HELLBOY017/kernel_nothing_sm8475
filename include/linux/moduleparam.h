@@ -8,7 +8,7 @@
 
 /* You can override this manually, but generally this should match the
    module name. */
-#if defined(MODULE) && !defined(CONFIG_LAZY_INITCALL)
+#ifdef MODULE
 #define MODULE_PARAM_PREFIX /* empty */
 #define __MODULE_INFO_PREFIX /* empty */
 #else

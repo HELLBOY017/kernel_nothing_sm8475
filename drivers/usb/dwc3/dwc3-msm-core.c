@@ -6715,6 +6715,7 @@ MODULE_SOFTDEP("pre: phy-generic phy-msm-snps-hs phy-msm-snps-eusb2 phy-msm-ssus
 
 static int dwc3_msm_init(void)
 {
+	dwc3_msm_kretprobe_init();
 	return platform_driver_register(&dwc3_msm_driver);
 }
 module_init(dwc3_msm_init);
@@ -6722,5 +6723,6 @@ module_init(dwc3_msm_init);
 static void __exit dwc3_msm_exit(void)
 {
 	platform_driver_unregister(&dwc3_msm_driver);
+	dwc3_msm_kretprobe_exit();
 }
 module_exit(dwc3_msm_exit);
