@@ -66,7 +66,9 @@
 #include <linux/mutex.h>
 #include <linux/cgroup.h>
 #include <linux/wait.h>
+#ifdef CONFIG_CPUSET_ASSIST
 #include <linux/binfmts.h>
+#endif
 
 #include <trace/hooks/sched.h>
 #include <trace/hooks/cgroup.h>
@@ -2554,6 +2556,7 @@ out_unlock:
 	return retval ?: nbytes;
 }
 
+#ifdef CONFIG_CPUSET_ASSIST
 static ssize_t cpuset_write_resmask_assist(struct kernfs_open_file *of,
 					   struct cs_target tgt, size_t nbytes,
 					   loff_t off)
@@ -2565,7 +2568,6 @@ static ssize_t cpuset_write_resmask_assist(struct kernfs_open_file *of,
 static ssize_t cpuset_write_resmask_wrapper(struct kernfs_open_file *of,
 					 char *buf, size_t nbytes, loff_t off)
 {
-#ifdef CONFIG_CPUSET_ASSIST
 	static struct cs_target cs_targets[] = {
 		{ "audio-app",		CONFIG_CPUSET_AUDIO_APP },
 		{ "background",		CONFIG_CPUSET_BG },
@@ -2587,12 +2589,12 @@ static ssize_t cpuset_write_resmask_wrapper(struct kernfs_open_file *of,
 								   nbytes, off);
 		}
 	}
-#endif
 
 	buf = strstrip(buf);
 
 	return cpuset_write_resmask(of, buf, nbytes, off);
 }
+#endif
 
 /*
  * These ascii lists should be read in a single call, by using a user
@@ -2739,7 +2741,11 @@ static struct cftype legacy_files[] = {
 	{
 		.name = "cpus",
 		.seq_show = cpuset_common_seq_show,
+#ifdef CONFIG_CPUSET_ASSIST
 		.write = cpuset_write_resmask_wrapper,
+#else
+		.write = cpuset_write_resmask,
+#endif
 		.max_write_len = (100U + 6 * NR_CPUS),
 		.private = FILE_CPULIST,
 	},
