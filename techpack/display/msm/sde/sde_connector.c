@@ -23,7 +23,9 @@
 
 #include "sde_trace.h"
 
+#ifdef CONFIG_CPU_INPUT_BOOST
 #include <linux/cpu_input_boost.h>
+#endif
 
 #define BL_NODE_NAME_SIZE 32
 #define HDR10_PLUS_VSIF_TYPE_CODE      0x81
@@ -1071,8 +1073,10 @@ static int _sde_connector_update_finger_hbm_status(
 		return 0;
 	}
 
+#ifdef CONFIG_CPU_INPUT_BOOST
 	if (!!status)
                 cpu_input_boost_kick_max(500);
+#endif
 
 	SDE_ATRACE_BEGIN("_sde_connector_update_finger_hbm_statuss");
         if (!c_conn->fingerlayer_dirty)
@@ -1924,7 +1928,9 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		if (c_conn->finger_flag != val) {
 			c_conn->finger_flag = val;
 			c_conn->fingerlayer_dirty = true;
+#ifdef CONFIG_CPU_INPUT_BOOST
 			cpu_input_boost_kick_max(500);
+#endif
 		}
 	default:
 		break;
