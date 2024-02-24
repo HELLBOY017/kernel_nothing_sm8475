@@ -14,7 +14,9 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#ifdef CONFIG_CPU_INPUT_BOOST
 #include <linux/binfmts.h>
+#endif
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
 #include <linux/cpufreq_times.h>
@@ -735,6 +737,8 @@ static ssize_t show_scaling_cur_freq(struct cpufreq_policy *policy, char *buf)
 /*
  * cpufreq_per_cpu_attr_write() / store_##file_name() - sysfs write access
  */
+
+#ifdef CONFIG_CPU_INPUT_BOOST
 #define store_one(file_name, object)			\
 static ssize_t store_##file_name					\
 (struct cpufreq_policy *policy, const char *buf, size_t count)		\
@@ -749,9 +753,25 @@ static ssize_t store_##file_name					\
 	if (ret != 1)							\
 		return -EINVAL;						\
 									\
-	ret = freq_qos_update_request(policy->object##_freq_req, val);\
+	ret = freq_qos_update_request(policy->object##_freq_req, val);  \
 	return ret >= 0 ? count : ret;					\
 }
+#else
+#define store_one(file_name, object)                    \
+static ssize_t store_##file_name                                        \
+(struct cpufreq_policy *policy, const char *buf, size_t count)          \
+{                                                                       \
+        unsigned long val;                                              \
+        int ret;                                                        \
+                                                                        \
+        ret = sscanf(buf, "%lu", &val);                                 \
+        if (ret != 1)                                                   \
+                return -EINVAL;                                         \
+                                                                        \
+        ret = freq_qos_update_request(policy->object##_freq_req, val);  \
+        return ret >= 0 ? count : ret;                                  \
+}
+#endif
 
 store_one(scaling_min_freq, min);
 store_one(scaling_max_freq, max);

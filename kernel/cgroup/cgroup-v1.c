@@ -16,7 +16,9 @@
 #include <linux/cgroupstats.h>
 #include <linux/fs_parser.h>
 #include <linux/binfmts.h>
+#ifdef CONFIG_CPU_INPUT_BOOST
 #include <linux/cpu_input_boost.h>
+#endif
 
 #include <trace/events/cgroup.h>
 #include <trace/hooks/cgroup.h>
@@ -531,8 +533,10 @@ static ssize_t __cgroup1_procs_write(struct kernfs_open_file *of,
 	if (!ret && !threadgroup &&
 		!memcmp(of->kn->parent->name, "top-app", sizeof("top-app")) &&
 		is_zygote_pid(task->parent->pid)) {
+#ifdef CONFIG_CPU_INPUT_BOOST
 		cpu_input_boost_kick_max(1000);
-	}	
+#endif
+	}
 
 out_finish:
 	cgroup_procs_write_finish(task, locked);

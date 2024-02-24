@@ -262,7 +262,7 @@ struct cpu_status {
 	unsigned int max;
 };
 static DEFINE_PER_CPU(struct cpu_status, msm_perf_cpu_stats);
-#if 0
+#ifndef CONFIG_CPU_INPUT_BOOST
 static DEFINE_PER_CPU(struct freq_qos_request, qos_req_min);
 static DEFINE_PER_CPU(struct freq_qos_request, qos_req_max);
 #endif
@@ -314,7 +314,7 @@ static unsigned int aggr_top_load;
 static unsigned int top_load[CLUSTER_MAX];
 static unsigned int curr_cap[CLUSTER_MAX];
 static atomic_t game_status_pid;
-#if 0
+#ifndef CONFIG_CPU_INPUT_BOOST
 static bool ready_for_freq_updates;
 #endif
 
@@ -406,7 +406,7 @@ static int msm_perf_atomic_try_buf_read(char *dest, void __iomem *src, size_t sz
 }
 #endif
 
-#if 0
+#ifndef CONFIG_CPU_INPUT_BOOST
 static int freq_qos_request_init(void)
 {
 	unsigned int cpu;
@@ -471,7 +471,7 @@ cleanup:
 static ssize_t set_cpu_min_freq(struct kobject *kobj,
 	struct kobj_attribute *attr, const char *buf, size_t count)
 {
-#if 0
+#ifndef CONFIG_CPU_INPUT_BOOST
 	int i, j, ntokens = 0;
 	unsigned int val, cpu;
 	const char *cp = buf;
@@ -562,7 +562,7 @@ static ssize_t get_cpu_min_freq(struct kobject *kobj,
 static ssize_t set_cpu_max_freq(struct kobject *kobj,
 	struct kobj_attribute *attr, const char *buf, size_t count)
 {
-#if 0
+#ifndef CONFIG_CPU_INPUT_BOOST
 	int i, j, ntokens = 0;
 	unsigned int val, cpu;
 	const char *cp = buf;

@@ -97,7 +97,9 @@
 #include <linux/scs.h>
 #include <linux/io_uring.h>
 #include <linux/cpufreq_times.h>
+#ifdef CONFIG_CPU_INPUT_BOOST
 #include <linux/cpu_input_boost.h>
+#endif
 
 #include <asm/pgalloc.h>
 #include <linux/uaccess.h>
@@ -2547,7 +2549,9 @@ pid_t kernel_clone(struct kernel_clone_args *args)
 
 	/* Boost CPU to the max for 50 ms when userspace launches an app */
 	if (is_zygote_pid(current->pid)) {
+#ifdef CONFIG_CPU_INPUT_BOOST
 		cpu_input_boost_kick_max(50);
+#endif
 	}
 
 	/*
