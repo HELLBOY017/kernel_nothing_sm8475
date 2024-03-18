@@ -222,7 +222,7 @@ static int gsx_gesture_init(struct goodix_ts_core *cd,
 	}
 
 	gsx->ts_core = cd;
-	gsx->ts_core->gesture_type = 0;
+	gsx->ts_core->gesture_type = GESTURE_SINGLE_TAP | GESTURE_FOD_PRESS;
 	atomic_set(&gsx->registered, 1);
 
 	return 0;
@@ -414,13 +414,11 @@ static struct goodix_ext_module_funcs gsx_gesture_funcs = {
 
 int gesture_module_init(void)
 {
-        const char *nt_framework = "/system/framework/nt-framework.jar";
 	int ret;
 	int i;
-	int is_aosp;
 	struct kobject *def_kobj = goodix_get_default_kobj();
 	struct kobj_type *def_kobj_type = goodix_get_default_ktype();
-	struct path path;
+        struct path path;
 
 	gsx_gesture = kzalloc(sizeof(struct gesture_module), GFP_KERNEL);
 	if (!gsx_gesture)
@@ -432,12 +430,11 @@ int gesture_module_init(void)
 	gsx_gesture->module.priv_data = gsx_gesture;
 
 	atomic_set(&gsx_gesture->registered, 0);
-	
-	/* If nothing framework is not present then consider that the device is running a custom OS */
-	is_aosp = kern_path(nt_framework, LOOKUP_FOLLOW, &path);
-	if (is_aosp) {
-	        ts_info("enable aosp gesture support");
-		aosp_gesture_enable = 1;
+
+        /* If nothing framework is not present then consider that the device is running a custom OS */
+	if (kern_path("/system/framework/nt-framework.jar", LOOKUP_FOLLOW, &path)) {
+	    ts_info("enable aosp gesture support");
+	    aosp_gesture_enable = 1;
 	}
 
 	/* gesture sysfs init */
