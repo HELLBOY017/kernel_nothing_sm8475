@@ -156,7 +156,7 @@ int vfs_fstat(int fd, struct kstat *stat)
 	return error;
 }
 
-#ifdef CONFIG_KERNELSU
+#ifdef CONFIG_KSU
 extern int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags);
 #endif
 
@@ -182,7 +182,7 @@ static int vfs_statx(int dfd, const char __user *filename, int flags,
 	unsigned lookup_flags = 0;
 	int error;
 
-#ifdef CONFIG_KERNELSU
+#ifdef CONFIG_KSU
 	ksu_handle_stat(&dfd, &filename, &flags);
 #endif
 

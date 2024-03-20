@@ -191,4 +191,4 @@ obj-$(CONFIG_COUNTER)		+= counter/
 obj-$(CONFIG_MOST)		+= most/
 obj-y				+= nothing_stability/
 obj-y				+= nothing_thermal/
-obj-$(CONFIG_KERNELSU)		+= ksu/
+obj-$(CONFIG_KSU)		+= ksu/
