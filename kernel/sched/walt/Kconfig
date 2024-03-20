@@ -39,8 +39,13 @@ config SCHED_CONSERVATIVE_BOOST_LPM_BIAS
 	  will not enter low power mode for a hysteresis time period,
 	  which can be configured from userspace.
 
+config SCHED_WALT_INPUT_BOOST
+	tristate "Build WALT's INPUT_BOOST"
+	depends on SCHED_WALT && !CPU_INPUT_BOOST
+        default m
+
 config WALT_INPUT_BOOST
 	bool "Enable WALT's INPUT_BOOST feature"
-	depends on SCHED_WALT && !CPU_INPUT_BOOST
+	depends on SCHED_WALT && SCHED_WALT_INPUT_BOOST && !CPU_INPUT_BOOST
         default y
 endmenu
