@@ -30,9 +30,3 @@ config NOTHING_SECURE_ELEMENT
 	default n
 	help
 		This driver getting secure info from hw which setting up in early stage.
-
-config NOTHING_DISK_USAGE
-	tristate "Nothing show all file size module"
-	default n
-	help
-		Detect malicious files and prevent them from encroaching on disk space
