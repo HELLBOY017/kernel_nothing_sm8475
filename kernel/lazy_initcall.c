@@ -60,8 +60,12 @@ static const __initconst char * const blacklist[] = {
 
 	// Renamed
 	"hdcp_qseecom",
+        
+        // Removed
         "fsa4480_i2c",
         "qti_amoled_ecm",
+        "nothing_disk_usage",
+        "nothing_readahead_trace",
 
 	NULL
 };
