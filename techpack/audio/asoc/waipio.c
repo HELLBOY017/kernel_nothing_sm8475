@@ -1968,9 +1968,7 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 	}
 	if(!strncmp(component->driver->name, WCD937X_DRV_NAME,
 			strlen(WCD937X_DRV_NAME))){
-		wcd937x_info_create_codec_entry(pdata->codec_root, component);
-		codec_variant = wcd937x_get_codec_variant(component);
-		dev_dbg(component->dev, "%s: variant %d\n",__func__, codec_variant);
+		panic("Device is wcd937x, which is unsupported");
 	} else {
 		wcd938x_info_create_codec_entry(pdata->codec_root, component);
 		codec_variant = wcd938x_get_codec_variant(component);
