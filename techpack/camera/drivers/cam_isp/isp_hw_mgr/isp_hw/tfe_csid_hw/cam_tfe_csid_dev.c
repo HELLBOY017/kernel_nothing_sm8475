@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -10,7 +11,9 @@
 #include "cam_tfe_csid_dev.h"
 #include "cam_tfe_csid_hw_intf.h"
 #include "cam_debug_util.h"
+#include "cam_cpas_api.h"
 #include "camera_main.h"
+#include <dt-bindings/msm-camera.h>
 
 static struct cam_hw_intf *cam_tfe_csid_hw_list[CAM_TFE_CSID_HW_NUM_MAX] = {
 	0, 0, 0};
@@ -30,6 +33,18 @@ static int cam_tfe_csid_component_bind(struct device *dev,
 
 	CAM_DBG(CAM_ISP, "probe called");
 
+	/* get tfe csid hw index */
+	rc = of_property_read_u32(pdev->dev.of_node, "cell-index", &csid_dev_idx);
+	if (rc) {
+		CAM_ERR(CAM_ISP, "Failed to read cell-index of TFE CSID HW, rc: %d", rc);
+		goto err;
+	}
+
+	if (!cam_cpas_is_feature_supported(CAM_CPAS_ISP_FUSE, BIT(csid_dev_idx), NULL)) {
+		CAM_DBG(CAM_ISP, "CSID[%d] not supported based on fuse", csid_dev_idx);
+		goto err;
+	}
+
 	csid_hw_intf = kzalloc(sizeof(*csid_hw_intf), GFP_KERNEL);
 	if (!csid_hw_intf) {
 		rc = -ENOMEM;
@@ -48,8 +63,6 @@ static int cam_tfe_csid_component_bind(struct device *dev,
 		goto free_hw_info;
 	}
 
-	/* get tfe csid hw index */
-	of_property_read_u32(pdev->dev.of_node, "cell-index", &csid_dev_idx);
 	/* get tfe csid hw information */
 	match_dev = of_match_device(pdev->dev.driver->of_match_table,
 		&pdev->dev);

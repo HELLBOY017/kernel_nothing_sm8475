@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _CAM_CPAS_API_H_
@@ -233,6 +233,16 @@ enum cam_sys_cache_config_types {
 	CAM_LLCC_SMALL_1 = 0,
 	CAM_LLCC_SMALL_2 = 1,
 	CAM_LLCC_MAX = 2,
+};
+
+/**
+ * enum cam_subparts_index - Enum for camera subparts indices
+ */
+enum cam_subparts_index {
+	CAM_IFE_HW_IDX,
+	CAM_IFE_LITE_HW_IDX,
+	CAM_SFE_HW_IDX,
+	CAM_CUSTOM_HW_IDX
 };
 
 /**
@@ -486,6 +496,23 @@ struct cam_axi_vote {
 	uint32_t num_paths;
 	struct cam_axi_per_path_bw_vote axi_path[CAM_CPAS_MAX_PATHS_PER_CLIENT];
 };
+
+/**
+ * cam_cpas_prepare_subpart_info()
+ *
+ * @brief: API to update the number of ifes, ife_lites, sfes and custom
+ *         in the struct cam_cpas_private_soc.
+ *
+ * @idx                   : Camera subpart index
+ * @num_subpart_available : Number of available subparts
+ * @num_subpart_functional: Number of functional subparts
+ *
+ * @returns 0 on success & -EINVAL when @subpart_type is invalid.
+ *
+ */
+int cam_cpas_prepare_subpart_info(
+	enum cam_subparts_index idx, uint32_t num_subpart_available,
+	uint32_t num_subpart_functional);
 
 /**
  * cam_cpas_register_client()

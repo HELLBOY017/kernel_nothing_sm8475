@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _CAM_CPASTOP_HW_H_
@@ -9,6 +9,10 @@
 
 #include "cam_cpas_api.h"
 #include "cam_cpas_hw.h"
+
+/* Camera Hw parts array indices */
+#define CAM_CPAS_PART_MAX_FUSE_BITS 8
+#define CAM_CPAS_PART_MAX_FUSE_BIT_INFO 2
 
 /**
  * enum cam_camnoc_hw_irq_type - Enum for camnoc error types
@@ -290,6 +294,18 @@ struct cam_cpas_hw_errata_wa {
 	union {
 		struct cam_cpas_reg reg_info;
 	} data;
+};
+
+/**
+ * struct cam_cpas_subpart_info : Struct for camera Hw parts info
+ *
+ * @num_bits: Number of entries in hw_bitmap_mask
+ * @hw_bitmap_mask: Contains Fuse flag and hw_map info
+ *
+ */
+struct cam_cpas_subpart_info {
+	uint32_t num_bits;
+	uint32_t hw_bitmap_mask[CAM_CPAS_PART_MAX_FUSE_BITS][CAM_CPAS_PART_MAX_FUSE_BIT_INFO];
 };
 
 /**
