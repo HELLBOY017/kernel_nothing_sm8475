@@ -152,6 +152,16 @@ enum cam_isp_resource_type
 	}
 }
 
+static void cam_custom_mgr_count_functional_hws(uint32_t *num_custom_functional)
+{
+	int i;
+
+	for (i = 0; i < CAM_CUSTOM_CSID_HW_MAX; i++) {
+		if (g_custom_hw_mgr.custom_hw[i])
+			(*num_custom_functional)++;
+	}
+}
+
 static int cam_custom_hw_mgr_deinit_hw_res(
 	struct cam_custom_hw_mgr_res *hw_mgr_res)
 {
@@ -1475,6 +1485,7 @@ int cam_custom_hw_mgr_init(struct device_node *of_node,
 	int rc = 0;
 	int i, j;
 	struct cam_custom_hw_mgr_ctx *ctx_pool;
+	uint32_t num_custom_available, num_custom_functional = 0;
 
 	memset(&g_custom_hw_mgr, 0, sizeof(g_custom_hw_mgr));
 	mutex_init(&g_custom_hw_mgr.ctx_mutex);
@@ -1552,6 +1563,13 @@ int cam_custom_hw_mgr_init(struct device_node *of_node,
 
 	if (iommu_hdl)
 		*iommu_hdl = g_custom_hw_mgr.img_iommu_hdl;
+
+	cam_custom_get_num_hws(&num_custom_available);
+	cam_custom_mgr_count_functional_hws(&num_custom_functional);
+	rc = cam_cpas_prepare_subpart_info(CAM_CUSTOM_HW_IDX, num_custom_available,
+		num_custom_functional);
+	if (rc)
+		CAM_ERR(CAM_CUSTOM, "Failed to populate num_custom, rc: %d", rc);
 
 	CAM_DBG(CAM_CUSTOM, "HW manager initialized");
 	return 0;

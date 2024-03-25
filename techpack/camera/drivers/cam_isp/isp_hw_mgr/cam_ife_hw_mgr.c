@@ -58,8 +58,9 @@ static uint32_t blob_type_hw_cmd_map[CAM_ISP_GENERIC_BLOB_TYPE_MAX] = {
 };
 
 static struct cam_ife_hw_mgr g_ife_hw_mgr;
-static uint32_t g_num_ife, g_num_ife_lite, g_num_sfe;
 static uint32_t max_ife_out_res;
+static uint32_t g_num_ife_available, g_num_ife_lite_available, g_num_sfe_available;
+static uint32_t g_num_ife_functional, g_num_ife_lite_functional, g_num_sfe_functional;
 
 static int cam_isp_blob_ife_clock_update(
 	struct cam_isp_clock_config           *clock_config,
@@ -276,6 +277,10 @@ static int cam_ife_mgr_handle_reg_dump(struct cam_ife_hw_mgr_ctx *ctx,
 			"Reg dump values might be from more than one request");
 
 	for (i = 0; i < num_reg_dump_buf; i++) {
+                rc = cam_packet_util_validate_cmd_desc(&reg_dump_buf_desc[i]);
+                if (rc)
+                        return rc;
+
 		CAM_DBG(CAM_ISP, "Reg dump cmd meta data: %u req_type: %u",
 			reg_dump_buf_desc[i].meta_data, meta_type);
 		if (reg_dump_buf_desc[i].meta_data == meta_type) {
@@ -2277,60 +2282,62 @@ err:
 	return rc;
 }
 
-static inline void cam_ife_mgr_count_sfe(void)
+static inline void cam_ife_mgr_count_functional_sfe(void)
 {
 	int i;
 
-	g_num_sfe = 0;
+	g_num_sfe_functional = 0;
 
 	for (i = 0; i < CAM_SFE_HW_NUM_MAX; i++) {
 		if (g_ife_hw_mgr.sfe_devices[i])
-			g_num_sfe++;
+			g_num_sfe_functional++;
 	}
-	CAM_DBG(CAM_ISP, "counted %d SFE", g_num_sfe);
+	CAM_DBG(CAM_ISP, "counted %u functional SFEs", g_num_sfe_functional);
 }
 
-static inline void cam_ife_mgr_count_ife(void)
+static inline void cam_ife_mgr_count_functional_ife(void)
 {
 	int i;
 
-	g_num_ife = 0;
-	g_num_ife_lite = 0;
+	g_num_ife_functional = 0;
+	g_num_ife_lite_functional = 0;
 
 	for (i = 0; i < CAM_IFE_HW_NUM_MAX; i++) {
 		if (g_ife_hw_mgr.ife_devices[i]) {
 			if (g_ife_hw_mgr.ife_dev_caps[i].is_lite)
-				g_num_ife_lite++;
+				g_num_ife_lite_functional++;
 			else
-				g_num_ife++;
+				g_num_ife_functional++;
 		}
 	}
-	CAM_DBG(CAM_ISP, "counted %d IFE and %d IFE lite", g_num_ife, g_num_ife_lite);
+	CAM_DBG(CAM_ISP, "counted functional %d IFE and %d IFE lite", g_num_ife_functional,
+		g_num_ife_lite_functional);
 }
 
 static int cam_convert_hw_idx_to_sfe_hw_num(int hw_idx)
 {
-	if (hw_idx < g_num_sfe) {
+	if (hw_idx < g_num_sfe_available) {
 		switch (hw_idx) {
 		case 0: return CAM_ISP_SFE0_HW;
 		case 1: return CAM_ISP_SFE1_HW;
 		}
 	} else {
-		CAM_ERR(CAM_ISP, "hw idx %d out-of-bounds", hw_idx);
+		CAM_ERR(CAM_ISP, "SFE hw idx %d out-of-bounds max available %u",
+			hw_idx, g_num_sfe_available);
 	}
 	return 0;
 }
 
 static int cam_convert_hw_idx_to_ife_hw_num(int hw_idx)
 {
-	if (hw_idx < g_num_ife) {
+	if (hw_idx < g_num_ife_available) {
 		switch (hw_idx) {
 		case 0: return CAM_ISP_IFE0_HW;
 		case 1: return CAM_ISP_IFE1_HW;
 		case 2: return CAM_ISP_IFE2_HW;
 		}
-	} else if (hw_idx < g_num_ife + g_num_ife_lite) {
-		switch (hw_idx - g_num_ife) {
+	} else if (hw_idx < g_num_ife_available + g_num_ife_lite_available) {
+		switch (hw_idx - g_num_ife_available) {
 		case 0: return CAM_ISP_IFE0_LITE_HW;
 		case 1: return CAM_ISP_IFE1_LITE_HW;
 		case 2: return CAM_ISP_IFE2_LITE_HW;
@@ -13931,8 +13938,27 @@ int cam_ife_hw_mgr_init(struct cam_hw_mgr_intf *hw_mgr_intf, int *iommu_hdl)
 		*iommu_hdl = g_ife_hw_mgr.mgr_common.img_iommu_hdl;
 
 	cam_ife_hw_mgr_debug_register();
-	cam_ife_mgr_count_ife();
-	cam_ife_mgr_count_sfe();
+	cam_ife_mgr_count_functional_ife();
+	cam_ife_mgr_count_functional_sfe();
+
+	cam_vfe_get_num_ifes(&g_num_ife_available);
+	rc = cam_cpas_prepare_subpart_info(CAM_IFE_HW_IDX, g_num_ife_available,
+		g_num_ife_functional);
+	if (rc)
+		CAM_ERR(CAM_ISP, "Failed to populate num_ifes, rc: %d", rc);
+
+	cam_vfe_get_num_ife_lites(&g_num_ife_lite_available);
+	rc = cam_cpas_prepare_subpart_info(CAM_IFE_LITE_HW_IDX, g_num_ife_lite_available,
+		g_num_ife_lite_functional);
+	if (rc)
+		CAM_ERR(CAM_ISP, "Failed to populate num_ife_lites, rc: %d", rc);
+
+	cam_sfe_get_num_hws(&g_num_sfe_available);
+	rc = cam_cpas_prepare_subpart_info(CAM_SFE_HW_IDX, g_num_sfe_available,
+		g_num_sfe_functional);
+	if (rc)
+		CAM_ERR(CAM_ISP, "Failed to populate num_sfes, rc: %d", rc);
+
 	cam_common_register_mini_dump_cb(cam_ife_hw_mgr_mini_dump_cb,
 		"CAM_ISP");
 

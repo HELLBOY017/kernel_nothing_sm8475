@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only
  *
  * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _CAM_CUSTOM_HW_MGR_H_
@@ -125,6 +126,16 @@ struct cam_custom_hw_mgr {
 	struct list_head               used_ctx_list;
 	struct cam_custom_hw_mgr_ctx   ctx_pool[CAM_CTX_MAX];
 };
+
+/**
+ * cam_custom_get_num_hws()
+ *
+ * @brief : Populates number of custom.
+ *
+ * @num_custom : Fills number of custom hws in the address passed.
+ *
+ */
+void cam_custom_get_num_hws(uint32_t *num_custom);
 
 /**
  * cam_custom_hw_mgr_init()

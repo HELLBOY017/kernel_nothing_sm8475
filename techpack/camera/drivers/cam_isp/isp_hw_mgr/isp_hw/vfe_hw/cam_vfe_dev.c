@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 
@@ -9,13 +10,13 @@
 #include <linux/of_device.h>
 #include <linux/component.h>
 
-#include "cam_vfe_dev.h"
 #include "cam_vfe_core.h"
 #include "cam_vfe_soc.h"
 #include "cam_debug_util.h"
 #include <dt-bindings/msm-camera.h>
 
 static  struct cam_isp_hw_intf_data cam_vfe_hw_list[CAM_VFE_HW_NUM_MAX];
+static uint32_t g_num_ife_hws, g_num_ife_lite_hws;
 
 static int cam_vfe_component_bind(struct device *dev,
 	struct device *master_dev, void *data)
@@ -28,24 +29,26 @@ static int cam_vfe_component_bind(struct device *dev,
 	int                                rc = 0;
 	struct platform_device *pdev = to_platform_device(dev);
 	struct cam_vfe_soc_private   *vfe_soc_priv;
+	uint32_t  vfe_dev_idx;
 	uint32_t  i;
+
+	rc = of_property_read_u32(pdev->dev.of_node, "cell-index", &vfe_dev_idx);
+	if (rc) {
+		CAM_ERR(CAM_ISP, "Failed to read cell-index of IFE HW, rc: %d", rc);
+		goto end;
+	}
+
+	if (!cam_cpas_is_feature_supported(CAM_CPAS_ISP_FUSE, BIT(vfe_dev_idx), NULL) ||
+		!cam_cpas_is_feature_supported(CAM_CPAS_ISP_LITE_FUSE,
+		BIT(vfe_dev_idx), NULL)) {
+		CAM_DBG(CAM_ISP, "IFE:%d is not supported", vfe_dev_idx);
+		goto end;
+	}
 
 	vfe_hw_intf = kzalloc(sizeof(struct cam_hw_intf), GFP_KERNEL);
 	if (!vfe_hw_intf) {
 		rc = -ENOMEM;
 		goto end;
-	}
-
-	of_property_read_u32(pdev->dev.of_node,
-		"cell-index", &vfe_hw_intf->hw_idx);
-
-	if (!cam_cpas_is_feature_supported(CAM_CPAS_ISP_FUSE,
-		(1 << vfe_hw_intf->hw_idx), 0) ||
-		!cam_cpas_is_feature_supported(CAM_CPAS_ISP_LITE_FUSE,
-		(1 << vfe_hw_intf->hw_idx), 0)) {
-		CAM_DBG(CAM_ISP, "IFE:%d is not supported",
-			vfe_hw_intf->hw_idx);
-		goto free_vfe_hw_intf;
 	}
 
 	vfe_hw = kzalloc(sizeof(struct cam_hw_info), GFP_KERNEL);
@@ -58,6 +61,7 @@ static int cam_vfe_component_bind(struct device *dev,
 	vfe_hw->soc_info.dev = &pdev->dev;
 	vfe_hw->soc_info.dev_name = pdev->name;
 	vfe_hw_intf->hw_priv = vfe_hw;
+	vfe_hw_intf->hw_idx = vfe_dev_idx;
 	vfe_hw_intf->hw_ops.get_hw_caps = cam_vfe_get_hw_caps;
 	vfe_hw_intf->hw_ops.init = cam_vfe_init_hw;
 	vfe_hw_intf->hw_ops.deinit = cam_vfe_deinit_hw;
@@ -198,11 +202,44 @@ const static struct component_ops cam_vfe_component_ops = {
 	.unbind = cam_vfe_component_unbind,
 };
 
+void cam_vfe_get_num_ifes(uint32_t *num_ifes)
+{
+	if (num_ifes)
+		*num_ifes = g_num_ife_hws;
+	else
+		CAM_ERR(CAM_ISP, "Invalid argument, g_num_ife_hws: %u", g_num_ife_hws);
+}
+
+void cam_vfe_get_num_ife_lites(uint32_t *num_ife_lites)
+{
+	if (num_ife_lites)
+		*num_ife_lites = g_num_ife_lite_hws;
+	else
+		CAM_ERR(CAM_ISP, "Invalid argument, g_num_ife_lite_hws: %u", g_num_ife_lite_hws);
+}
+
 int cam_vfe_probe(struct platform_device *pdev)
 {
 	int rc = 0;
+	const char *compatible_name;
+	struct device_node *of_node = NULL;
 
 	CAM_DBG(CAM_ISP, "Adding VFE component");
+	of_node = pdev->dev.of_node;
+
+	rc = of_property_read_string_index(of_node, "compatible", 0,
+			(const char **)&compatible_name);
+	if (rc)
+		CAM_ERR(CAM_ISP, "No compatible string present for: %s, rc: %d",
+			pdev->name, rc);
+
+	if (strnstr(compatible_name, "lite", strlen(compatible_name)) != NULL)
+		g_num_ife_lite_hws++;
+	else if (strnstr(compatible_name, "vfe", strlen(compatible_name)) != NULL)
+		g_num_ife_hws++;
+	else
+		CAM_ERR(CAM_ISP, "Failed to increment number of IFEs/IFE-LITEs");
+
 	rc = component_add(&pdev->dev, &cam_vfe_component_ops);
 	if (rc)
 		CAM_ERR(CAM_ISP, "failed to add component rc: %d", rc);
