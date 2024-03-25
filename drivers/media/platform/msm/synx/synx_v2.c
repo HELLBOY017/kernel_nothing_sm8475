@@ -1041,6 +1041,7 @@ int synx_merge(struct synx_session *session,
 		"[sess :%llu] merge allocated %u, core %pK, fence %pK\n",
 		client->id, *params->h_merged_obj, synx_obj,
 		synx_obj->fence);
+	kfree(h_child_list);
 	synx_put_client(client);
 	return SYNX_SUCCESS;
 
@@ -1770,6 +1771,7 @@ static int synx_handle_import(struct synx_private_ioctl_arg *k_ioctl,
 {
 	struct synx_import_info import_info;
 	struct synx_import_params params = {0};
+	int result = SYNX_SUCCESS;
 
 	if (k_ioctl->size != sizeof(import_info))
 		return -SYNX_INVALID;
@@ -1779,28 +1781,32 @@ static int synx_handle_import(struct synx_private_ioctl_arg *k_ioctl,
 			k_ioctl->size))
 		return -EFAULT;
 
-	if (import_info.flags & SYNX_IMPORT_SYNX_FENCE)
-		params.indv.fence = &import_info.synx_obj;
-	else if (import_info.flags & SYNX_IMPORT_DMA_FENCE)
+	if (import_info.flags & SYNX_IMPORT_DMA_FENCE)
 		params.indv.fence =
 			sync_file_get_fence(import_info.desc.id[0]);
+	else if (import_info.flags & SYNX_IMPORT_SYNX_FENCE)
+		params.indv.fence = &import_info.synx_obj;
 
 	params.type = SYNX_IMPORT_INDV_PARAMS;
 	params.indv.flags = import_info.flags;
 	params.indv.new_h_synx = &import_info.new_synx_obj;
 
 	if (synx_import(session, &params))
-		return -SYNX_INVALID;
+		result = -SYNX_INVALID;
 
+	// Fence needs to be put irresepctive of import status
 	if (import_info.flags & SYNX_IMPORT_DMA_FENCE)
 		dma_fence_put(params.indv.fence);
+
+	if (result != SYNX_SUCCESS)
+		return result;
 
 	if (copy_to_user(u64_to_user_ptr(k_ioctl->ioctl_ptr),
 			&import_info,
 			k_ioctl->size))
 		return -EFAULT;
 
-	return SYNX_SUCCESS;
+	return result;
 }
 
 static int synx_handle_import_arr(
@@ -1843,12 +1849,19 @@ static int synx_handle_import_arr(
 	while (idx < arr_info.num_objs) {
 		params.new_h_synx = &arr[idx].new_synx_obj;
 		params.flags = arr[idx].flags;
-		if (arr[idx].flags & SYNX_IMPORT_SYNX_FENCE)
-			params.fence = &arr[idx].synx_obj;
+
 		if (arr[idx].flags & SYNX_IMPORT_DMA_FENCE)
 			params.fence =
 				sync_file_get_fence(arr[idx].desc.id[0]);
+		else if (arr[idx].flags & SYNX_IMPORT_SYNX_FENCE)
+			params.fence = &arr[idx].synx_obj;
+
 		rc = synx_native_import_indv(client, &params);
+
+		// Fence needs to be put irresepctive of import status
+		if (arr[idx].flags & SYNX_IMPORT_DMA_FENCE)
+			dma_fence_put(params.fence);
+
 		if (rc != SYNX_SUCCESS)
 			break;
 		idx++;
@@ -2575,6 +2588,11 @@ static int __init synx_init(void)
 	}
 
 	synx_dev->class = class_create(THIS_MODULE, SYNX_DEVICE_NAME);
+
+	if (IS_ERR(synx_dev->class)) {
+		rc = PTR_ERR(synx_dev->class);
+		goto err_class_create;
+	}
 	device_create(synx_dev->class, NULL, synx_dev->dev,
 		NULL, SYNX_DEVICE_NAME);
 
@@ -2625,6 +2643,8 @@ err:
 fail:
 	device_destroy(synx_dev->class, synx_dev->dev);
 	class_destroy(synx_dev->class);
+err_class_create:
+	cdev_del(&synx_dev->cdev);
 reg_fail:
 	unregister_chrdev_region(synx_dev->dev, 1);
 alloc_fail:
