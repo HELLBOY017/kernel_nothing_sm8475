@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -11,8 +12,10 @@
 #include "cam_tfe_soc.h"
 #include "cam_debug_util.h"
 #include "camera_main.h"
+#include <dt-bindings/msm-camera.h>
 
 static struct cam_isp_hw_intf_data  cam_tfe_hw_list[CAM_TFE_HW_NUM_MAX];
+static uint32_t g_num_tfe_hws;
 
 static int cam_tfe_component_bind(struct device *dev,
 	struct device *master_dev, void *data)
@@ -24,17 +27,26 @@ static int cam_tfe_component_bind(struct device *dev,
 	struct cam_tfe_hw_info            *hw_info = NULL;
 	struct cam_tfe_soc_private        *tfe_soc_priv;
 	int                                rc = 0;
+	uint32_t                           tfe_dev_idx;
 	struct platform_device *pdev = to_platform_device(dev);
 	uint32_t  i;
+
+	rc = of_property_read_u32(pdev->dev.of_node, "cell-index", &tfe_dev_idx);
+	if (rc) {
+		CAM_ERR(CAM_ISP, "Failed to read cell-index of TFE HW, rc: %d", rc);
+		goto end;
+	}
+
+	if (!cam_cpas_is_feature_supported(CAM_CPAS_ISP_FUSE, BIT(tfe_dev_idx), NULL)) {
+		CAM_DBG(CAM_ISP, "TFE[%d] not supported based on fuse", tfe_dev_idx);
+		goto end;
+	}
 
 	tfe_hw_intf = kzalloc(sizeof(struct cam_hw_intf), GFP_KERNEL);
 	if (!tfe_hw_intf) {
 		rc = -ENOMEM;
 		goto end;
 	}
-
-	of_property_read_u32(pdev->dev.of_node,
-		"cell-index", &tfe_hw_intf->hw_idx);
 
 	tfe_hw = kzalloc(sizeof(struct cam_hw_info), GFP_KERNEL);
 	if (!tfe_hw) {
@@ -46,6 +58,7 @@ static int cam_tfe_component_bind(struct device *dev,
 	tfe_hw->soc_info.dev = &pdev->dev;
 	tfe_hw->soc_info.dev_name = pdev->name;
 	tfe_hw_intf->hw_priv = tfe_hw;
+	tfe_hw_intf->hw_idx = tfe_dev_idx;
 	tfe_hw_intf->hw_ops.get_hw_caps = cam_tfe_get_hw_caps;
 	tfe_hw_intf->hw_ops.init = cam_tfe_init_hw;
 	tfe_hw_intf->hw_ops.deinit = cam_tfe_deinit_hw;
@@ -195,11 +208,21 @@ const static struct component_ops cam_tfe_component_ops = {
 	.unbind = cam_tfe_component_unbind,
 };
 
+void cam_tfe_get_num_tfe_hws(uint32_t *num_tfes)
+{
+	if (num_tfes)
+		*num_tfes = g_num_tfe_hws;
+	else
+		CAM_ERR(CAM_ISP, "Invalid argument, g_num_tfe_hws: %u", g_num_tfe_hws);
+}
+
 int cam_tfe_probe(struct platform_device *pdev)
 {
 	int rc = 0;
 
 	CAM_DBG(CAM_ISP, "Adding TFE component");
+	g_num_tfe_hws++;
+
 	rc = component_add(&pdev->dev, &cam_tfe_component_ops);
 	if (rc)
 		CAM_ERR(CAM_ISP, "failed to add component rc: %d", rc);

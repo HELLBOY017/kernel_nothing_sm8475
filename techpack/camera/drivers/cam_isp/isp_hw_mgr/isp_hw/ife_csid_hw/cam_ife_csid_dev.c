@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -30,6 +31,20 @@ static int cam_ife_csid_component_bind(struct device *dev,
 
 	CAM_DBG(CAM_ISP, "Binding IFE CSID component");
 
+	/* get ife csid hw index */
+	rc = of_property_read_u32(pdev->dev.of_node, "cell-index", &csid_dev_idx);
+	if (rc) {
+		CAM_ERR(CAM_ISP, "Failed to read cell-index of IFE CSID HW, rc: %d", rc);
+		goto err;
+	}
+
+	if (!cam_cpas_is_feature_supported(CAM_CPAS_ISP_FUSE, BIT(csid_dev_idx), NULL) ||
+		!cam_cpas_is_feature_supported(CAM_CPAS_ISP_LITE_FUSE,
+		BIT(csid_dev_idx), NULL)) {
+		CAM_DBG(CAM_ISP, "CSID[%d] not supported based on fuse", csid_dev_idx);
+		goto err;
+	}
+
 	hw_intf = kzalloc(sizeof(*hw_intf), GFP_KERNEL);
 	if (!hw_intf) {
 		rc = -ENOMEM;
@@ -42,8 +57,6 @@ static int cam_ife_csid_component_bind(struct device *dev,
 		goto free_hw_intf;
 	}
 
-	/* get ife csid hw index */
-	of_property_read_u32(pdev->dev.of_node, "cell-index", &csid_dev_idx);
 	/* get ife csid hw information */
 	match_dev = of_match_device(pdev->dev.driver->of_match_table,
 		&pdev->dev);
@@ -64,14 +77,6 @@ static int cam_ife_csid_component_bind(struct device *dev,
 
 	csid_core_info = (struct cam_ife_csid_core_info  *)match_dev->data;
 
-	if (!cam_cpas_is_feature_supported(CAM_CPAS_ISP_FUSE,
-		(1 << hw_intf->hw_idx), NULL) ||
-		!cam_cpas_is_feature_supported(CAM_CPAS_ISP_LITE_FUSE,
-		(1 << hw_intf->hw_idx), NULL)) {
-		CAM_DBG(CAM_ISP, "CSID[%d] not supported based on fuse",
-			csid_dev_idx);
-		goto free_hw_info;
-	}
 	/* call the driver init and fill csid_hw_info->core_info */
 	rc = cam_ife_csid_hw_probe_init(hw_intf, csid_core_info, false);
 

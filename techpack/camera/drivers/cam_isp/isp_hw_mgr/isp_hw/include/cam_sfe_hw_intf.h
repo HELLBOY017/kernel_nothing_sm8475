@@ -352,6 +352,15 @@ struct cam_sfe_acquire_args {
 };
 
 /*
+ * cam_sfe_get_num_hws()
+ *
+ * @brief : Populates number of SFEs.
+ *
+ * @num_sfes : Fills number of SFEs in the address passed.
+ */
+void cam_sfe_get_num_hws(uint32_t *num_sfes);
+
+/*
  * cam_sfe_hw_init()
  *
  * @Brief:                  Initialize SFE HW device

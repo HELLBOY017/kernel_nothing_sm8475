@@ -13,6 +13,10 @@
 #include "cam_cpas_api.h"
 #include "camera_main.h"
 
+#if KERNEL_VERSION(5, 15, 0) <= LINUX_VERSION_CODE
+#include <soc/qcom/socinfo.h>
+#endif
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
 int cam_reserve_icp_fw(struct cam_fw_alloc_info *icp_fw, size_t fw_length)
 {
@@ -415,5 +419,37 @@ void cam_compat_util_put_dmabuf_va(struct dma_buf *dmabuf, void *vaddr)
 int cam_get_ddr_type(void)
 {
 	return of_fdt_get_ddrtype();
+}
+#endif
+
+#if KERNEL_VERSION(5, 15, 0) <= LINUX_VERSION_CODE
+int cam_get_subpart_info(uint32_t *part_info, uint32_t max_num_cam)
+{
+	int rc = 0;
+	int num_cam;
+
+	num_cam = socinfo_get_part_count(PART_CAMERA);
+	CAM_DBG(CAM_CPAS, "number of cameras: %d", num_cam);
+	if (num_cam != max_num_cam) {
+		CAM_ERR(CAM_CPAS, "Unsupported number of parts: %d", num_cam);
+		return -EINVAL;
+	}
+
+	/*
+	 * If bit value in part_info is "0" then HW is available.
+	 * If bit value in part_info is "1" then HW is unavailable.
+	 */
+	rc = socinfo_get_subpart_info(PART_CAMERA, part_info, num_cam);
+	if (rc) {
+		CAM_ERR(CAM_CPAS, "Failed while getting subpart_info, rc = %d.", rc);
+		return rc;
+	}
+
+	return 0;
+}
+#else
+int cam_get_subpart_info(uint32_t *part_info, uint32_t max_num_cam)
+{
+	return 0;
 }
 #endif

@@ -379,6 +379,24 @@ struct cam_vfe_generic_ubwc_config {
 };
 
 /*
+ * cam_vfe_get_num_ifes()
+ *
+ * @brief:         Gets number of IFEs
+ *
+ * @num_ifes:      Fills number of IFES in the address passed
+ */
+void cam_vfe_get_num_ifes(uint32_t *num_ifes);
+
+/*
+ * cam_vfe_get_num_ife_lites()
+ *
+ * @brief:         Gets number of IFE-LITEs
+ *
+ * @num_ifes:      Fills number of IFE-LITES in the address passed
+ */
+void cam_vfe_get_num_ife_lites(uint32_t *num_ife_lites);
+
+/*
  * cam_vfe_hw_init()
  *
  * @Brief:                  Initialize VFE HW device
