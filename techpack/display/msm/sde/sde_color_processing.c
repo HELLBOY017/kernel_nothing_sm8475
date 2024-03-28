@@ -1649,7 +1649,7 @@ bool sde_is_fod_pressed(struct drm_crtc *crtc)
 {
 	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
 
-	return !!cstate->fod_hbm_enable;
+	return !!cstate->fod_dim_layer;
 }
 
 bool sde_cp_crtc_update_pcc(struct drm_crtc *crtc)

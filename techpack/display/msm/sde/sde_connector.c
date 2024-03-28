@@ -1038,7 +1038,7 @@ static bool sde_connector_is_fod_enabled(struct sde_connector *c_conn)
 	    !c_conn->encoder->crtc->state)
 		return false;
 
-	return !!to_sde_crtc_state(c_conn->encoder->crtc->state)->fod_hbm_enable;
+	return !!to_sde_crtc_state(c_conn->encoder->crtc->state)->fod_dim_layer;
 }
 
 static int _sde_connector_update_finger_hbm_status(
@@ -1072,11 +1072,6 @@ static int _sde_connector_update_finger_hbm_status(
 		SDE_ERROR("panel in power off\n");
 		return 0;
 	}
-
-#ifdef CONFIG_CPU_INPUT_BOOST
-	if (!!status)
-                cpu_input_boost_kick_max(500);
-#endif
 
 	SDE_ATRACE_BEGIN("_sde_connector_update_finger_hbm_statuss");
         if (!c_conn->fingerlayer_dirty)
