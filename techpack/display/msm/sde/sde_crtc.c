@@ -5010,13 +5010,15 @@ static void
 sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 			  struct plane_state *pstates, int cnt)
 {
-	struct sde_hw_dim_layer *fod_dim_layer;
+	struct sde_hw_dim_layer *fod_dim_layer = NULL;
 	struct dsi_display *display;
 	struct dsi_panel *panel;
-	uint32_t dim_layer_stage;
+	uint32_t dim_layer_stage = 0;
 	bool force_fod_ui;
+	bool panel_hbm_on = false;
+	bool fod_hbm_enable = false;
 	int plane_idx;
-	bool fod_hbm_enable;
+	int fod_plane_idx = -1;
 
 	display = get_main_display();
 	if (!display || !display->panel) {
@@ -5028,42 +5030,41 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 
 	force_fod_ui = dsi_panel_get_force_fod_ui(panel);
 
-	for (plane_idx = 0; plane_idx < cnt; plane_idx++)
-		if (sde_plane_is_fod_layer(pstates[plane_idx].drm_pstate))
-			break;
-			
-	if (plane_idx < cnt) {
-	        fod_hbm_enable = true;
-	        if (panel->bl_config.real_bl_level >= panel->bl_config.bl_hbm_level) {
-	                fod_dim_layer = NULL;
-	        } else {
-			dim_layer_stage = pstates[plane_idx].stage;
-		        fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate,
-							            dim_layer_stage);
-	        }
-	} else if (force_fod_ui) {
-	        fod_hbm_enable = true;
-	        if (panel->bl_config.real_bl_level >= panel->bl_config.bl_hbm_level) {
-	                fod_dim_layer = NULL;
-	        } else {
-	                dim_layer_stage = pstates[cnt - 1].stage + 1;
-		        fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate,
-							            dim_layer_stage);
-		}
-        } else {
-	        fod_hbm_enable = false;
-		fod_dim_layer = NULL;
-	}
-	
-	if (fod_hbm_enable != cstate->fod_hbm_enable)
-	        cstate->fod_hbm_enable = fod_hbm_enable;
+	if (panel->bl_config.real_bl_level >= panel->bl_config.bl_hbm_level)
+		panel_hbm_on = true;
 
-	if (fod_dim_layer == cstate->fod_dim_layer)
+	if (panel->power_mode == SDE_MODE_DPMS_ON) {
+		for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
+			if (sde_plane_is_fod_layer(pstates[plane_idx].drm_pstate)) {
+				fod_plane_idx = plane_idx;
+				break;
+			} else if (!panel_hbm_on && force_fod_ui) {
+				if (pstates[plane_idx].stage > dim_layer_stage)
+					dim_layer_stage = pstates[plane_idx].stage + 1;
+			}
+		}
+
+		if (!panel_hbm_on) {
+			if (fod_plane_idx >= 0)
+				dim_layer_stage = pstates[fod_plane_idx].stage;
+
+			if (fod_plane_idx >= 0 || force_fod_ui) {
+				fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate, dim_layer_stage);
+				dsi_panel_set_nolp(panel);
+			}
+		}
+
+		if (fod_plane_idx >= 0 || force_fod_ui)
+			fod_hbm_enable = true;
+	}
+
+	if (fod_dim_layer == cstate->fod_dim_layer && fod_hbm_enable == cstate->fod_hbm_enable)
 		return;
 
 	cstate->fod_dim_layer = fod_dim_layer;
+	cstate->fod_hbm_enable = fod_hbm_enable;
 
-	if (!fod_dim_layer)
+	if (fod_plane_idx < 0 || !cstate->fod_dim_layer)
 		return;
 
 	for (plane_idx = 0; plane_idx < cnt; plane_idx++)
