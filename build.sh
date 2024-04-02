@@ -137,7 +137,7 @@ function choices() {
             if [ $(ls $KERNEL_DIR/KernelSU 2>/dev/null | wc -l) -eq 0 ]; then
                 rm -rf $KERNEL_DIR/KernelSU
                 git submodule update --init --recursive KernelSU
-            elif [ $(ls $KERNEL_DIR/KernelSU 2>/dev/null | wc -l) -ne 0 ]; then
+            else
             	ZIPNAME=Meteoric-KernelSU
             	KSU_CONFIG=ksu.config
             	if [ $(grep -c "KSU" arch/arm64/configs/$DEFCONFIG) -eq 0 ]; then
@@ -164,8 +164,7 @@ function choices() {
     if [ $SIGINT_DETECT -eq 1 ]; then
         if [ $(grep -c "KSU" arch/arm64/configs/$DEFCONFIG) -ne 0 ]; then
             sed -i "s/-Meteoric-$VERSION-KSU/-Meteoric/" arch/arm64/configs/$DEFCONFIG
-        fi
-        if [ $(grep -c $VERSION arch/arm64/configs/$DEFCONFIG) -ne 0 ]; then
+        elif [ $(grep -c $VERSION arch/arm64/configs/$DEFCONFIG) -ne 0 ]; then
             sed -i "s/-Meteoric-$VERSION/-Meteoric/" arch/arm64/configs/$DEFCONFIG
         fi
         exit
