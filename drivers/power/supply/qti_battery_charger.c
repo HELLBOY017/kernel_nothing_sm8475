@@ -199,6 +199,7 @@ enum battery_property_id {
 	BATT_FAKE_TBAT,
 	BATT_FAKE_TUSB,
 	BATT_FAKE_SOC,
+	BATT_NT_QMAX,
 #endif
 	BATT_PROP_MAX,
 };
@@ -1923,6 +1924,26 @@ exit:
 	return buflen;
 }
 
+static int nt_qmax_show(struct seq_file *m, void *v)
+{
+   struct battery_chg_dev *bcdev = m->private;
+   struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_BATTERY];
+   int rc;
+   if((pst == NULL) || (bcdev == NULL))
+   {
+       return -EINVAL;
+   }
+   rc = read_property_id(bcdev, pst, BATT_NT_QMAX);
+   if (rc < 0)
+       return rc;
+   seq_printf(m, "%d\n", pst->prop[BATT_NT_QMAX]);
+   return 0;
+}
+
+static int nt_qmax_open(struct inode *inode, struct file *file)
+{
+   return single_open(file, nt_qmax_show, PDE_DATA(inode));
+}
 
 static ssize_t is_aging_test_write(struct file *file, const char __user *buff,
                size_t count, loff_t *ppos)
@@ -2010,7 +2031,13 @@ const struct nt_proc entries[] = {
 	                  .proc_lseek = seq_lseek,
 	                  .proc_release = single_release,
 	                  .proc_write = nt_fake_soc_write,}
+	},
+	{"nt_qmax",{.proc_open = nt_qmax_open,
+	                  .proc_read = seq_read,
+	                  .proc_lseek = seq_lseek,
+	                  .proc_release = single_release,}
 	}
+
 };
 
 int create_aging_proc_file(struct battery_chg_dev *bcdev, struct proc_dir_entry *nt_chg_proc_dir)
