@@ -53,6 +53,7 @@ static const __initconst char * const blacklist[] = {
 	"phy_qcom_ufs_qmp_v4_parrot",
 	"phy_qcom_ufs_qmp_v4_waipio",
 	"qca6490",
+	"qca_cld3_qca6490",
 	"qcom_ipc_logging",
 	"qcom_logbuf_vendor_hooks",
 	"rimps_log",
