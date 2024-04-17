@@ -1215,7 +1215,7 @@ static void richtap_update_fifo_data(struct aw_haptic *aw_haptic, uint32_t fifo_
 {
 	int32_t samples_left = 0, pos = 0, retry = 30;
 	
-	pr_err("richtap_update_fifo_data start\n");
+	aw_err("start");
 	do
 	{
 		if (aw_haptic->curr_buf->status == MMAP_BUF_DATA_VALID) {
@@ -1241,7 +1241,7 @@ static void richtap_update_fifo_data(struct aw_haptic *aw_haptic, uint32_t fifo_
 		} else {
 			if((retry-- <= 0) || !atomic_read(&aw_haptic->richtap_rtp_mode)) {
 				atomic_set(&aw_haptic->richtap_rtp_mode, false);
-				pr_err("aac richtap invalid data or stop retry %d\n", retry);
+				aw_err("aac richtap invalid data or stop retry %d", retry);
 				return;
 			} else {
 				usleep_range(1000,1000);
@@ -1251,7 +1251,7 @@ static void richtap_update_fifo_data(struct aw_haptic *aw_haptic, uint32_t fifo_
 	if (pos <= 0)
 		return;
 	aw_haptic->func->set_rtp_data(aw_haptic, aw_haptic->rtp_ptr, pos);
-	pr_err("richtap_update_fifo_data data %d,samples_left = %d\n", pos, samples_left);
+	aw_err("data %d,samples_left = %d", pos, samples_left);
 }
 
 static bool richtap_rtp_start(struct aw_haptic *aw_haptic)
@@ -1270,11 +1270,11 @@ static bool richtap_rtp_start(struct aw_haptic *aw_haptic)
 		if ((reg_val & AW_GLBRD_STATE_MASK) == AW_STATE_RTP) {
 			cnt = 0;
 			rtp_work_flag = true;
-			pr_info("richtap_rtp_start:RTP_GO! glb_state=0x08\n");
+			aw_info("RTP_GO! glb_state=0x08");
 			break;
 		} else if (atomic_read(&aw_haptic->richtap_rtp_mode)){
 			cnt--;
-			pr_info("richtap_rtp_start: wait for RTP_GO, glb_state=0x%02X\n", reg_val);
+			aw_info("wait for RTP_GO, glb_state=0x%02X", reg_val);
 			usleep_range(2000, 2500);
 		}
 	}
@@ -1320,12 +1320,12 @@ static void richtap_rtp_work(struct work_struct *work)
 		msleep(1);
 	} while(tmp_len < aw_haptic->ram.base_addr && retry++ < 30);
 
-	pr_info("richtap_rtp_work rtp 1837 tm_len = %d\n", tmp_len);
+	aw_info("rtp 1837 tm_len = %d", tmp_len);
 
 	if (tmp_len <= 0)
 		return;
 	if (richtap_rtp_start(aw_haptic)) {
-		pr_info("richtap_rtp_work start richtap play\n");
+		aw_info("richtap work play");
 		pm_qos_enable(aw_haptic, true);
 		aw_haptic->func->set_rtp_data(aw_haptic, aw_haptic->rtp_ptr, tmp_len);
 		aw_haptic->func->set_rtp_aei(aw_haptic, false);
@@ -1340,7 +1340,7 @@ static void richtap_rtp_work(struct work_struct *work)
 
 			glb_state_val = aw_haptic->func->get_glb_state(aw_haptic);
 			if((glb_state_val & AW_GLBRD_STATE_MASK) == AW_STATE_STANDBY){
-				pr_err("debugrichtap work break\n");
+				aw_err("richtap work break");
 				break;
 			}
 		}
@@ -1379,7 +1379,7 @@ static int richtap_file_open(struct inode *inode, struct file *file)
 		file->private_data = (void *)right;
 	}else{
 		file->private_data = (void *)NULL;
-		pr_err("richtap_file_open: file private_data err!");
+		aw_err("file private_data err!");
 	}
 #else
 	file->private_data = (void *)g_aw_haptic;
@@ -1399,7 +1399,7 @@ static long richtap_file_unlocked_ioctl(struct file *filp, unsigned int cmd, uns
 	struct aw_haptic *aw_haptic = (struct aw_haptic *)filp->private_data;
 	int ret = 0, tmp;
 
-	pr_info("richtap_file_unlocked_ioctl: cmd=0x%x, arg=0x%lx\n", cmd, arg);
+	aw_info("cmd=0x%x, arg=0x%lx", cmd, arg);
 
 	switch (cmd) {
 		case RICHTAP_GET_HWINFO:
