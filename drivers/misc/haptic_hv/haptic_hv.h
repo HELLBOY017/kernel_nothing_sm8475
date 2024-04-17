@@ -625,6 +625,7 @@ struct aw_haptic {
 	uint8_t name[15];
 
 	int vmax;
+	int custom_gain;
 	int gain;
 	int rate;
 	int width;
