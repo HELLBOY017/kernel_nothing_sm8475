@@ -256,7 +256,7 @@ static void aw8692x_play_go(struct aw_haptic *aw_haptic, bool flag)
 	uint8_t stop_on = AW8692X_BIT_PLAYCFG4_STOP_ON;
 	uint8_t reg_val = 0;
 
-	aw_info("enter, flag = %d", flag);
+	aw_dbg("enter, flag = %d", flag);
 	haptic_hv_i2c_reads(aw_haptic, AW8692X_REG_ANACFG20, &reg_val,
 			    AW_I2C_BYTE_ONE);
 	if (flag && (reg_val <= AW8692X_BIT_ANACFG20_TRIM_LRA))
@@ -275,7 +275,7 @@ static int aw8692x_wait_enter_standby(struct aw_haptic *aw_haptic)
 	while (count--) {
 		reg_val = aw8692x_get_glb_state(aw_haptic);
 		if (reg_val == AW8692X_BIT_GLBRD5_STATE_STANDBY) {
-			aw_info("entered standby!");
+			aw_dbg("entered standby!");
 			return 0;
 		}
 		aw_dbg("wait for standby");
@@ -289,13 +289,13 @@ static void aw8692x_bst_mode_config(struct aw_haptic *aw_haptic, uint8_t mode)
 {
 	switch (mode) {
 	case AW_BST_BOOST_MODE:
-		aw_info("haptic bst mode = bst");
+		aw_dbg("haptic bst mode = bst");
 		haptic_hv_i2c_write_bits(aw_haptic, AW8692X_REG_PLAYCFG1,
 					 AW8692X_BIT_PLAYCFG1_BST_MODE_MASK,
 					 AW8692X_BIT_PLAYCFG1_BST_MODE);
 		break;
 	case AW_BST_BYPASS_MODE:
-		aw_info("haptic bst mode = bypass");
+		aw_dbg("haptic bst mode = bypass");
 		haptic_hv_i2c_write_bits(aw_haptic, AW8692X_REG_PLAYCFG1,
 					 AW8692X_BIT_PLAYCFG1_BST_MODE_MASK,
 					 AW8692X_BIT_PLAYCFG1_BST_MODE_BYPASS);
@@ -310,7 +310,7 @@ static void aw8692x_play_mode(struct aw_haptic *aw_haptic, uint8_t play_mode)
 {
 	switch (play_mode) {
 	case AW_STANDBY_MODE:
-		aw_info("enter standby mode");
+		aw_dbg("enter standby mode");
 		aw_haptic->play_mode = AW_STANDBY_MODE;
 		haptic_hv_i2c_write_bits(aw_haptic, AW8692X_REG_SYSCTRL3,
 					 AW8692X_BIT_SYSCTRL3_STANDBY_MASK,
@@ -320,7 +320,7 @@ static void aw8692x_play_mode(struct aw_haptic *aw_haptic, uint8_t play_mode)
 					 AW8692X_BIT_SYSCTRL3_STANDBY_OFF);
 		break;
 	case AW_RAM_MODE:
-		aw_info("enter ram mode");
+		aw_dbg("enter ram mode");
 		aw_haptic->play_mode = AW_RAM_MODE;
 		haptic_hv_i2c_write_bits(aw_haptic, AW8692X_REG_PLAYCFG3,
 					 AW8692X_BIT_PLAYCFG3_PLAY_MODE_MASK,
@@ -330,7 +330,7 @@ static void aw8692x_play_mode(struct aw_haptic *aw_haptic, uint8_t play_mode)
 		aw8692x_vbat_mode_config(aw_haptic, AW_CONT_VBAT_SW_COMP_MODE);
 		break;
 	case AW_RAM_LOOP_MODE:
-		aw_info("enter ram loop mode");
+		aw_dbg("enter ram loop mode");
 		aw_haptic->play_mode = AW_RAM_LOOP_MODE;
 		haptic_hv_i2c_write_bits(aw_haptic, AW8692X_REG_PLAYCFG3,
 					 AW8692X_BIT_PLAYCFG3_PLAY_MODE_MASK,
@@ -340,7 +340,7 @@ static void aw8692x_play_mode(struct aw_haptic *aw_haptic, uint8_t play_mode)
 		aw8692x_vbat_mode_config(aw_haptic, AW_CONT_VBAT_SW_COMP_MODE);
 		break;
 	case AW_RTP_MODE:
-		aw_info("enter rtp mode");
+		aw_dbg("enter rtp mode");
 		aw_haptic->play_mode = AW_RTP_MODE;
 		haptic_hv_i2c_write_bits(aw_haptic, AW8692X_REG_PLAYCFG3,
 					 AW8692X_BIT_PLAYCFG3_PLAY_MODE_MASK,
@@ -350,7 +350,7 @@ static void aw8692x_play_mode(struct aw_haptic *aw_haptic, uint8_t play_mode)
 		aw8692x_vbat_mode_config(aw_haptic, AW_CONT_VBAT_SW_COMP_MODE);
 		break;
 	case AW_TRIG_MODE:
-		aw_info("enter trig mode");
+		aw_dbg("enter trig mode");
 		aw_haptic->play_mode = AW_TRIG_MODE;
 		haptic_hv_i2c_write_bits(aw_haptic, AW8692X_REG_PLAYCFG3,
 					 AW8692X_BIT_PLAYCFG3_PLAY_MODE_MASK,
@@ -358,7 +358,7 @@ static void aw8692x_play_mode(struct aw_haptic *aw_haptic, uint8_t play_mode)
 		aw8692x_vbat_mode_config(aw_haptic, AW_CONT_VBAT_SW_COMP_MODE);
 		break;
 	case AW_CONT_MODE:
-		aw_info("enter cont mode");
+		aw_dbg("enter cont mode");
 		aw_haptic->play_mode = AW_CONT_MODE;
 		haptic_hv_i2c_write_bits(aw_haptic, AW8692X_REG_PLAYCFG3,
 					 AW8692X_BIT_PLAYCFG3_PLAY_MODE_MASK,
@@ -409,22 +409,22 @@ static void aw8692x_upload_lra(struct aw_haptic *aw_haptic, uint32_t flag)
 	aw8692x_reg_unlock(aw_haptic, true);
 	switch (flag) {
 	case AW_WRITE_ZERO:
-		aw_info("write zero to trim_lra!");
+		aw_dbg("write zero to trim_lra!");
 		break;
 	case AW_F0_CALI_LRA:
-		aw_info("write f0_cali_data to trim_lra = 0x%02X",
+		aw_dbg("write f0_cali_data to trim_lra = 0x%02X",
 			aw_haptic->f0_cali_data);
 		cali_data = (char)aw_haptic->f0_cali_data &
 			    AW8692X_BIT_ANACFG20_TRIM_LRA;
 		break;
 	case AW_OSC_CALI_LRA:
-		aw_info("write osc_cali_data to trim_lra = 0x%02X",
+		aw_dbg("write osc_cali_data to trim_lra = 0x%02X",
 			aw_haptic->osc_cali_data);
 		cali_data = (char)aw_haptic->osc_cali_data &
 			    AW8692X_BIT_ANACFG20_TRIM_LRA;
 		break;
 	default:
-		aw_err("error param, write f0_cali_data to trim_lra!");
+		aw_dbg("error param, write f0_cali_data to trim_lra!");
 		cali_data = (char)aw_haptic->f0_cali_data &
 			    AW8692X_BIT_ANACFG20_TRIM_LRA;
 		break;
