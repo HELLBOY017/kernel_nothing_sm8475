@@ -2952,7 +2952,7 @@ static ssize_t awrw_show(struct device *dev, struct device_attribute *attr,
 		aw_err("no read mode");
 		return -ERANGE;
 	}
-	if (aw_haptic->i2c_info.reg_data == NULL) {
+	if (aw_haptic->i2c_info.reg_num == 0 || aw_haptic->i2c_info.reg_num > AW_HAPTIC_REG_MAX) {
 		aw_err("awrw lack param");
 		return -ERANGE;
 	}
@@ -2979,15 +2979,12 @@ static ssize_t awrw_store(struct device *dev, struct device_attribute *attr,
 						   vib_dev);
 
 	if (sscanf(buf, "%x %x %x", &flag, &reg_num, &reg_addr) == 3) {
-		if (!reg_num) {
+		if (reg_num == 0 || reg_num > AW_HAPTIC_REG_MAX) {
 			aw_err("param error");
 			return -ERANGE;
 		}
 		aw_haptic->i2c_info.flag = flag;
 		aw_haptic->i2c_info.reg_num = reg_num;
-		if (aw_haptic->i2c_info.reg_data != NULL)
-			kfree(aw_haptic->i2c_info.reg_data);
-		aw_haptic->i2c_info.reg_data = kmalloc(reg_num, GFP_KERNEL);
 		if (flag == AW_SEQ_WRITE) {
 			if ((reg_num * 5) != (strlen(buf) - 3 * 5)) {
 				aw_err("param error");
