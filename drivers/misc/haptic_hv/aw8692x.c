@@ -12,7 +12,6 @@
  */
 
 #include "haptic_hv.h"
-#include "haptic_hv_reg.h"
 
 static void aw8692x_ram_init(struct aw_haptic *, bool);
 static void aw8692x_vbat_mode_config(struct aw_haptic *, uint8_t);
