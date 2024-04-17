@@ -1707,10 +1707,10 @@ static int audio_ctrl_list_ins(struct aw_haptic *aw_haptic,
 	struct aw_haptic_ctr *p_new = NULL;
 	struct aw_haptic_audio *haptic_audio = &aw_haptic->haptic_audio;
 
-	p_new = (struct aw_haptic_ctr *)kzalloc(
+	p_new = (struct aw_haptic_ctr *)kmalloc(
 		sizeof(struct aw_haptic_ctr), GFP_KERNEL);
 	if (p_new == NULL) {
-		aw_err("kzalloc memory fail");
+		aw_err("kmalloc memory fail");
 		return -ENOMEM;
 	}
 	/* update new list info */
