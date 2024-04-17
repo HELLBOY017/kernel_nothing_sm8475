@@ -12,7 +12,6 @@
  */
 
 #include "haptic_hv.h"
-#include "haptic_hv_reg.h"
 
 static uint8_t aw869xx_get_glb_state(struct aw_haptic *aw_haptic);
 static void aw869xx_vbat_mode_config(struct aw_haptic *, uint8_t);
