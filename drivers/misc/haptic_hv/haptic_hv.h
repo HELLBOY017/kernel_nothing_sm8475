@@ -12,6 +12,8 @@
 #include <sound/soc.h>
 #include <sound/pcm_params.h>
 
+#include "haptic_hv_reg.h"
+
 #define MAX_CMDLINE_PARAM_LEN                  5
 
 /*********************************************************
@@ -527,7 +529,7 @@ struct aw_haptic_ctr {
 struct aw_i2c_info {
 	uint32_t flag;
 	uint32_t reg_num;
-	uint8_t *reg_data;
+	uint8_t reg_data[AW_HAPTIC_REG_MAX];
 };
 
 struct aw_haptic_audio {
