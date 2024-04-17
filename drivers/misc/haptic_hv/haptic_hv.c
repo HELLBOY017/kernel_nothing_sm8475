@@ -90,16 +90,22 @@ int haptic_hv_i2c_reads(struct aw_haptic *aw_haptic, uint8_t reg_addr,
 int haptic_hv_i2c_writes(struct aw_haptic *aw_haptic, uint8_t reg_addr,
 			 uint8_t *buf, uint32_t len)
 {
-	uint8_t *data = NULL;
+	uint8_t __data[512 + 1];
+	uint8_t *data = &__data[0];
 	int ret = -1;
 
-	data = kmalloc(len + 1, GFP_KERNEL);
+	if (unlikely(len + 1 > sizeof(__data)))
+		data = kmalloc(len + 1, GFP_KERNEL);
+
 	data[0] = reg_addr;
 	memcpy(&data[1], buf, len);
 	ret = i2c_master_send(aw_haptic->i2c, data, len + 1);
 	if (ret < 0)
 		aw_err("i2c master send 0x%02x err", reg_addr);
-	kfree(data);
+
+	if (unlikely(data != &__data[0]))
+		kfree(data);
+
 	return ret;
 }
 
