@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _CAM_MEM_MGR_H_
@@ -54,9 +54,12 @@ struct cam_presil_dmabuf_params {
  * @is_internal:    Flag indicating kernel allocated buffer
  * @timestamp:      Timestamp at which this entry in tbl was made
  * @krefcount:      Reference counter to track whether the buffer is
- *                  mapped and in use
+ *                  mapped and in use by kmd
  * @smmu_mapping_client: Client buffer (User or kernel)
  * @presil_params:  Parameters specific to presil environment
+ * @urefcount:      Reference counter to track whether the buffer is
+ *                  mapped and in use by umd
+ * @ref_lock:       Mutex lock for refcount
  */
 struct cam_mem_buf_queue {
 	struct dma_buf *dma_buf;
@@ -81,6 +84,8 @@ struct cam_mem_buf_queue {
 #ifdef CONFIG_CAM_PRESIL
 	struct cam_presil_dmabuf_params presil_params;
 #endif
+	struct kref urefcount;
+	struct mutex ref_lock;
 };
 
 /**
