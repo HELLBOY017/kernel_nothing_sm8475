@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "cam_tpg_core.h"
@@ -351,6 +351,7 @@ static int cam_tpg_validate_cmd_descriptor(
 	int rc = 0;
 	uintptr_t generic_ptr;
 	size_t len_of_buff = 0;
+	size_t remain_len = 0;
 	uint32_t                *cmd_buf = NULL;
 	struct tpg_command_header_t *cmd_header = NULL;
 
@@ -363,6 +364,20 @@ static int cam_tpg_validate_cmd_descriptor(
 		CAM_ERR(CAM_TPG,
 			"Failed to get cmd buf Mem address : %d", rc);
 		return rc;
+	}
+
+	if (cmd_desc->offset >= len_of_buff) {
+		CAM_ERR(CAM_TPG,
+			"Buffer Offset past length of buffer");
+		rc = -EINVAL;
+		goto end;
+	}
+	remain_len = len_of_buff - cmd_desc->offset;
+	if (cmd_desc->length > remain_len) {
+		CAM_ERR(CAM_TPG,
+			"Not enough buffer provided for Cmd Buffer");
+		rc = -EINVAL;
+		goto end;
 	}
 
 	cmd_buf = (uint32_t *)generic_ptr;
