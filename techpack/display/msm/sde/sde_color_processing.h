@@ -366,6 +366,4 @@ void sde_cp_disable_features(struct drm_crtc *crtc);
 void sde_cp_set_skip_blend_plane_info(struct drm_crtc *crtc,
 		struct sde_cp_crtc_skip_blend_plane *skip_blend);
 
-const struct drm_msm_pcc *sde_cp_crtc_get_pcc_cfg(struct drm_crtc *crtc);
-
 #endif /*_SDE_COLOR_PROCESSING_H */

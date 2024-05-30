@@ -1897,10 +1897,8 @@ static inline void sde_hw_catalog_irq_offset_list_delete(
  */
 static inline bool sde_hw_sspp_multirect_enabled(const struct sde_sspp_cfg *cfg)
 {
-	return (test_bit(SDE_SSPP_SMART_DMA_V1, &cfg->features) ||
+	return test_bit(SDE_SSPP_SMART_DMA_V1, &cfg->features) ||
 			 test_bit(SDE_SSPP_SMART_DMA_V2, &cfg->features) ||
-			 test_bit(SDE_SSPP_SMART_DMA_V2p5, &cfg->features))
-		&& !(test_bit(SDE_SSPP_CSC_10BIT, &cfg->features) ||
-		     test_bit(SDE_SSPP_CSC, &cfg->features));
+			 test_bit(SDE_SSPP_SMART_DMA_V2p5, &cfg->features);
 }
 #endif /* _SDE_HW_CATALOG_H */
