@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -216,6 +216,7 @@ enum sde_prop {
 	DIM_LAYER,
 	SMART_DMA_REV,
 	IDLE_PC,
+	ENABLE_HIBERNATION,
 	DDR_TYPE,
 	WAKEUP_WITH_TOUCH,
 	DEST_SCALER,
@@ -603,6 +604,8 @@ static struct sde_prop_type sde_prop[] = {
 	{DIM_LAYER, "qcom,sde-has-dim-layer", false, PROP_TYPE_BOOL},
 	{SMART_DMA_REV, "qcom,sde-smart-dma-rev", false, PROP_TYPE_STRING},
 	{IDLE_PC, "qcom,sde-has-idle-pc", false, PROP_TYPE_BOOL},
+	{ENABLE_HIBERNATION, "qcom,sde-enable-hibernation", false,
+			PROP_TYPE_BOOL},
 	{DDR_TYPE, "qcom,sde-ddr-type", false, PROP_TYPE_U32_ARRAY},
 	{WAKEUP_WITH_TOUCH, "qcom,sde-wakeup-with-touch", false,
 			PROP_TYPE_BOOL},
@@ -1065,6 +1068,7 @@ static int _validate_dt_entry(struct device_node *np,
 {
 	int rc = 0, i, val;
 	struct device_node *snp = NULL;
+	const u32 *arr;
 
 	if (off_count) {
 		*off_count = of_property_count_u32_elems(np,
@@ -1082,7 +1086,10 @@ static int _validate_dt_entry(struct device_node *np,
 		}
 	}
 
+	memset(prop_count, 0, sizeof(int) * prop_size);
 	for (i = 0; i < prop_size; i++) {
+		val = 0;
+		arr = NULL;
 		switch (sde_prop[i].type) {
 		case PROP_TYPE_U32:
 			rc = of_property_read_u32(np, sde_prop[i].prop_name,
@@ -1103,8 +1110,9 @@ static int _validate_dt_entry(struct device_node *np,
 				rc = prop_count[i];
 			break;
 		case PROP_TYPE_BIT_OFFSET_ARRAY:
-			of_get_property(np, sde_prop[i].prop_name, &val);
-			prop_count[i] = val / (MAX_BIT_OFFSET * sizeof(u32));
+			arr = of_get_property(np, sde_prop[i].prop_name, &val);
+			if (arr)
+				prop_count[i] = val / (MAX_BIT_OFFSET * sizeof(u32));
 			break;
 		case PROP_TYPE_NODE:
 			snp = of_get_child_by_name(np,
@@ -4069,6 +4077,8 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 	cfg->has_src_split = PROP_VALUE_ACCESS(props->values, SRC_SPLIT, 0);
 	cfg->has_dim_layer = PROP_VALUE_ACCESS(props->values, DIM_LAYER, 0);
 	cfg->has_idle_pc = PROP_VALUE_ACCESS(props->values, IDLE_PC, 0);
+	cfg->enable_hibernation = PROP_VALUE_ACCESS(props->values,
+			ENABLE_HIBERNATION, 0);
 	cfg->wakeup_with_touch = PROP_VALUE_ACCESS(props->values,
 			WAKEUP_WITH_TOUCH, 0);
 	cfg->pipe_order_type = PROP_VALUE_ACCESS(props->values,
