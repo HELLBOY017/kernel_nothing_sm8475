@@ -317,7 +317,7 @@ struct sde_hw_sspp_ops {
 			const struct sde_format *fmt,
 			bool blend_enabled, u32 flags,
 			enum sde_sspp_multirect_index index,
-			u32 comp_color, bool force_csc);
+			u32 comp_color);
 
 	/**
 	 * setup_rects - setup pipe ROI rectangles
