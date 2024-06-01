@@ -587,7 +587,6 @@ struct sde_connector {
 	bool fingerlayer_dirty;
 	u32 finger_flag;
 
-	struct work_struct set_brightness_work;
 	bool dimming_bl_notify_enabled;
 
 	u32 hdr_eotf;
