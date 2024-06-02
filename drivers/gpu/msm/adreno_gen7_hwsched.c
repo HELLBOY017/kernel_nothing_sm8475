@@ -711,6 +711,53 @@ static int gen7_hwsched_gmu_init(struct adreno_device *adreno_dev)
 	return gen7_hwsched_hfi_init(adreno_dev);
 }
 
+static void gen7_hwsched_touch_wakeup(struct adreno_device *adreno_dev)
+{
+	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
+	struct gen7_gmu_device *gmu = to_gen7_gmu(adreno_dev);
+	int ret;
+
+	/*
+	 * Do not wake up a suspended device or until the first boot sequence
+	 * has been completed.
+	 */
+	if (test_bit(GMU_PRIV_PM_SUSPEND, &gmu->flags) ||
+		!test_bit(GMU_PRIV_FIRST_BOOT_DONE, &gmu->flags))
+		return;
+
+	if (test_bit(GMU_PRIV_GPU_STARTED, &gmu->flags))
+		goto done;
+
+	kgsl_pwrctrl_request_state(device, KGSL_STATE_ACTIVE);
+
+	ret = gen7_hwsched_gmu_boot(adreno_dev);
+	if (ret)
+		return;
+
+	ret = gen7_hwsched_gpu_boot(adreno_dev);
+	if (ret)
+		return;
+
+	kgsl_pwrscale_wake(device);
+
+	set_bit(GMU_PRIV_GPU_STARTED, &gmu->flags);
+
+	device->pwrctrl.last_stat_updated = ktime_get();
+	device->state = KGSL_STATE_ACTIVE;
+
+	kgsl_pwrctrl_set_state(device, KGSL_STATE_ACTIVE);
+
+done:
+	/*
+	 * When waking up from a touch event we want to stay active long enough
+	 * for the user to send a draw command. The default idle timer timeout
+	 * is shorter than we want so go ahead and push the idle timer out
+	 * further for this special case
+	 */
+	mod_timer(&device->idle_timer, jiffies +
+		msecs_to_jiffies(adreno_wake_timeout));
+}
+
 static int gen7_hwsched_boot(struct adreno_device *adreno_dev)
 {
 	struct gen7_gmu_device *gmu = to_gen7_gmu(adreno_dev);
@@ -1368,6 +1415,7 @@ const struct adreno_power_ops gen7_hwsched_power_ops = {
 	.last_close = gen7_hwsched_power_off,
 	.active_count_get = gen7_hwsched_active_count_get,
 	.active_count_put = gen7_hwsched_active_count_put,
+	.touch_wakeup = gen7_hwsched_touch_wakeup,
 	.pm_suspend = gen7_hwsched_pm_suspend,
 	.pm_resume = gen7_hwsched_pm_resume,
 	.gpu_clock_set = gen7_hwsched_clock_set,
