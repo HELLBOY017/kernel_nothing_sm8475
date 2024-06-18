@@ -1715,6 +1715,8 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 	bool feature_enabled = false;
 	struct sde_mdss_cfg *catalog = NULL;
 	struct sde_crtc_state *sde_crtc_state;
+	struct drm_property_blob *blob;
+	struct drm_msm_pcc *pcc_cfg;
 
 	memset(&hw_cfg, 0, sizeof(hw_cfg));
 	_sde_cp_get_cached_payload(prop_node, &hw_cfg, &feature_enabled);
@@ -1744,19 +1746,24 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 	}
 
 	if (prop_node->feature == SDE_CP_CRTC_DSPP_PCC) {
-		if (hw_cfg.payload && (hw_cfg.len == sizeof(save_pcc))) {
-			memcpy(&save_pcc, hw_cfg.payload, hw_cfg.len);
-			pcc_enabled = true;
+		blob = prop_node->blob_ptr;
+		pcc_cfg = blob->data;
 
-			if (sde_is_fod_pressed(&sde_crtc->base)) {
-				hw_cfg.payload = NULL;
-				hw_cfg.len = 0;
-				skip_pcc = true;
+		if (!(pcc_cfg->r.c == 0 && pcc_cfg->g.c == 0 && pcc_cfg->b.c == 0)) {
+			if (hw_cfg.payload && (hw_cfg.len == sizeof(save_pcc))) {
+				memcpy(&save_pcc, hw_cfg.payload, hw_cfg.len);
+				pcc_enabled = true;
+
+				if (sde_is_fod_pressed(&sde_crtc->base)) {
+					hw_cfg.payload = NULL;
+					hw_cfg.len = 0;
+					skip_pcc = true;
+				} else {
+					skip_pcc = false;
+				}
 			} else {
-				skip_pcc = false;
+				pcc_enabled = false;
 			}
-		} else {
-			pcc_enabled = false;
 		}
 	}
 
