@@ -7,12 +7,12 @@
 
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
-#include <linux/fb.h>
 #include <linux/input.h>
 #include <linux/kthread.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/version.h>
+#include <drm/msm_disp_notifier.h>
 
 /* The sched_param struct is located elsewhere in newer kernels */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
@@ -71,8 +71,7 @@ enum {
 struct boost_drv {
 	struct delayed_work input_unboost;
 	struct delayed_work max_unboost;
-	struct notifier_block cpu_notif;
-	struct notifier_block fb_notif;
+	struct notifier_block msm_disp_notif;
 	wait_queue_head_t boost_waitq;
 	atomic_long_t max_boost_expires;
 	unsigned long state;
@@ -295,21 +294,22 @@ static int cpu_boost_thread(void *data)
 	return 0;
 }
 
-static int fb_notifier_cb(struct notifier_block *nb,
+static int msm_disp_notifier_cb(struct notifier_block *nb,
 			       unsigned long action, void *data)
 {
-	struct boost_drv *b = container_of(nb, typeof(*b), fb_notif);
-	struct fb_event *evdata = data;
+	struct boost_drv *b = container_of(nb, typeof(*b), msm_disp_notif);
+	struct msm_disp_notifier *evdata = data;
 	int *blank = evdata->data;
 
-	if (action != FB_EVENT_BLANK)
+	/* Parse framebuffer blank events as soon as they occur */
+	if (action != MSM_DISP_DPMS_EARLY_EVENT)
 		return NOTIFY_OK;
 
 	/* Boost when the screen turns on and unboost when it turns off */
-	if (*blank == FB_BLANK_UNBLANK) {
+	if (*blank == MSM_DISP_DPMS_ON) {
 		clear_bit(SCREEN_OFF, &b->state);
 		__cpu_input_boost_kick_max(b, wake_boost_duration);
-	} else {
+	} else if (*blank == MSM_DISP_DPMS_POWERDOWN) {
 		set_bit(SCREEN_OFF, &b->state);
 		wake_up(&b->boost_waitq);
 	}
@@ -411,11 +411,11 @@ static int __init cpu_input_boost_init(void)
 		pr_err("Failed to register input handler, err: %d\n", ret);
 	}
 
-	b->fb_notif.notifier_call = fb_notifier_cb;
-	b->fb_notif.priority = INT_MAX;
-	ret = fb_register_client(&b->fb_notif);
+	b->msm_disp_notif.notifier_call = msm_disp_notifier_cb;
+	b->msm_disp_notif.priority = INT_MAX;
+	ret = msm_disp_register_client(&b->msm_disp_notif);
 	if (ret) {
-		pr_err("Failed to register fb notifier, err: %d\n", ret);
+		pr_err("Failed to register msm disp notifier, err: %d\n", ret);
 		goto unregister_handler;
 	}
 
@@ -423,13 +423,13 @@ static int __init cpu_input_boost_init(void)
 	if (IS_ERR(thread)) {
 		ret = PTR_ERR(thread);
 		pr_err("Failed to start CPU boost thread, err: %d\n", ret);
-		goto unregister_fb_notif;
+		goto unregister_disp_notif;
 	}
 
 	return 0;
 
-unregister_fb_notif:
-	fb_unregister_client(&b->fb_notif);
+unregister_disp_notif:
+	msm_disp_unregister_client(&b->msm_disp_notif);
 unregister_handler:
 	input_unregister_handler(&cpu_input_boost_input_handler);
 	return ret;
