@@ -8,6 +8,7 @@
 #include <linux/of.h>
 #include <linux/of_gpio.h>
 #include <linux/err.h>
+#include <drm/msm_disp_notifier.h>
 
 #include "msm_drv.h"
 #include "sde_connector.h"
@@ -1370,6 +1371,8 @@ int dsi_display_set_power(struct drm_connector *connector,
 		int power_mode, void *disp)
 {
 	struct dsi_display *display = disp;
+	struct msm_disp_notifier notify_data;
+	int disp_id = 0;
 	int rc = 0;
 
 	if (!display || !display->panel) {
@@ -1377,20 +1380,37 @@ int dsi_display_set_power(struct drm_connector *connector,
 		return -EINVAL;
 	}
 
+	mutex_lock(&display->display_lock);
+
+	if (!strcmp(display->display_type, "primary"))
+		disp_id = MSM_DISPLAY_PRIMARY;
+	else
+		disp_id = MSM_DISPLAY_SECONDARY;
+
+	notify_data.data = &power_mode;
+	notify_data.disp_id = disp_id;
+
 	switch (power_mode) {
 	case SDE_MODE_DPMS_LP1:
+		msm_disp_notifier_call_chain(MSM_DISP_DPMS_EARLY_EVENT, &notify_data);
 		rc = dsi_panel_set_lp1(display->panel);
+		msm_disp_notifier_call_chain(MSM_DISP_DPMS_EVENT, &notify_data);
 		break;
 	case SDE_MODE_DPMS_LP2:
+		msm_disp_notifier_call_chain(MSM_DISP_DPMS_EARLY_EVENT, &notify_data);
 		rc = dsi_panel_set_lp2(display->panel);
+		msm_disp_notifier_call_chain(MSM_DISP_DPMS_EVENT, &notify_data);
 		break;
 	case SDE_MODE_DPMS_ON:
 		if ((display->panel->power_mode == SDE_MODE_DPMS_LP1) ||
-			(display->panel->power_mode == SDE_MODE_DPMS_LP2))
+			(display->panel->power_mode == SDE_MODE_DPMS_LP2)) {
+			msm_disp_notifier_call_chain(MSM_DISP_DPMS_EARLY_EVENT, &notify_data);
 			rc = dsi_panel_set_nolp(display->panel);
+		}
 		break;
 	case SDE_MODE_DPMS_OFF:
 	default:
+		mutex_unlock(&display->display_lock);
 		return rc;
 	}
 
@@ -1400,6 +1420,8 @@ int dsi_display_set_power(struct drm_connector *connector,
 			rc ? "failed" : "successful");
 	if (!rc)
 		display->panel->power_mode = power_mode;
+
+	mutex_unlock(&display->display_lock);
 
 	return rc;
 }
