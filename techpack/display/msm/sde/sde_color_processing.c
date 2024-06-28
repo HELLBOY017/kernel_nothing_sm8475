@@ -19,6 +19,7 @@
 #include "sde_core_irq.h"
 #include "dsi_panel.h"
 #include "sde_hw_color_proc_common_v4.h"
+#include "dsi_display.h"
 
 struct sde_cp_node {
 	u32 property_id;
@@ -1647,8 +1648,15 @@ static int _sde_cp_crtc_checkfeature(u32 feature,
 bool sde_is_fod_pressed(struct drm_crtc *crtc)
 {
 	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
+	struct dsi_display *display;
 
-	return !!cstate->fod_dim_layer;
+	display = get_main_display();
+	if (!display || !display->panel) {
+		SDE_ERROR("Invalid primary display\n");
+		return -EINVAL;
+	}
+
+	return (!!cstate->fod_dim_layer || !!dsi_panel_get_force_fod_ui(display->panel));
 }
 
 bool sde_cp_crtc_update_pcc(struct drm_crtc *crtc)
@@ -1750,6 +1758,7 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 		pcc_cfg = blob->data;
 
 		if (!(pcc_cfg->r.c == 0 && pcc_cfg->g.c == 0 && pcc_cfg->b.c == 0)) {
+			sde_crtc_state->color_invert_on = true;
 			if (hw_cfg.payload && (hw_cfg.len == sizeof(save_pcc))) {
 				memcpy(&save_pcc, hw_cfg.payload, hw_cfg.len);
 				pcc_enabled = true;
@@ -1764,6 +1773,8 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 			} else {
 				pcc_enabled = false;
 			}
+		} else {
+			sde_crtc_state->color_invert_on = false;
 		}
 	}
 

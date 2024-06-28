@@ -5050,7 +5050,7 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 #endif
 				fod_plane_idx = plane_idx;
 				break;
-			} else if (force_fod_ui) {
+			} else if (!cstate->color_invert_on && force_fod_ui) {
 				if (pstates[plane_idx].stage > dim_layer_stage)
 					dim_layer_stage = pstates[plane_idx].stage + 1;
 			}
@@ -5059,7 +5059,7 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 		if (fod_plane_idx >= 0)
 			dim_layer_stage = pstates[fod_plane_idx].stage;
 
-		if (fod_plane_idx >= 0 || force_fod_ui)
+		if (fod_plane_idx >= 0 || (!cstate->color_invert_on && force_fod_ui))
 			fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate, dim_layer_stage);
 	}
 
