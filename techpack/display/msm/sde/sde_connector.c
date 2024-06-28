@@ -1038,7 +1038,8 @@ static bool sde_connector_is_fod_enabled(struct sde_connector *c_conn)
 	    !c_conn->encoder->crtc->state)
 		return false;
 
-	return !!to_sde_crtc_state(c_conn->encoder->crtc->state)->fod_dim_layer;
+	return (!!to_sde_crtc_state(c_conn->encoder->crtc->state)->fod_dim_layer &&
+		!!to_sde_crtc_state(c_conn->encoder->crtc->state)->fod_dim_valid);
 }
 
 static int _sde_connector_update_finger_hbm_status(
@@ -1087,11 +1088,15 @@ static int _sde_connector_update_finger_hbm_status(
 			mutex_unlock(&c_conn->lock);
 			c_conn->last_panel_power_mode = SDE_MODE_DPMS_ON;
 		}
+		/*wait for VBLANK */
+		sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
 		sde_backlight_device_update_status(c_conn->bl_device);
 		/*wait for VBLANK */
 		//sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
 	} else {
 		SDE_ERROR("close hbm");
+		/*wait for VBLANK */
+		sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
 		sde_backlight_device_update_status(c_conn->bl_device);
 		/*wait for VBLANK */
 		//sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
