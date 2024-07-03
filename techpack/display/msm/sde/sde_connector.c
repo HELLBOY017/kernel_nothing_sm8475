@@ -987,7 +987,8 @@ static bool sde_connector_fod_dim_layer_status(struct sde_connector *c_conn)
 	    !c_conn->encoder->crtc->state)
 		return false;
 
-	return !!to_sde_crtc_state(c_conn->encoder->crtc->state)->fod_dim_layer;
+	return (!!to_sde_crtc_state(c_conn->encoder->crtc->state)->fod_dim_layer && 
+	        !!to_sde_crtc_state(c_conn->encoder->crtc->state)->fod_dim_valid);
 }
 
 static int _sde_connector_update_dirty_properties(
@@ -1086,10 +1087,14 @@ static int _sde_connector_update_finger_hbm_status(
 	        return 0;
 
 	SDE_ATRACE_BEGIN("_sde_connector_update_finger_hbm_statuss");
-        if (is_aosp)
+        if (is_aosp) {
                 finger_hbm_flag = status;
-        else
+                drm_crtc_vblank_put(connector->state->crtc);
+                // wait sometime after vblank for dimlayer to get applied
+                usleep_range(4000, 4001);
+        } else {
                 finger_hbm_flag = c_conn->finger_flag;
+        }
 	if (finger_hbm_flag) {
 		SDE_ERROR("open hbm");
 		if ((c_conn->lp_mode == SDE_MODE_DPMS_LP1) ||

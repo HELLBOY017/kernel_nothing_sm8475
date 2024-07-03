@@ -1723,6 +1723,8 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 
             		_sde_crtc_setup_dim_layer_cfg(crtc, sde_crtc,
             			mixer, cstate->fod_dim_layer);
+
+			cstate->fod_dim_valid = true;
             	}
 	}
 
@@ -1851,6 +1853,9 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 				lm->ops.clear_dim_layer(lm);
 		}
 	}
+
+        if (test_bit(SDE_CRTC_DIRTY_DIM_LAYERS, sde_crtc_state->dirty))
+		sde_crtc_state->fod_dim_valid = false;
 
 	_sde_crtc_swap_mixers_for_right_partial_update(crtc);
 
