@@ -1088,8 +1088,6 @@ static int _sde_connector_update_finger_hbm_status(
 			mutex_unlock(&c_conn->lock);
 			c_conn->last_panel_power_mode = SDE_MODE_DPMS_ON;
 		}
-		/*wait for VBLANK */
-		sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
 		sde_backlight_device_update_status(c_conn->bl_device);
 		/*wait for VBLANK */
 		//sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
