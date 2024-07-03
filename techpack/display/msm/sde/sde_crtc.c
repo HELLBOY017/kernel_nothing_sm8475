@@ -1706,9 +1706,24 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 						mixer, &cstate->dim_layer[i]);
 			clear_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
 		}
-		if (cstate->fod_dim_layer)
-			_sde_crtc_setup_dim_layer_cfg(crtc, sde_crtc,
-					mixer, cstate->fod_dim_layer);
+		if (cstate->fod_dim_layer) {
+	            	drm_atomic_crtc_for_each_plane(plane, crtc) {
+				state = plane->state;
+	       			if (!state)
+         				continue;
+
+            			pstate = to_sde_plane_state(state);
+
+            			if (pstate->stage == cstate->fod_dim_layer->stage) {
+					SDE_ERROR("Skip fod_dim_layer as it shared plane stage %d %d\n",
+							pstate->stage, cstate->fod_dim_layer->stage);
+					return;
+            			}
+            		}
+
+            		_sde_crtc_setup_dim_layer_cfg(crtc, sde_crtc,
+	            			mixer, cstate->fod_dim_layer);
+          	}
 	}
 
 end:
