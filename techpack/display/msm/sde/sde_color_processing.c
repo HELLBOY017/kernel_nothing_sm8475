@@ -19,7 +19,6 @@
 #include "sde_core_irq.h"
 #include "dsi_panel.h"
 #include "sde_hw_color_proc_common_v4.h"
-#include "dsi_display.h"
 
 struct sde_cp_node {
 	u32 property_id;
@@ -213,6 +212,7 @@ typedef int (*feature_wrapper)(struct sde_hw_dspp *hw_dspp,
 struct drm_msm_pcc save_pcc;
 bool pcc_enabled = false;
 bool skip_pcc = false;
+bool skipped_pcc = false;
 
 static struct sde_kms *get_kms(struct drm_crtc *crtc)
 {
@@ -1648,15 +1648,8 @@ static int _sde_cp_crtc_checkfeature(u32 feature,
 bool sde_is_fod_pressed(struct drm_crtc *crtc)
 {
 	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
-	struct dsi_display *display;
 
-	display = get_main_display();
-	if (!display || !display->panel) {
-		SDE_ERROR("Invalid primary display\n");
-		return -EINVAL;
-	}
-
-	return (!!cstate->fod_dim_layer || !!dsi_panel_get_force_fod_ui(display->panel));
+	return !!cstate->fod_dim_layer;
 }
 
 bool sde_cp_crtc_update_pcc(struct drm_crtc *crtc)
@@ -1767,8 +1760,10 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 					hw_cfg.payload = NULL;
 					hw_cfg.len = 0;
 					skip_pcc = true;
+					skipped_pcc = true;
 				} else {
 					skip_pcc = false;
+					skipped_pcc = false;
 				}
 			} else {
 				pcc_enabled = false;

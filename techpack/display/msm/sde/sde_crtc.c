@@ -1545,6 +1545,7 @@ static void _sde_crtc_setup_blend_cfg_by_stage(struct sde_crtc_mixer *mixer,
 	}
 }
 
+extern bool skipped_pcc;
 static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 		struct drm_crtc_state *old_state, struct sde_crtc *sde_crtc,
 		struct sde_crtc_mixer *mixer)
@@ -1712,6 +1713,9 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 			uint32_t zpos_max = 0;
 
 			cstate->fod_dim_valid = false;
+
+                        if (cstate->color_invert_on && !skipped_pcc)
+                                return;
 
 			drm_atomic_crtc_for_each_plane(plane, crtc) {
 				state = plane->state;
@@ -5053,7 +5057,7 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 #endif
 				fod_plane_idx = plane_idx;
 				break;
-			} else if (!cstate->color_invert_on && force_fod_ui) {
+			} else if (force_fod_ui) {
 				if (pstates[plane_idx].stage > dim_layer_stage)
 					dim_layer_stage = pstates[plane_idx].stage + 1;
 			}
@@ -5062,7 +5066,7 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 		if (fod_plane_idx >= 0)
 			dim_layer_stage = pstates[fod_plane_idx].stage;
 
-		if (fod_plane_idx >= 0 || (!cstate->color_invert_on && force_fod_ui))
+		if (fod_plane_idx >= 0 || force_fod_ui)
 			fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate, dim_layer_stage);
 	}
 
