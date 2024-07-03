@@ -5400,6 +5400,7 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 	cstate->fod_dim_layer = fod_dim_layer;
 
 	if (!cstate->fod_dim_layer) {
+		set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
 		return;
 	}
 
