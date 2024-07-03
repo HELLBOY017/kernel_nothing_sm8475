@@ -5074,6 +5074,7 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 	if (!!cstate->fod_dim_layer)
 		dsi_panel_set_nolp(display->panel);
 	else if (!cstate->fod_dim_layer) {
+	        set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
 		cstate->fod_dim_valid = false;
 		return;
 	}
