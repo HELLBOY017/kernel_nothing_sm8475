@@ -213,6 +213,7 @@ typedef int (*feature_wrapper)(struct sde_hw_dspp *hw_dspp,
 struct drm_msm_pcc save_pcc;
 bool pcc_enabled = false;
 bool skip_pcc = false;
+bool skipped_pcc = false;
 
 static struct sde_kms *get_kms(struct drm_crtc *crtc)
 {
@@ -1758,6 +1759,7 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 		pcc_cfg = blob->data;
 
 		if (!(pcc_cfg->r.c == 0 && pcc_cfg->g.c == 0 && pcc_cfg->b.c == 0)) {
+			sde_crtc_state->color_invert_on = true;
 			if (hw_cfg.payload && (hw_cfg.len == sizeof(save_pcc))) {
 				memcpy(&save_pcc, hw_cfg.payload, hw_cfg.len);
 				pcc_enabled = true;
@@ -1766,12 +1768,16 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 					hw_cfg.payload = NULL;
 					hw_cfg.len = 0;
 					skip_pcc = true;
+					skipped_pcc = true;
 				} else {
 					skip_pcc = false;
+					skipped_pcc = false;
 				}
 			} else {
 				pcc_enabled = false;
 			}
+		} else {
+			sde_crtc_state->color_invert_on = false;
 		}
 	}
 

@@ -5297,6 +5297,7 @@ static int _sde_crtc_check_zpos(struct drm_crtc_state *state,
 	return rc;
 }
 
+extern bool skipped_pcc;
 static struct sde_hw_dim_layer *
 sde_crtc_setup_fod_dim_layer(struct sde_crtc_state *cstate, uint32_t stage)
 {
@@ -5307,6 +5308,9 @@ sde_crtc_setup_fod_dim_layer(struct sde_crtc_state *cstate, uint32_t stage)
 	struct sde_kms *kms;
 	uint32_t alpha;
 	uint32_t layer_stage;
+
+	if (cstate->color_invert_on && !skipped_pcc)
+        	goto error;
 
 	kms = _sde_crtc_get_kms(crtc_state->crtc);
 	if (!kms || !kms->catalog) {

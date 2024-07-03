@@ -523,6 +523,7 @@ struct sde_crtc_state {
 	struct sde_cp_crtc_range_prop_payload
 		cp_range_payload[SDE_CP_CRTC_MAX_FEATURES];
 	bool cont_splash_populated;
+	bool color_invert_on;
 	bool fod_pressed;
 };
 
