@@ -1093,8 +1093,6 @@ static int _sde_connector_update_finger_hbm_status(
 		//sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
 	} else {
 		SDE_ERROR("close hbm");
-		/*wait for VBLANK */
-		sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
 		sde_backlight_device_update_status(c_conn->bl_device);
 		/*wait for VBLANK */
 		//sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
