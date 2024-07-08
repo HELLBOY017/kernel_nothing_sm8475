@@ -1709,7 +1709,6 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 		}
 
 		if (cstate->fod_dim_layer) {
-			uint32_t zpos_max = 0;
 			cstate->fod_dim_valid = false;
 
                         if (cstate->color_invert_on && !skipped_pcc)
@@ -1719,10 +1718,8 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 				state = plane->state;
 				if (!state)
 					continue;
-				pstate = to_sde_plane_state(state);
 
-				if (zpos_max < pstate->stage)
-					zpos_max = pstate->stage;
+				pstate = to_sde_plane_state(state);
 
 				if (pstate->stage == cstate->fod_dim_layer->stage) {
 					SDE_ERROR("Skip fod_dim_layer as it shared plane stage %d %d\n",
@@ -1733,7 +1730,6 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 
 			_sde_crtc_setup_dim_layer_cfg(crtc, sde_crtc,
 			        mixer, cstate->fod_dim_layer);
-			usleep_range(52 * 100, 52 * 100);
 			cstate->fod_dim_valid = true;
 		}
 	}
@@ -5031,7 +5027,7 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 {
 	struct sde_hw_dim_layer *fod_dim_layer = NULL;
 	struct dsi_display *display;
-	uint32_t dim_layer_stage = 0;
+	uint32_t dim_layer_stage = INT_MAX;
 	bool force_fod_ui;
 	int plane_idx;
 	int fod_plane_idx = -1;
@@ -5044,37 +5040,42 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 
 	force_fod_ui = dsi_panel_get_force_fod_ui(display->panel);
 
-	if (display->panel->power_mode == SDE_MODE_DPMS_ON) {
-		for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
-			if (sde_plane_is_fod_layer(pstates[plane_idx].drm_pstate)) {
+	for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
+		if (sde_plane_is_fod_layer(pstates[plane_idx].drm_pstate)) {
 #ifdef CONFIG_CPU_INPUT_BOOST
-				cpu_input_boost_kick_max(500);
+			cpu_input_boost_kick_max(500);
 #endif
-				fod_plane_idx = plane_idx;
-				break;
-			} else if (force_fod_ui) {
-				if (pstates[plane_idx].stage > dim_layer_stage)
-					dim_layer_stage = pstates[plane_idx].stage + 1;
-			}
-		}
-
-		if (fod_plane_idx >= 0)
-			dim_layer_stage = pstates[fod_plane_idx].stage;
-
-		if (fod_plane_idx >= 0 || force_fod_ui)
-			fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate, dim_layer_stage);
+			fod_plane_idx = plane_idx;
+			break;
+	        }
 	}
+	
+	if (fod_plane_idx >= 0) {
+                dim_layer_stage = pstates[fod_plane_idx].stage;
+        } else if (force_fod_ui && display->panel->power_mode == SDE_MODE_DPMS_ON) {
+                if (dim_layer_stage == INT_MAX) {
+                        dim_layer_stage = 0;
+                        for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
+                                if (pstates[plane_idx].stage > dim_layer_stage)
+                                        dim_layer_stage = pstates[plane_idx].stage + 1;
+                        }
+                }
+	}
+	
+	if (fod_plane_idx >= 0 || force_fod_ui)
+		fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate, dim_layer_stage);
 
 	if (fod_dim_layer == cstate->fod_dim_layer)
 		return;
 
 	cstate->fod_dim_layer = fod_dim_layer;
 
-	if (!!cstate->fod_dim_layer)
+	if (!!cstate->fod_dim_layer) {
 		dsi_panel_set_nolp(display->panel);
-	else if (!cstate->fod_dim_layer) {
+	} else if (!cstate->fod_dim_layer) {
 	        set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
-	        cstate->fod_dim_valid = false;
+	        if (test_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty))
+	                cstate->fod_dim_valid = false;
 		return;
 	}
 
