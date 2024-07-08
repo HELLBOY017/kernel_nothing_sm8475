@@ -1066,7 +1066,7 @@ static int _sde_connector_update_finger_hbm_status(
 	}
 
         status = sde_connector_is_fod_enabled(c_conn);
-        if ((!c_conn->fingerlayer_dirty) && (status == dsi_panel_get_fod_ui(display->panel)))
+        if (!c_conn->fingerlayer_dirty && status == dsi_panel_get_fod_ui(display->panel))
                 return 0;
 
 	if (display->panel->power_mode == SDE_MODE_DPMS_OFF) {
@@ -1091,6 +1091,8 @@ static int _sde_connector_update_finger_hbm_status(
 			mutex_unlock(&c_conn->lock);
 			c_conn->last_panel_power_mode = SDE_MODE_DPMS_ON;
 		}
+		if (!c_conn->fingerlayer_dirty)
+                        usleep_range(521 * 10, 521 * 10); // Avoid screen flashes
 		sde_backlight_device_update_status(c_conn->bl_device);
 		/*wait for VBLANK */
 		//sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
