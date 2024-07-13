@@ -68,6 +68,11 @@ static const __initconst char * const blacklist[] = {
         "qti_amoled_ecm",
         "nothing_disk_usage",
         "nothing_readahead_trace",
+        "nothing_writeback_kmsg",
+        "memory_dump_v2",
+        "minidump",
+        "qcom_edac",
+        "kryo_arm64_edac",
 
 	NULL
 };
