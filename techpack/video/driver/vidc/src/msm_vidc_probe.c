@@ -358,7 +358,9 @@ static int msm_vidc_remove(struct platform_device* pdev)
 	msm_vidc_deinitialize_core(core);
 
 	dev_set_drvdata(&pdev->dev, NULL);
+#ifdef CONFIG_DEBUG_FS
 	debugfs_remove_recursive(core->debugfs_parent);
+#endif
 	msm_vidc_vmem_free((void **)&core);
 	g_core = NULL;
 
@@ -378,9 +380,11 @@ static int msm_vidc_probe_video_device(struct platform_device *pdev)
 		return rc;
 	g_core = core;
 
+#ifdef CONFIG_DEBUG_FS
 	core->debugfs_parent = msm_vidc_debugfs_init_drv();
 	if (!core->debugfs_parent)
 		d_vpr_h("Failed to create debugfs for msm_vidc\n");
+#endif
 
 	core->pdev = pdev;
 	dev_set_drvdata(&pdev->dev, core);
@@ -455,9 +459,11 @@ static int msm_vidc_probe_video_device(struct platform_device *pdev)
 		rc = 0; /* Ignore error */
 	}
 
+#ifdef CONFIG_DEBUG_FS
 	core->debugfs_root = msm_vidc_debugfs_init_core(core);
 	if (!core->debugfs_root)
 		d_vpr_h("Failed to init debugfs core\n");
+#endif
 
 	d_vpr_h("populating sub devices\n");
 	/*
@@ -497,7 +503,9 @@ init_dt_failed:
 	msm_vidc_deinitialize_core(core);
 init_core_failed:
 	dev_set_drvdata(&pdev->dev, NULL);
+#ifdef CONFIG_DEBUG_FS
 	debugfs_remove_recursive(core->debugfs_parent);
+#endif
 	msm_vidc_vmem_free((void **)&core);
 	g_core = NULL;
 
