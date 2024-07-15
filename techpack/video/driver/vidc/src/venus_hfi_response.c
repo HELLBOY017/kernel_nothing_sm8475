@@ -771,7 +771,9 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 	}
 
 	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
+#ifdef CONFIG_DEBUG_FS
 	msm_vidc_update_stats(inst, buf, MSM_VIDC_DEBUGFS_EVENT_EBD);
+#endif
 
 	return rc;
 }
@@ -925,7 +927,9 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		msm_vidc_ts_reorder_get_first_timestamp(inst, &buf->timestamp);
 
 	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
+#ifdef CONFIG_DEBUG_FS
 	msm_vidc_update_stats(inst, buf, MSM_VIDC_DEBUGFS_EVENT_FBD);
+#endif
 
 	return rc;
 }
