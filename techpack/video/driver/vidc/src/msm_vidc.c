@@ -945,10 +945,12 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 		goto error;
 	}
 
+#ifdef CONFIG_DEBUG_FS
 	inst->debugfs_root =
 		msm_vidc_debugfs_init_inst(inst, core->debugfs_root);
 	if (!inst->debugfs_root)
 		i_vpr_h(inst, "%s: debugfs not available\n", __func__);
+#endif
 
 	return inst;
 
