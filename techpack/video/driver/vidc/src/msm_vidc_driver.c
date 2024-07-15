@@ -3255,6 +3255,7 @@ void msm_vidc_free_capabililty_list(struct msm_vidc_inst *inst,
 	}
 }
 
+#ifdef CONFIG_DEBUG_FS
 void msm_vidc_update_stats(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf, enum msm_vidc_debugfs_event etype)
 {
@@ -3269,6 +3270,7 @@ void msm_vidc_update_stats(struct msm_vidc_inst *inst,
 
 	msm_vidc_debugfs_update(inst, etype);
 }
+#endif
 
 void msm_vidc_print_stats(struct msm_vidc_inst *inst)
 {
@@ -3361,7 +3363,9 @@ void msm_vidc_stats_handler(struct work_struct *work)
 static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buffer *buf)
 {
 	struct msm_vidc_buffer *meta;
+#ifdef CONFIG_DEBUG_FS
 	enum msm_vidc_debugfs_event etype;
+#endif
 	int rc = 0;
 	u32 cr = 0;
 
@@ -3434,12 +3438,14 @@ static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buf
 	if (is_input_buffer(buf->type))
 		inst->power.buffer_counter++;
 
+#ifdef CONFIG_DEBUG_FS
 	if (is_input_buffer(buf->type))
 		etype = MSM_VIDC_DEBUGFS_EVENT_ETB;
 	else
 		etype = MSM_VIDC_DEBUGFS_EVENT_FTB;
 
 	msm_vidc_update_stats(inst, buf, etype);
+#endif
 
 	return 0;
 }
@@ -5417,7 +5423,9 @@ static void msm_vidc_close_helper(struct kref *kref)
 	msm_vidc_fence_deinit(inst);
 	msm_vidc_event_queue_deinit(inst);
 	msm_vidc_vb2_queue_deinit(inst);
+#ifdef CONFIG_DEBUG_FS
 	msm_vidc_debugfs_deinit_inst(inst);
+#endif
 	if (is_decode_session(inst))
 		msm_vdec_inst_deinit(inst);
 	else if (is_encode_session(inst))
