@@ -525,6 +525,7 @@ struct sde_crtc_state {
 	bool cont_splash_populated;
 	bool color_invert_on;
 	bool fod_dim_valid;
+	bool fod_pressed;
 };
 
 enum sde_crtc_irq_state {
