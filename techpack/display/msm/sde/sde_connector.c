@@ -1099,7 +1099,7 @@ static int _sde_connector_update_finger_hbm_status(
 			c_conn->last_panel_power_mode = SDE_MODE_DPMS_ON;
 		}
 		if (!c_conn->fingerlayer_dirty)
-                        usleep_range(7544, 7544); // Avoid screen flashes
+                        usleep_range(8970, 8970); // Avoid screen flashes
 		update_hbm_brightness = true;
 		sde_backlight_device_update_status(c_conn->bl_device);
 		update_hbm_brightness = false;
