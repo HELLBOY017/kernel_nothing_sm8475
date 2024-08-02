@@ -390,7 +390,7 @@ static void ram_vbat_comp(struct aw_haptic *aw_haptic, bool flag)
 		}
 	} else {
 		aw_haptic->func->set_gain(aw_haptic, aw_haptic->gain);
-		aw_info("ram vbat comp close");
+		//aw_info("ram vbat comp close");
 	}
 }
 
@@ -1906,7 +1906,7 @@ static void brightness_set(struct led_classdev *cdev, enum led_brightness level)
 	struct aw_haptic *aw_haptic = container_of(cdev, struct aw_haptic,
 						   vib_dev);
 
-	aw_info("enter");
+	//aw_info("enter");
 	if (!aw_haptic->ram_init) {
 		aw_err("ram init failed, not allow to play!");
 		return;
@@ -1967,7 +1967,7 @@ static ssize_t duration_store(struct device *dev, struct device_attribute *attr,
 	/* setting 0 on duration is NOP for now */
 	if (val <= 0)
 		return count;
-	aw_info("duration=%d", val);
+	//aw_info("duration=%d", val);
 	aw_haptic->duration = val;
 	return count;
 }
@@ -1994,7 +1994,7 @@ static ssize_t activate_store(struct device *dev, struct device_attribute *attr,
 	rc = kstrtouint(buf, 0, &val);
 	if (rc < 0)
 		return rc;
-	aw_info("value=%d", val);
+	//aw_info("value=%d", val);
 	if (!aw_haptic->ram_init) {
 		aw_err("ram init failed, not allow to play!");
 		return count;
@@ -2068,7 +2068,7 @@ static ssize_t index_store(struct device *dev, struct device_attribute *attr,
 		aw_err("input value out of range!");
 		return count;
 	}
-	aw_info("value=%d", val);
+	//aw_info("value=%d", val);
 	mutex_lock(&aw_haptic->lock);
 	aw_haptic->index = val;
 	aw_haptic->func->set_repeat_seq(aw_haptic, aw_haptic->index);
@@ -2098,7 +2098,7 @@ static ssize_t vmax_store(struct device *dev, struct device_attribute *attr,
 	rc = kstrtouint(buf, 0, &val);
 	if (rc < 0)
 		return rc;
-	aw_info("value=%d", val);
+	//aw_info("value=%d", val);
 	mutex_lock(&aw_haptic->lock);
 	aw_haptic->vmax = val;
 	aw_haptic->func->set_bst_vol(aw_haptic, aw_haptic->vmax);
@@ -2128,7 +2128,7 @@ static ssize_t gain_store(struct device *dev, struct device_attribute *attr,
 	rc = kstrtouint(buf, 0, &val);
 	if (rc < 0)
 		return rc;
-	aw_info("value=0x%02x", val);
+	//aw_info("value=0x%02x", val);
 	mutex_lock(&aw_haptic->lock);
 	aw_haptic->gain = val;
 	aw_haptic->func->set_gain(aw_haptic, aw_haptic->gain);
@@ -2201,7 +2201,7 @@ static ssize_t loop_store(struct device *dev, struct device_attribute *attr,
 	uint32_t databuf[2] = { 0, 0 };
 
 	if (sscanf(buf, "%x %x", &databuf[0], &databuf[1]) == 2) {
-		aw_info("seq%d loop=0x%02X", databuf[0], databuf[1]);
+		//aw_info("seq%d loop=0x%02X", databuf[0], databuf[1]);
 		mutex_lock(&aw_haptic->lock);
 		aw_haptic->loop[databuf[0]] = (uint8_t)databuf[1];
 		aw_haptic->func->set_wav_loop(aw_haptic, (uint8_t)databuf[0],
