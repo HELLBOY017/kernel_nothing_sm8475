@@ -103,6 +103,15 @@ static const __initconst char * const blacklist[] = {
         "stm_p_ost",
         "stm_console",
         "stm_ftrace",
+        "qti_regmap_debugfs",
+        "dispcc_diwali",
+        "gcc_diwali",
+        "pinctrl_diwali",
+        "qnoc_diwali",
+        "gpucc_diwali",
+        "camcc_diwali",
+        "videocc_diwali",
+        "debugcc_diwali",
 
 	NULL
 };
