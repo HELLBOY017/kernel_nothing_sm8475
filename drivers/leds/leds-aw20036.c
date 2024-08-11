@@ -1086,7 +1086,7 @@ static ssize_t aw20036_frame_brightness_store(struct device *dev,
 	unsigned char brightness_1[13] = {0};
 	unsigned char brightness_2[22] = {0};
 
-	pr_info("%s\n", __func__);
+	//pr_info("%s\n", __func__);
 
 	pm_stay_awake(aw20036->dev);
 
@@ -1210,7 +1210,7 @@ static ssize_t aw20036_operating_mode_store(struct device *dev,
 
 	sscanf(buf, "%d", &val);
 
-	pr_info("%s: var %d mode %d\n", __func__, val, aw20036->operating_mode);
+	//pr_info("%s: var %d mode %d\n", __func__, val, aw20036->operating_mode);
 
 	if(val ==1){/*active*/
 		if(aw20036->operating_mode ==0){
