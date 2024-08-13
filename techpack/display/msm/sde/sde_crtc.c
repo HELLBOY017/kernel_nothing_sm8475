@@ -5377,14 +5377,18 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 
 	for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
 		if (sde_plane_is_fod_layer(pstates[plane_idx].drm_pstate)) {
+			cstate->fod_pressed = true;
 			fod_plane_idx = plane_idx;
 			break;
 	        }
 	}
 
-	if (fod_plane_idx >= 0) {
+	if (fod_plane_idx >= 0)
                 dim_layer_stage = pstates[fod_plane_idx].stage;
-        } else if (force_fod_ui) {
+	else
+		cstate->fod_pressed = false;
+
+        if (force_fod_ui) {
                 if (dim_layer_stage == INT_MAX) {
                         dim_layer_stage = 0;
                         for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
