@@ -5374,25 +5374,34 @@ sde_crtc_fod_atomic_check(struct sde_crtc_state *cstate,
 
 	for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
 		if (sde_plane_is_fod_layer(pstates[plane_idx].drm_pstate)) {
+			cstate->fod_pressed = true;
 			fod_plane_idx = plane_idx;
 			break;
 	        }
 	}
 
-	if (fod_plane_idx >= 0) {
-                dim_layer_stage = pstates[fod_plane_idx].stage;
-        } else if (force_fod_ui && display->panel->power_mode == SDE_MODE_DPMS_ON) {
-                if (dim_layer_stage == INT_MAX) {
-                        dim_layer_stage = 0;
-                        for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
-                                if (pstates[plane_idx].stage > dim_layer_stage)
-                                        dim_layer_stage = pstates[plane_idx].stage + 1;
-                        }
-                }
-	}
+	if (display->panel->power_mode == SDE_MODE_DPMS_ON) {
+		if (fod_plane_idx >= 0)
+			dim_layer_stage = pstates[fod_plane_idx].stage;
+		else
+			cstate->fod_pressed = false;
 
-	if (fod_plane_idx >= 0 || force_fod_ui)
-		fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate, dim_layer_stage);
+		if (force_fod_ui) {
+			if (dim_layer_stage == INT_MAX) {
+				dim_layer_stage = 0;
+				for (plane_idx = 0; plane_idx < cnt; plane_idx++) {
+					if (pstates[plane_idx].stage > dim_layer_stage)
+						dim_layer_stage = pstates[plane_idx].stage + 1;
+				}
+			}
+		}
+
+		if (fod_plane_idx >= 0 || force_fod_ui)
+			fod_dim_layer = sde_crtc_setup_fod_dim_layer(cstate, dim_layer_stage);
+
+        } else {
+		cstate->fod_pressed = false;
+        }
 
 	if (fod_dim_layer == cstate->fod_dim_layer)
 		return;
