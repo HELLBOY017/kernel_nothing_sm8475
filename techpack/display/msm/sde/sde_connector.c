@@ -1170,6 +1170,9 @@ static void _sde_connector_set_brightness_work(struct work_struct *work)
 	/* map UI brightness into driver backlight level with rounding */
 	bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
 			display->panel->bl_config.brightness_max_level);
+
+        display->panel->bl_config.real_bl_level = bl_lvl;
+
 	/*if enable hbm_mode, set brightness to HBM brightness*/
 	if (finger_hbm_flag) {
 		SDE_ERROR("update hbm brightness\n");
