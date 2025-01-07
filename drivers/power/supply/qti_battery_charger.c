@@ -89,6 +89,7 @@
 #define NT_GET_CHARGE_KEY_INFO      1
 #define KEY_INFO_COUNT			5
 #define PROJECT_DATA_ID		1
+#define IBUS_NOW_UA_TO_MA		1000
 enum nt_notify_finish_type {
         NT_NOTIFY_NOT_FINISH = 0,
         NT_NOTIFY_FINISH = 1,
@@ -228,6 +229,7 @@ enum usb_property_id {
 	NT_CHG_PARAM,
 	USB_CHARGE_KEY_INFO,
 	NT_OTG_ENABLE,
+	NT_ADP_POWER,
 #endif
 	USB_SCOPE,
 	USB_CONNECTOR_TYPE,
@@ -1945,6 +1947,51 @@ static int nt_qmax_open(struct inode *inode, struct file *file)
    return single_open(file, nt_qmax_show, PDE_DATA(inode));
 }
 
+static int nt_ibus_now_show(struct seq_file *m, void *v)
+{
+   struct battery_chg_dev *bcdev = m->private;
+   struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_USB];
+   int rc;
+
+   if((pst == NULL) || (bcdev == NULL))
+   {
+       return -EINVAL;
+   }
+   rc = read_property_id(bcdev, pst, USB_CURR_NOW);
+   if (rc < 0)
+       return rc;
+   seq_printf(m, "%d\n", pst->prop[USB_CURR_NOW] / IBUS_NOW_UA_TO_MA);
+
+   return 0;
+}
+
+static int nt_ibus_now_open(struct inode *inode, struct file *file)
+{
+   return single_open(file, nt_ibus_now_show, PDE_DATA(inode));
+}
+
+static int nt_adp_power_show(struct seq_file *m, void *v)
+{
+	struct battery_chg_dev *bcdev = m->private;
+	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_USB];
+	int rc;
+
+	if((pst == NULL) || (bcdev == NULL)) {
+		return -EINVAL;
+	}
+	rc = read_property_id(bcdev, pst, NT_ADP_POWER);
+	if (rc < 0)
+		return rc;
+	seq_printf(m, "%d\n", pst->prop[NT_ADP_POWER]);
+
+	return 0;
+}
+
+static int nt_adp_power_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nt_adp_power_show, PDE_DATA(inode));
+}
+
 static ssize_t is_aging_test_write(struct file *file, const char __user *buff,
                size_t count, loff_t *ppos)
 {
@@ -2036,8 +2083,17 @@ const struct nt_proc entries[] = {
 	                  .proc_read = seq_read,
 	                  .proc_lseek = seq_lseek,
 	                  .proc_release = single_release,}
+	},
+	{"ibus_now",{.proc_open = nt_ibus_now_open,
+	                  .proc_read = seq_read,
+	                  .proc_lseek = seq_lseek,
+	                  .proc_release = single_release,}
+	},
+	{"nt_adp_power",{.proc_open = nt_adp_power_open,
+	                  .proc_read = seq_read,
+	                  .proc_lseek = seq_lseek,
+	                  .proc_release = single_release,}
 	}
-
 };
 
 int create_aging_proc_file(struct battery_chg_dev *bcdev, struct proc_dir_entry *nt_chg_proc_dir)

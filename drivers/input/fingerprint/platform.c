@@ -136,28 +136,33 @@ void gf_cleanup(struct gf_dev *gf_dev)
 int gf_power_on(struct gf_dev *gf_dev)
 {
 	int rc = 0;
-
-	if(!regulator_is_enabled(gf_dev->vdd)){
-		rc = regulator_enable(gf_dev->vdd);
-		if (rc) {
-			pr_err("Regulator enable failed rc=%d\n", rc);
-			goto err_reg;
+	if(gf_dev->power_on_tag == 0){
+		if(!regulator_is_enabled(gf_dev->vdd)){
+			rc = regulator_enable(gf_dev->vdd);
+			if (rc) {
+				pr_err("%s : Regulator enable failed rc=%d power_tag = %d\n", __func__, rc, gf_dev->power_on_tag);
+			}else{
+				gf_dev->power_on_tag = 1;
+				pr_info("%s success , power_tag = %d\n", __func__, gf_dev->power_on_tag);
+			}
 		}
 	}
-	/* TODO: add your power control here */
-	return rc;
-err_reg:
+	pr_info("%s no need to do , power_tag = %d\n", __func__, gf_dev->power_on_tag);
 	return rc;
 }
 
 int gf_power_off(struct gf_dev *gf_dev)
 {
 	int rc = 0;
-
-	rc = regulator_disable(gf_dev->vdd);
-
-	/* TODO: add your power control here */
-
+	if(gf_dev->power_on_tag == 1){
+		rc = regulator_disable(gf_dev->vdd);
+		if(rc){
+			pr_err("%s : Regulator enable failed rc=%d power_tag = %d\n", __func__, rc, gf_dev->power_on_tag);
+		}else{
+			gf_dev->power_on_tag = 0;
+			pr_info("%s success , power_tag = %d\n", __func__, gf_dev->power_on_tag);
+		}
+	}
 	return rc;
 }
 

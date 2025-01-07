@@ -2238,6 +2238,9 @@ static int aw20036_resume(struct device *dev)
 	if(aw20036->suspend == 1){
 		pr_info("%s is suspend\n", __func__);
 
+		/* aw20036_hw_reset(aw20036);*/
+		/* aw20036_led_init(aw20036);*/
+		/* Change to aw20036_hw_reinit*/
 #ifdef POWER_SAVE_MODE
 		aw20036->operating_mode =2;
 #else

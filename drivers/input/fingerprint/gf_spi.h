@@ -143,6 +143,7 @@ struct gf_dev {
 	char fb_black;
 
 	struct drm_panel *active_panel;
+	int power_on_tag;
 };
 
 int check_drm_dt(struct gf_dev *gf_dev);

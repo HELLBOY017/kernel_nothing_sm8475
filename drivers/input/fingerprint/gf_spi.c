@@ -728,6 +728,7 @@ static int gf_probe(struct platform_device *pdev)
 	gf_dev->cookie = NULL;
 	gf_dev->device_available = 0;
 	gf_dev->fb_black = 0;
+	gf_dev->power_on_tag = 0;
 
 	/* If we can allocate a minor number, hook up this device.
 	 * Reusing minors is fine so long as udev or mdev is working.

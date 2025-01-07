@@ -582,7 +582,7 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 
 	if (panel->power_mode == SDE_MODE_DPMS_LP1 || panel->power_mode == SDE_MODE_DPMS_LP2) {
 		brightness = panel->bl_config.brightness;
-		if (brightness > 0 && brightness < 360) {
+		if (brightness >= 0 && brightness < 360) {
 			lp1_cmd_flag = DSI_CMD_SET_AOD_5NIT;
 		} else if (brightness >= 360 && brightness < 1300) {
 			lp1_cmd_flag = DSI_CMD_SET_AOD_30NIT;
@@ -4768,7 +4768,7 @@ int dsi_panel_set_lp1(struct dsi_panel *panel)
 			"ibb", REGULATOR_MODE_IDLE);
 
 	brightness = panel->bl_config.brightness;
-	if (brightness > 0 && brightness < 360) {
+	if (brightness >= 0 && brightness < 360) {
 		lp1_cmd_flag = DSI_CMD_SET_LP1_5NIT;
 	} else if (brightness >= 360 && brightness < 1300) {
 		lp1_cmd_flag = DSI_CMD_SET_LP1_30NIT;

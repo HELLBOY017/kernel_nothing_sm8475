@@ -97,7 +97,7 @@ static int secure_register_proc_fs(struct secure_data *secure_data)
 {
 	struct proc_dir_entry *pentry;
 
-	/*  make the dir /proc/oplus_secure_common  */
+	/*  make the dir /proc/nothing_secure  */
 	nothing_secure_dir =  proc_mkdir(nothing_secure_dir_name, NULL);
 	if(!nothing_secure_dir) {
 			dev_err(secure_data->dev,"can't create nothing_secure_dir proc\n");
